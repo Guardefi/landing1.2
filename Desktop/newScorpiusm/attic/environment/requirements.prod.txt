@@ -1,0 +1,221 @@
+# Production Requirements - Scorpius X World-Class Platform
+# ==========================================================
+# Comprehensive dependencies for world-class blockchain security platform
+
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+starlette==0.27.0
+
+# Database
+sqlalchemy==2.0.23
+asyncpg==0.29.0          # PostgreSQL async driver
+alembic==1.13.0          # Database migrations
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+cryptography==41.0.8
+
+# API & Networking
+httpx==0.25.2
+requests==2.31.0
+websockets==12.0
+aiohttp==3.9.1
+
+# Data Processing & Analytics
+pandas==2.1.4
+numpy==1.24.4
+scipy==1.11.4
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Machine Learning & AI
+scikit-learn==1.3.2
+torch==2.1.2
+transformers==4.36.2
+tensorflow==2.15.0
+
+# Blockchain & Web3
+web3==6.13.0
+eth-account==0.10.0
+eth-hash==0.5.2
+py-evm==0.8.0b1
+
+# Quantum Cryptography & Advanced Crypto
+qiskit==0.45.1
+pycryptodome==3.19.0
+pyopenssl==23.3.0
+
+# WebAssembly
+wasmtime-py==14.0.0
+
+# Graph Analysis & Network Science
+networkx==3.2.1
+igraph==0.11.3
+
+# CLI & Terminal Interface
+click==8.1.7
+rich==13.7.0
+colorama==0.4.6
+questionary==2.0.1
+tabulate==0.9.0
+
+# Performance & Monitoring
+psutil==5.9.6
+prometheus-client==0.19.0
+py-spy==0.3.14
+
+# Development & Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+pre-commit==3.6.0
+
+# Data Formats & Serialization
+orjson==3.9.10
+msgpack==1.0.7
+protobuf==4.25.1
+
+# Time & Date
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Blockchain & Web3
+web3==6.13.0
+eth-abi==4.2.1
+py-solc-x==2.0.2
+
+# Security Analysis Tools
+slither-analyzer==0.10.0
+mythril==0.23.25
+
+# Caching & Message Queue
+redis==5.0.1
+celery==5.3.4
+
+# Monitoring & Logging
+prometheus-client==0.19.0
+structlog==23.2.0
+python-json-logger==2.0.7
+
+# Development & Testing (production testing)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+bandit==1.7.5            # Security linting
+safety==2.3.5            # Vulnerability scanning
+
+# Configuration
+python-dotenv==1.0.0
+pyyaml==6.0.1
+toml==0.10.2
+
+# Performance
+gunicorn==21.2.0         # Production WSGI server
+gevent==23.9.1           # Async support
+
+# Advanced Platform Modules Dependencies
+# =====================================
+
+# Advanced Monitoring Dashboard
+prometheus-client==0.19.0
+grafana-api==1.0.3
+elasticsearch==8.11.1
+
+# AI Trading Engine
+ccxt==4.1.74             # Cryptocurrency exchange library
+yfinance==0.2.28         # Yahoo Finance data
+quantlib==1.32           # Quantitative finance library
+
+# Blockchain Bridge Network
+eth-bridge==0.1.0        # Ethereum bridge utilities
+cross-chain==0.2.0       # Cross-chain protocols
+
+# Enterprise Analytics Platform
+matplotlib==3.8.2        # Plotting library
+seaborn==0.13.0          # Statistical data visualization
+plotly==5.17.0           # Interactive plotting
+jupyter==1.0.0           # Notebook support
+
+# Distributed Computing Engine
+dask==2023.12.0          # Parallel computing
+ray==2.8.1               # Distributed computing framework
+joblib==1.3.2            # Lightweight pipelining
+multiprocessing-logging==0.3.4  # Multiprocessing logging
+
+# Additional AI/ML Libraries
+sentence-transformers==2.2.2  # Sentence embeddings
+openai==1.3.8            # OpenAI API client
+langchain==0.1.0         # LLM framework
+
+# Additional Blockchain Libraries
+brownie==1.19.3          # Ethereum development framework
+eth-utils==2.3.1         # Ethereum utilities
+
+# Quantum Computing Enhancement
+cirq==1.3.0              # Google's quantum computing framework
+quantum-computing==0.1.0 # Quantum algorithms
+
+# High Performance Computing
+numba==0.58.1            # JIT compiler for Python
+cython==3.0.6            # Python to C compiler
+lz4==4.3.2               # Fast compression
+zstandard==0.22.0        # Zstandard compression
+
+# Networking & Messaging
+zmq==0.0.0               # ZeroMQ messaging
+pika==1.3.2              # RabbitMQ client
+asyncio-mqtt==0.13.0     # MQTT async client
+
+# Additional Storage & Databases
+minio==7.2.0             # Object storage client
+pymongo==4.6.1           # MongoDB driver
+cassandra-driver==3.28.0 # Cassandra driver
+
+# Image & Media Processing
+pillow==10.1.0           # Image processing
+opencv-python==4.8.1.78 # Computer vision
+
+# Geographic & Spatial
+geopy==2.4.1             # Geocoding library
+shapely==2.0.2           # Geometric objects
+
+# Communication & Notifications
+sendgrid==6.10.0         # Email service
+twilio==8.11.1           # SMS/Voice service
+discord-py==2.3.2        # Discord bot framework
+
+# Configuration Management
+dynaconf==3.2.4          # Dynamic configuration
+python-decouple==3.8     # Environment variables
+
+# Advanced Serialization
+pickle5==0.0.12          # Enhanced pickle
+arrow==1.3.0             # Better datetime
+pendulum==2.1.2          # Python datetime replacement
+
+# Logging & Monitoring Enhancement
+loguru==0.7.2            # Enhanced logging
+sentry-sdk==1.39.2       # Error tracking
+jaeger-client==4.8.0     # Distributed tracing
+
+# System Utilities
+distro==1.8.0            # Linux distribution info
+platform==1.0.8          # Platform identification
+
+# Additional Testing
+faker==20.1.0            # Fake data generation
+hypothesis==6.92.1       # Property-based testing
+
+# Memory & Performance Profiling
+memory-profiler==0.61.0  # Memory usage profiling
+py-spy==0.3.14           # Sampling profiler
+
+# Additional Data Processing
+polars==0.20.0           # Fast DataFrame library
+pyarrow==14.0.2          # Columnar data format

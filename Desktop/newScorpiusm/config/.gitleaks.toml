@@ -1,0 +1,85 @@
+# Gitleaks configuration for Scorpius DeFi Security Platform
+
+[extend]
+# Use the default gitleaks config as a base
+useDefault = true
+
+# Additional rules for common secrets in DeFi/blockchain projects
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-[a-zA-Z0-9]{20,}'''
+keywords = ["sk-"]
+
+[[rules]]
+id = "anthropic-api-key"
+description = "Anthropic API Key"
+regex = '''sk-ant-[a-zA-Z0-9\-]{20,}'''
+keywords = ["sk-ant-"]
+
+[[rules]]
+id = "ethereum-private-key"
+description = "Ethereum Private Key"
+regex = '''0x[a-fA-F0-9]{64}'''
+keywords = ["private", "key", "wallet"]
+
+[[rules]]
+id = "infura-project-secret"
+description = "Infura Project Secret"
+regex = '''[a-fA-F0-9]{32}'''
+keywords = ["infura", "project", "secret"]
+
+[[rules]]
+id = "alchemy-api-key"
+description = "Alchemy API Key"
+regex = '''[a-zA-Z0-9_-]{32,}'''
+keywords = ["alchemy"]
+
+[[rules]]
+id = "coingecko-api-key"
+description = "CoinGecko API Key"
+regex = '''CG-[a-zA-Z0-9]{20,}'''
+keywords = ["coingecko"]
+
+[[rules]]
+id = "mongodb-connection-string"
+description = "MongoDB Connection String"
+regex = '''mongodb(\+srv)?://[^\s]+'''
+keywords = ["mongodb"]
+
+[[rules]]
+id = "redis-url"
+description = "Redis URL with credentials"
+regex = '''redis://[^:]+:[^@]+@[^\s]+'''
+keywords = ["redis"]
+
+# Allowlist for false positives
+[allowlist]
+description = "Allowlist for documentation and test files"
+files = [
+    '''.*\.md$''',
+    '''.*\.rst$''',
+    '''.*\.txt$''',
+    '''.*\.example$''',
+    '''.*_test\.py$''',
+    '''test_.*\.py$''',
+    '''.*\.test\.ts$''',
+    '''.*\.test\.tsx$''',
+    '''.*\.spec\.ts$''',
+    '''.*\.spec\.tsx$''',
+]
+
+paths = [
+    '''docs/''',
+    '''tests/''',
+    '''attic/''',
+    '''.*\.example''',
+]
+
+# Allowlist for placeholder values in documentation
+regexes = [
+    '''sk-ant-\.\.\.''',  # Anthropic placeholder
+    '''sk-\.\.\.''',      # OpenAI placeholder
+    '''CG-\.\.\.''',      # CoinGecko placeholder
+    '''0x[0-9a-fA-F]{8}\.\.\.''',  # Ethereum address placeholder
+]

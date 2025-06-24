@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Core Scorpius Scanner Service
+  scorpius-scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile.security
+    ports:
+      - '3001:8000'
+    environment:
+      - DATABASE__URL=postgresql://scorpius:scorpius@postgres:5432/scorpius
+      - REDIS__URL=redis://redis:6379/0
+      - API_PORT=8000
+      - DEBUG=false
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./reports:/app/reports
+      - ./contracts:/app/contracts
+    networks:
+      - scorpius-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: scorpius
+      POSTGRES_USER: scorpius
+      POSTGRES_PASSWORD: scorpius
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    networks:
+      - scorpius-network
+
+  # Redis for Job Queue
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - scorpius-network
+
+  # Anvil for Blockchain Simulation
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    command: anvil --host 0.0.0.0 --port 8545 --fork-url ${ETHEREUM_RPC_URL}
+    ports:
+      - '8545:8545'
+    environment:
+      - ETHEREUM_RPC_URL=${ETHEREUM_RPC_URL:-https://ethereum.publicnode.com}
+    networks:
+      - scorpius-network
+
+  # Worker Process for Background Jobs
+  scorpius-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.security
+    command: ['python', '-m', 'scorpius_scanner.cli', 'worker']
+    environment:
+      - DATABASE__URL=postgresql://scorpius:scorpius@postgres:5432/scorpius
+      - REDIS__URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+      - anvil
+    volumes:
+      - ./reports:/app/reports
+      - ./contracts:/app/contracts
+    networks:
+      - scorpius-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  scorpius-network:
+    driver: bridge

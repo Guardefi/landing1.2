@@ -1,0 +1,27 @@
+# Development Dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0
+httpx>=0.24.0
+pytest-mock>=3.11.0
+
+# Code Quality
+ruff>=0.0.280
+black>=23.7.0
+mypy>=1.5.0
+bandit>=1.7.5
+
+# Security Testing
+safety>=2.3.0
+semgrep>=1.34.0
+
+# Performance Testing
+pytest-benchmark>=4.0.0
+
+# Database Testing
+pytest-postgresql>=5.0.0
+alembic>=1.11.0
+
+# API Testing
+fastapi[all]>=0.100.0
+requests>=2.31.0

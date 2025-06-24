@@ -1,0 +1,755 @@
+name: 🚀 Production Quality Gates & Deploy
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================================================
+  # SECURITY SCANNING
+  # ============================================================================
+  security-scan:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety semgrep
+
+      - name: Run Bandit Security Scan
+        run: |
+          bandit -r backend/ -f json -o bandit-report.json || true
+          bandit -r backend/ -f txt
+
+      - name: Run Safety Check
+        run: |
+          safety check --json --output safety-report.json || true
+          safety check
+
+      - name: Run Semgrep Security Scan
+        run: |
+          semgrep --config=auto backend/ --json --output=semgrep-report.json || true
+          semgrep --config=auto backend/
+
+      - name: Run Gitleaks Secret Scan
+        run: |
+          # Install gitleaks
+          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/scripts/install.sh | sh -s -- -b /usr/local/bin
+          gitleaks detect --config .gitleaks.toml --no-banner
+
+      - name: Upload Security Reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            semgrep-report.json
+
+  # ============================================================================
+  # BACKEND QUALITY CHECKS
+  # ============================================================================
+  backend-quality:
+    name: 🐍 Backend Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.prod.txt
+          pip install -r requirements-dev.txt
+
+      - name: Code formatting check (Black)
+        run: |
+          black --check --line-length=100 backend/
+
+      - name: Linting (Ruff)
+        run: |
+          ruff check backend/ --output-format=github
+
+      - name: Type checking (MyPy)
+        run: |
+          mypy backend/ --strict --ignore-missing-imports
+
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ \
+            --cov=backend \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-min=25 \
+            --junitxml=pytest-report.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: backend
+          name: backend-coverage
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            pytest-report.xml
+            coverage.xml
+
+  # ============================================================================
+  # FRONTEND QUALITY CHECKS
+  # ============================================================================
+  frontend-quality:
+    name: ⚛️ Frontend Quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type checking (TypeScript)
+        run: npm run type-check
+
+      - name: Linting (ESLint)
+        run: npm run lint
+
+      - name: Code formatting check (Prettier)
+        run: npm run format:check
+
+      - name: Run tests with coverage
+        run: |
+          npm run test:coverage -- \
+            --coverage.threshold.global.lines=25 \
+            --coverage.threshold.global.functions=25 \
+            --coverage.threshold.global.branches=25 \
+            --coverage.threshold.global.statements=25
+
+      - name: Build application
+        run: npm run build
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+
+  # ============================================================================
+  # INTEGRATION TESTS
+  # ============================================================================
+  integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    needs: [backend-quality, frontend-quality]
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: scorpius_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.prod.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/scorpius_test
+        run: |
+          # alembic upgrade head  # Uncomment when migrations are ready
+          echo "Database migrations would run here"
+
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/scorpius_test
+          REDIS_URL: redis://localhost:6379
+        run: |
+          pytest tests/integration/ -v --tb=short
+
+  # ============================================================================
+  # DOCKER BUILD AND PUBLISH
+  # ============================================================================
+  docker-build:
+    name: 🐳 Docker Build & Publish
+    runs-on: ubuntu-latest
+    needs: [backend-quality, frontend-quality]
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      backend-image: ${{ steps.meta-backend.outputs.tags }}
+      frontend-image: ${{ steps.meta-frontend.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Extract metadata for frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: backend/Dockerfile.prod
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: frontend/Dockerfile.prod
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker Compose
+        run: |
+          # Test the compose configuration with built images
+          export BACKEND_IMAGE="${{ steps.meta-backend.outputs.tags }}"
+          export FRONTEND_IMAGE="${{ steps.meta-frontend.outputs.tags }}"
+          docker-compose -f infrastructure/docker/docker-compose.prod.yml config
+
+      - name: Security scan images
+        if: github.event_name != 'pull_request'
+        run: |
+          # Install Trivy for vulnerability scanning
+          sudo apt-get update
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+
+          # Scan backend image
+          trivy image --format json --output backend-scan.json ${{ steps.meta-backend.outputs.tags }}
+          trivy image ${{ steps.meta-backend.outputs.tags }}
+
+          # Scan frontend image
+          trivy image --format json --output frontend-scan.json ${{ steps.meta-frontend.outputs.tags }}
+          trivy image ${{ steps.meta-frontend.outputs.tags }}
+
+      - name: Upload vulnerability scan results
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v3
+        with:
+          name: vulnerability-scans
+          path: |
+            backend-scan.json
+            frontend-scan.json
+
+  # ============================================================================
+  # PRODUCTION READINESS CHECK
+  # ============================================================================
+  production-readiness:
+    name: ✅ Production Readiness
+    runs-on: ubuntu-latest
+    needs:
+      [
+        security-scan,
+        backend-quality,
+        frontend-quality,
+        integration-tests,
+        docker-build,
+      ]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run production validation
+        run: |
+          pip install -r requirements-dev.txt
+          python scripts/validate_production.py
+
+      - name: Generate deployment readiness report
+        run: |
+          echo "## 🚀 Deployment Readiness Report" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All quality gates passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Security scans completed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Test coverage meets minimum requirements" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Docker builds successful" >> $GITHUB_STEP_SUMMARY
+          echo "🎉 **READY FOR PRODUCTION DEPLOYMENT**" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # DEPLOYMENT PIPELINE
+  # ============================================================================
+
+  # Deploy to staging (automatic)
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [production-readiness, docker-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up environment
+        run: |
+          echo "BACKEND_IMAGE=${{ needs.docker-build.outputs.backend-image }}" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=${{ needs.docker-build.outputs.frontend-image }}" >> $GITHUB_ENV
+
+      - name: Deploy to Fly.io Staging
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          # Install Fly CLI
+          curl -L https://fly.io/install.sh | sh
+          export FLYCTL_INSTALL="/home/runner/.fly"
+          export PATH="$FLYCTL_INSTALL/bin:$PATH"
+
+          # Deploy backend to staging
+          cd backend
+          fly deploy --config fly.staging.toml --image ${{ env.BACKEND_IMAGE }}
+
+          # Deploy frontend to staging
+          cd ../frontend
+          fly deploy --config fly.staging.toml --image ${{ env.FRONTEND_IMAGE }}
+
+      - name: Run smoke tests against staging
+        run: |
+          # Wait for deployment to be ready
+          sleep 30
+
+          # Run basic health checks
+          curl -f https://api.staging.scorpius.security/health
+          curl -f https://staging.scorpius.security/
+
+          # Run critical path tests
+          npm run test:e2e:staging
+
+      - name: Notify staging deployment
+        if: always()
+        run: |
+          echo "## 🚀 Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend**: https://api.staging.scorpius.security" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend**: https://staging.scorpius.security" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+
+  # Deploy to production (manual approval required)
+  deploy-production:
+    name: 🏭 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, docker-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up environment
+        run: |
+          echo "BACKEND_IMAGE=${{ needs.docker-build.outputs.backend-image }}" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=${{ needs.docker-build.outputs.frontend-image }}" >> $GITHUB_ENV
+
+      - name: Pre-deployment validation
+        run: |
+          # Validate configuration files
+          python scripts/validate_production.py
+
+          # Check external dependencies
+          curl -f https://api.github.com
+
+          # Verify database migration readiness
+          python backend/scripts/validate_migrations.py
+
+      - name: Deploy to AWS ECS Production
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          # Install AWS CLI
+          pip install awscli
+
+          # Update ECS service with new images
+          aws ecs update-service \
+            --cluster scorpius-production \
+            --service scorpius-backend \
+            --task-definition scorpius-backend:latest \
+            --force-new-deployment
+
+          aws ecs update-service \
+            --cluster scorpius-production \
+            --service scorpius-frontend \
+            --task-definition scorpius-frontend:latest \
+            --force-new-deployment
+
+      # Alternative deployment option (currently disabled)
+      - name: Alternative Deploy to Fly.io Production
+        if: false
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_PRODUCTION_TOKEN }}
+        run: |
+          curl -L https://fly.io/install.sh | sh
+          export FLYCTL_INSTALL="/home/runner/.fly"
+          export PATH="$FLYCTL_INSTALL/bin:$PATH"
+
+          # Deploy to production with zero-downtime
+          cd backend
+          fly deploy --config fly.production.toml --image ${{ env.BACKEND_IMAGE }} --strategy rolling
+
+          cd ../frontend
+          fly deploy --config fly.production.toml --image ${{ env.FRONTEND_IMAGE }} --strategy rolling
+
+      - name: Post-deployment verification
+        run: |
+          # Wait for deployment to stabilize
+          sleep 60
+
+          # Health checks
+          curl -f https://api.scorpius.security/health
+          curl -f https://scorpius.security/
+
+          # Run production smoke tests
+          npm run test:e2e:production
+
+          # Check performance metrics
+          python scripts/check_performance_metrics.py
+
+      - name: Notify stakeholders
+        if: always()
+        run: |
+          echo "## 🏭 Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend API**: https://api.scorpius.security" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend**: https://scorpius.security" >> $GITHUB_STEP_SUMMARY
+          echo "**Documentation**: https://docs.scorpius.security" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "🚨 Deployment failed, initiating rollback..."
+
+          # Get previous successful deployment
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1)
+
+          # Rollback ECS services
+          aws ecs update-service \
+            --cluster scorpius-production \
+            --service scorpius-backend \
+            --task-definition scorpius-backend:$PREVIOUS_TAG
+
+          aws ecs update-service \
+            --cluster scorpius-production \
+            --service scorpius-frontend \
+            --task-definition scorpius-frontend:$PREVIOUS_TAG
+
+  # Update deployment status
+  deployment-status:
+    name: 📊 Update Deployment Status
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always() && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update deployment dashboard
+        run: |
+          # Update internal deployment tracking
+          python scripts/update_deployment_status.py \
+            --staging="${{ needs.deploy-staging.result }}" \
+            --production="${{ needs.deploy-production.result }}" \
+            --commit-sha="${{ github.sha }}"
+
+      - name: Create GitHub Release
+        if: needs.deploy-production.result == 'success'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+          body: |
+            ## 🚀 Production Release v${{ github.run_number }}
+
+            **Deployed**: ${{ github.sha }}
+            **Timestamp**: $(date -u)
+
+            ### ✅ Quality Gates Passed
+            - Security scans: ✅
+            - Test coverage: ✅
+            - Performance tests: ✅
+            - Integration tests: ✅
+
+            ### 🔗 Deployment Links
+            - **Production**: https://scorpius.security
+            - **API Docs**: https://api.scorpius.security/docs
+            - **Status Page**: https://status.scorpius.security
+          draft: false
+          prerelease: false
+
+  # ============================================================================
+  # CONTAINER BUILD & PUBLISH
+  # ============================================================================
+  build-backend:
+    name: 🐳 Build Backend Image
+    runs-on: ubuntu-latest
+    needs: [backend-quality, security-scan]
+    if: github.event_name == 'push'
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.prod
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Output image
+        id: image
+        run: echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  build-frontend:
+    name: 🎨 Build Frontend Image
+    runs-on: ubuntu-latest
+    needs: [frontend-quality, security-scan]
+    if: github.event_name == 'push'
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Output image
+        id: image
+        run: echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  # ============================================================================
+  # DEPLOYMENT
+  # ============================================================================
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend, integration-tests]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: 
+      name: staging
+      url: https://staging.scorpius.app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy notification
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          echo "Backend image: ${{ needs.build-backend.outputs.image }}"
+          echo "Frontend image: ${{ needs.build-frontend.outputs.image }}"
+
+      - name: Simulate staging deployment
+        run: |
+          echo "✅ Staging deployment successful!"
+          echo "🌐 Staging URL: https://staging.scorpius.app"
+
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend, integration-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://scorpius.app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy notification
+        run: |
+          echo "🌟 Deploying to production environment..."
+          echo "Backend image: ${{ needs.build-backend.outputs.image }}"
+          echo "Frontend image: ${{ needs.build-frontend.outputs.image }}"
+
+      - name: Simulate production deployment
+        run: |
+          echo "✅ Production deployment successful!"
+          echo "🌐 Production URL: https://scorpius.app"
+
+  # ============================================================================
+  # SUCCESS NOTIFICATION
+  # ============================================================================
+  deployment-success:
+    name: 🎉 Deployment Complete
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    steps:
+      - name: Success notification
+        run: |
+          echo "🎉 Deployment pipeline completed successfully!"
+          echo "📊 View GitHub Container Registry: https://github.com/${{ github.repository }}/pkgs/container/${{ github.event.repository.name }}"

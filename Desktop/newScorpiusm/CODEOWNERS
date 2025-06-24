@@ -1,0 +1,26 @@
+# Global ownership - All files require review from lead engineer
+* @lead-engineer
+
+# Attic directory - Only Security Lead can modify archived code
+attic/** @security-lead
+
+# Critical infrastructure files require both leads
+/.github/ @lead-engineer @security-lead
+/scripts/ @lead-engineer @security-lead
+/infrastructure/ @lead-engineer @security-lead
+/pyproject.toml @lead-engineer @security-lead
+/.pre-commit-config.yaml @lead-engineer @security-lead
+/ARCHITECTURE.md @lead-engineer @security-lead
+
+# Backend core requires backend team review
+/backend/routes/ @backend-team
+/backend/tests/ @backend-team @lead-engineer
+
+# Frontend requires frontend team review
+/src/ @frontend-team
+/frontend/ @frontend-team
+
+# Security-sensitive areas require security lead approval
+/security/ @security-lead
+/backend/auth* @security-lead
+/backend/quantum* @security-lead

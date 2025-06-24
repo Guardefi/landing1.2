@@ -1,0 +1,42 @@
+# Core API Framework - FastAPI (replacing Flask)
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic[email]==2.10.4
+
+# Rate limiting & Redis
+slowapi==0.1.9
+redis==5.2.1
+
+# Observability & Monitoring
+loguru==0.7.3
+prometheus-fastapi-instrumentator==7.0.0
+
+# Database & Storage
+SQLAlchemy==2.0.41
+
+# Blockchain & Web3 (Updated to latest secure version)
+web3==7.12.0
+
+# HTTP & WebSocket
+requests==2.31.0
+websockets==15.0.1
+
+# System & Utils
+psutil==6.1.1
+python-dotenv==1.1.0
+typing-extensions==4.13.2
+
+# Testing & Development
+pytest==8.3.4
+pytest-asyncio==0.23.5
+pytest-cov==4.1.0
+httpx==0.28.1
+factory-boy==3.3.0
+faker==24.0.0
+
+# Test database (SQLite for CI/testing)
+aiosqlite==0.20.0
+
+# Additional security and utilities
+cryptography==42.0.5
+PyJWT==2.8.0

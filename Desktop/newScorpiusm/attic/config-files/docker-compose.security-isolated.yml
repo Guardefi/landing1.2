@@ -1,0 +1,135 @@
+# Multi-container Security Tools Architecture
+# Each tool runs in its own isolated container to avoid dependency conflicts
+
+version: '3.8'
+
+services:
+  # Core Scorpius Scanner Service (coordination layer)
+  scorpius-scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3001:8000'
+    environment:
+      - DATABASE__URL=postgresql://scorpius:scorpius@postgres:5432/scorpius
+      - REDIS__URL=redis://redis:6379/0
+      - API_PORT=8000
+      - DEBUG=false
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./reports:/app/reports
+      - ./contracts:/app/contracts
+    networks:
+      - scorpius-network
+
+  # Slither Static Analysis Service
+  slither-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.slither
+    environment:
+      - REDIS__URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    volumes:
+      - ./contracts:/app/contracts
+      - ./reports:/app/reports
+    networks:
+      - scorpius-network
+    deploy:
+      replicas: 0 # Start only when needed
+
+  # Mythril Symbolic Execution Service
+  mythril-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.mythril
+    environment:
+      - REDIS__URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    volumes:
+      - ./contracts:/app/contracts
+      - ./reports:/app/reports
+    networks:
+      - scorpius-network
+    deploy:
+      replicas: 0 # Start only when needed
+
+  # Manticore Dynamic Analysis Service
+  manticore-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.manticore
+    environment:
+      - REDIS__URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    volumes:
+      - ./contracts:/app/contracts
+      - ./reports:/app/reports
+    networks:
+      - scorpius-network
+    deploy:
+      replicas: 0 # Start only when needed
+
+  # Echidna Fuzzing Service
+  echidna-service:
+    image: trailofbits/echidna:latest
+    environment:
+      - REDIS__URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    volumes:
+      - ./contracts:/app/contracts
+      - ./reports:/app/reports
+    networks:
+      - scorpius-network
+    deploy:
+      replicas: 0 # Start only when needed
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: scorpius
+      POSTGRES_USER: scorpius
+      POSTGRES_PASSWORD: scorpius
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    networks:
+      - scorpius-network
+
+  # Redis for Job Queue and Inter-Service Communication
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - scorpius-network
+
+  # Anvil for Blockchain Simulation
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    command: anvil --host 0.0.0.0 --port 8545 --fork-url ${ETHEREUM_RPC_URL}
+    ports:
+      - '8545:8545'
+    environment:
+      - ETHEREUM_RPC_URL=${ETHEREUM_RPC_URL:-https://ethereum.publicnode.com}
+    networks:
+      - scorpius-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  scorpius-network:
+    driver: bridge

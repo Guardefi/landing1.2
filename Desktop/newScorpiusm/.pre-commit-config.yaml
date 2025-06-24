@@ -1,0 +1,89 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-json
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.2.2
+    hooks:
+      - id: ruff
+        args: [--select, ALL, --fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: https://github.com/psf/black
+    rev: 24.2.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=88, --check]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile', 'black', '--line-length=88', '--check', '--diff']
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        files: \.(js|jsx|ts|tsx|css|scss|json|yaml|yml|md)$
+        exclude: package-lock\.json
+
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.57.0
+    hooks:
+      - id: eslint
+        files: \.(js|jsx|ts|tsx)$
+        types: [file]
+        additional_dependencies:
+          - eslint@^8.57.0
+          - '@typescript-eslint/eslint-plugin@^6.0.0'
+          - '@typescript-eslint/parser@^6.0.0'
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks
+        name: 'Secrets detection'
+        args: ['protect', '--staged']
+
+  - repo: local
+    hooks:
+      - id: python-compile-check
+        name: 'Python syntax check'
+        entry: python -c "import py_compile, sys, glob; [py_compile.compile(f, doraise=True) for f in glob.glob('**/*.py', recursive=True) if 'attic/' not in f]"
+        language: system
+        files: \.py$
+        pass_filenames: false
+        
+      - id: frontend-lint
+        name: 'Frontend linting'
+        entry: npm run lint
+        language: system
+        files: \.(js|jsx|ts|tsx)$
+        pass_filenames: false
+        
+      - id: frontend-typecheck
+        name: 'Frontend type checking'
+        entry: npm run typecheck
+        language: system
+        files: \.(ts|tsx)$
+        pass_filenames: false
+        
+      - id: no_stubs_allowed
+        name: 'No TODO/FIXME/pass stubs allowed'
+        entry: bash -c 'if git diff --cached --name-only | xargs grep -l "^\s*pass\s*$\|TODO\|FIXME" 2>/dev/null | grep -v attic/; then echo "❌ Found TODO/FIXME/pass stubs - implement proper code"; exit 1; fi'
+        language: system
+        files: \.(py|js|ts|tsx)$
+        pass_filenames: false
+
+default_language_version:
+  python: python3.11

@@ -1,0 +1,72 @@
+# Fly.io configuration for Scorpius Backend - Staging Environment
+app = "scorpius-backend-staging"
+primary_region = "ord"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[experimental]
+  auto_rollback = true
+
+[build]
+  dockerfile = "Dockerfile.prod"
+
+[env]
+  ENVIRONMENT = "staging"
+  LOG_LEVEL = "INFO"
+  PORT = "8000"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[vm]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+[metrics]
+  port = 9091
+  path = "/metrics"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8000
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 1000
+    soft_limit = 500
+
+# Database configuration
+[[statics]]
+  guest_path = "/app/static"
+  url_prefix = "/static/"
+
+# Secrets (set via: fly secrets set KEY=value)
+# DATABASE_URL
+# SECRET_KEY
+# JWT_SECRET_KEY
+# REDIS_URL
+# OPENAI_API_KEY
+# ANTHROPIC_API_KEY

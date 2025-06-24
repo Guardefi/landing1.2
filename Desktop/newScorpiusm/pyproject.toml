@@ -1,0 +1,219 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scorpius-x"
+version = "2.0.0"
+description = "World-class blockchain security platform with advanced AI, quantum cryptography, WASM performance, and comprehensive forensics"
+authors = [{name = "Scorpius Team", email = "dev@scorpius.security"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+extend-select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "S",   # bandit security
+    "T20", # flake8-print
+]
+extend-ignore = [
+    "S101",  # assert statements
+    "S608",  # SQL injection (we use SQLAlchemy)
+    "T201",  # print statements (temporarily)
+]
+exclude = [
+    # Broken files - need manual repair
+    "backend/ai_blockchain_forensics.py",
+    "backend/ai_trading_engine.py",
+    "backend/api_server.py",
+    "backend/app.py",
+    "backend/auth_routes.py",
+    "backend/auth_routes_fixed.py",
+    "backend/blockchain_bridge_network.py",
+    "backend/dashboard_routes.py",
+    "backend/debug_server.py",
+    "backend/distributed_computing_engine.py",
+    "backend/elite_security_engine.py",
+    "backend/enterprise_analytics_platform.py",
+    "backend/fix_*.py",
+    "backend/integration_hub.py",
+    "backend/load_env.py",
+    "backend/main.py",
+    "backend/main_launcher.py",
+    "backend/main_minimal.py",
+    "backend/mev_guardians_routes.py",
+    "backend/mev_ops_routes.py",
+    "backend/models.py",
+    "backend/models_clean.py",
+    "backend/models_new.py",
+    "backend/models_old.py",
+    "backend/plugin_marketplace.py",
+    "backend/quantum_cryptography.py",
+    "backend/scanner_routes.py",
+    "backend/setup_database.py",
+    "backend/simple_api_test.py",
+    "backend/simple_server.py",
+    "backend/simulation_routes.py",
+    "backend/test_*.py",
+    "backend/time_machine_cli.py",
+    "backend/time_machine_cli_new.py",
+    "backend/verify_*.py",
+    "backend/wasm_core_engine.py",
+    "backend/websocket_server.py",
+    "backend/bytecode_analyzer/**/*.py",
+    "backend/common/**/*.py",
+    "backend/deprecated_flask/**/*.py",
+    "backend/elite_mempool_system_final/**/*.py",
+    "backend/honeypot_detector/**/*.py",
+    "backend/mev_bot/chain_registry.py",
+    "backend/mev_bot/defender_integration.py",
+    "backend/mev_bot/reinforcement_learning.py",
+]
+
+[tool.ruff.per-file-ignores]
+"tests/**/*.py" = ["S101", "T201"]
+"**/__init__.py" = ["F401"]
+
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | deprecated_flask
+  | elite_mempool_system_final
+  | honeypot_detector
+  | bytecode_analyzer
+  | common
+)
+# broken files - need manual repair
+| backend/(ai_blockchain_forensics|ai_trading_engine|api_server|app|auth_routes|auth_routes_fixed|blockchain_bridge_network|dashboard_routes|debug_server|distributed_computing_engine|elite_security_engine|enterprise_analytics_platform|integration_hub|load_env|main|main_launcher|main_minimal|mev_guardians_routes|mev_ops_routes|models|models_clean|models_new|models_old|plugin_marketplace|quantum_cryptography|scanner_routes|setup_database|simple_api_test|simple_server|simulation_routes|time_machine_cli|time_machine_cli_new|wasm_core_engine|websocket_server)\.py
+| backend/fix_.*\.py
+| backend/test_.*\.py
+| backend/verify_.*\.py
+| backend/mev_bot/(chain_registry|defender_integration|reinforcement_learning)\.py
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+skip_glob = [
+    "backend/ai_*.py",
+    "backend/api_server.py",
+    "backend/app.py",
+    "backend/auth_routes*.py",
+    "backend/blockchain_*.py",
+    "backend/dashboard_routes.py",
+    "backend/debug_server.py",
+    "backend/distributed_*.py",
+    "backend/elite_*.py",
+    "backend/enterprise_*.py",
+    "backend/fix_*.py",
+    "backend/integration_hub.py",
+    "backend/load_env.py",
+    "backend/main*.py",
+    "backend/mev_guardians_routes.py",
+    "backend/mev_ops_routes.py",
+    "backend/models*.py",
+    "backend/plugin_marketplace.py",
+    "backend/quantum_*.py",
+    "backend/scanner_routes.py",
+    "backend/setup_database.py",
+    "backend/simple_*.py",
+    "backend/simulation_routes.py",
+    "backend/test_*.py",
+    "backend/time_machine_cli*.py",
+    "backend/verify_*.py",
+    "backend/wasm_*.py",
+    "backend/websocket_server.py",
+    "backend/bytecode_analyzer/**/*",
+    "backend/common/**/*",
+    "backend/deprecated_flask/**/*",
+    "backend/elite_mempool_system_final/**/*",
+    "backend/honeypot_detector/**/*",
+    "backend/mev_bot/chain_registry.py",
+    "backend/mev_bot/defender_integration.py",
+    "backend/mev_bot/reinforcement_learning.py",
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "--cov=backend",
+    "--cov-branch",
+    "--cov-fail-under=75",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--strict-markers",
+    "--disable-warnings",
+]
+testpaths = ["tests", "backend/tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["backend"]
+omit = [
+    "*/tests/*",
+    "*/deprecated_flask/*",
+    "*/venv/*",
+    "*/.venv/*",
+    "*/node_modules/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true

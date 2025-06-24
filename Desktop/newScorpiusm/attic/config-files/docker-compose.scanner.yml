@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  scanner-service:
+    build:
+      context: ./backend/backend/SCANNER-main/SCANNER-main
+      dockerfile: Dockerfile.security
+    container_name: scorpius-scanner
+    ports:
+      - '8001:8000'
+    environment:
+      - SCANNER_MODE=production
+      - DATABASE_URL=sqlite:///app/scanner.db
+      - WORKDIR=/app/workspace
+      - DEFAULT_RPC_URL=https://eth-mainnet.alchemyapi.io/v2/demo
+    volumes:
+      - scanner_workspace:/app/workspace
+      - ./backend/backend/SCANNER-main/SCANNER-main:/app
+    networks:
+      - scorpius-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  main-backend:
+    build:
+      context: ./backend/backend
+      dockerfile: ../Dockerfile.backend
+    container_name: scorpius-backend
+    ports:
+      - '8000:8000'
+    environment:
+      - SCANNER_SERVICE_URL=http://scanner-service:8000
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend/backend:/app
+    networks:
+      - scorpius-network
+    depends_on:
+      - scanner-service
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  scanner_workspace:
+    driver: local
+
+networks:
+  scorpius-network:
+    driver: bridge
