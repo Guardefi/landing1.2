@@ -1,0 +1,90 @@
+[run]
+branch = True
+source = backend
+omit =
+    backend/*_old.py
+    backend/deprecated_flask/*
+    backend/main_minimal.py
+    backend/api_stubs.py
+    backend/distributed_computing_engine.py
+    backend/quantum_cryptography.py
+    backend/elite_mempool_system_final/*
+    backend/time_machine_cli.py
+    backend/run_server.py
+    backend/start.py
+    backend/load_env.py
+    backend/setup_database.py
+    backend/ai_blockchain_forensics.py
+    backend/ai_trading_engine.py
+    backend/advanced_monitoring_dashboard.py
+    backend/blockchain_bridge_network.py
+    backend/enterprise_analytics_platform.py
+    backend/integration_hub.py
+    backend/plugin_marketplace.py
+    backend/wasm_core_engine.py
+    backend/websocket_server.py
+    backend/test_*.py
+    backend/simple_api_test.py
+    backend/verify_backend.py
+    backend/debug_server.py
+
+[report]
+skip_covered = True
+show_missing = True
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+    backend/main_launcher.py
+    backend/routes/*_old.py
+    backend/routes/*_new.py
+    backend/test_*.py
+    backend/simple_api_test.py
+    backend/verify_backend.py
+    backend/main_minimal.py
+    backend/scorpius_backend.py
+    backend/elite_mempool_system_final/*
+    backend/time_machine_cli.py
+    backend/run_server.py
+    backend/start.py
+    backend/load_env.py
+    backend/setup_database.py
+    backend/ai_blockchain_forensics.py
+    backend/ai_trading_engine.py
+    backend/advanced_monitoring_dashboard.py
+    backend/blockchain_bridge_network.py
+    backend/enterprise_analytics_platform.py
+    backend/integration_hub.py
+    backend/plugin_marketplace.py
+    backend/wasm_core_engine.py
+    backend/websocket_server.py
+    backend/ai_trading_engine.py
+    backend/quantum_cryptography.py
+    backend/wasm_core_engine.py
+    backend/plugin_marketplace.py
+    backend/enterprise_analytics_platform.py
+    backend/app.py
+    backend/models_clean.py
+    backend/models_new.py
+
+[report]
+show_missing = True
+skip_covered = True
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod

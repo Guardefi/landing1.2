@@ -1,0 +1,15 @@
+global:
+  evaluation_interval: 15s
+  scrape_interval: 15s
+rule_files:
+  - alerts.yml
+scrape_configs:
+  - job_name: scorpius-backend
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - backend:8000
+  - job_name: scorpius-frontend
+    static_configs:
+      - targets:
+          - frontend:80

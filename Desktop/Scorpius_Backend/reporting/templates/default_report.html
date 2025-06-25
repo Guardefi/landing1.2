@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ metadata.title }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .chart-container { height: 400px; }
+        .vulnerability-item { transition: all 0.3s ease; }
+        .vulnerability-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .rotate-180 { transform: rotate(180deg); }
+        {% if dark_theme %}
+        body { background-color: #1f2937; color: #f9fafb; }
+        .bg-white { background-color: #374151 !important; }
+        .text-gray-900 { color: #f9fafb !important; }
+        .border-gray-200 { border-color: #4b5563 !important; }
+        {% endif %}
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ metadata.title }}</h1>
+                    <p class="text-gray-600 mt-1">{{ metadata.description }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500">Generated: {{ generated_at | format_timestamp }}</p>
+                    <p class="text-sm text-gray-500">Version: {{ metadata.version }}</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Executive Summary -->
+        <section class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Executive Summary</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="text-center p-4 bg-red-50 rounded-lg">
+                    <div class="text-3xl font-bold text-red-600">{{ stats.critical_issues }}</div>
+                    <div class="text-sm text-red-600">Critical</div>
+                </div>
+                <div class="text-center p-4 bg-orange-50 rounded-lg">
+                    <div class="text-3xl font-bold text-orange-600">{{ stats.high_issues }}</div>
+                    <div class="text-sm text-orange-600">High</div>
+                </div>
+                <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                    <div class="text-3xl font-bold text-yellow-600">{{ stats.medium_issues }}</div>
+                    <div class="text-sm text-yellow-600">Medium</div>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <div class="text-3xl font-bold text-green-600">{{ stats.low_issues + stats.info_issues }}</div>
+                    <div class="text-sm text-green-600">Low/Info</div>
+                </div>
+            </div>
+        </section>
+
+        {% if include_charts %}
+        <!-- Charts Section -->
+        <section class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Vulnerability Analysis</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="chart-container">
+                    <canvas id="severityChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+            {% if stats.total_scans > 1 %}
+            <div class="mt-8 chart-container">
+                <canvas id="timelineChart"></canvas>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        <!-- Vulnerabilities -->
+        <section class="bg-white rounded-lg shadow p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Detailed Findings</h2>
+                <input type="text" id="vulnerabilitySearch" placeholder="Search vulnerabilities..." 
+                       class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            {% for scan in scan_results %}
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ scan.project_name }}</h3>
+                
+                {% for vuln in scan.vulnerabilities %}
+                <div class="vulnerability-item bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4" data-severity="{{ vuln.severity }}">
+                    <div class="flex items-start justify-between mb-2">
+                        <h4 class="text-lg font-medium text-gray-900">{{ vuln.title }}</h4>
+                        {{ vuln.severity | severity_badge }}
+                    </div>
+                    
+                    <p class="text-gray-700 mb-3">{{ vuln.description }}</p>
+                    
+                    {% if vuln.code_snippet %}
+                    <div class="mb-3">
+                        <h5 class="font-medium text-gray-800 mb-2">Code Location:</h5>
+                        {{ vuln.code_snippet | code_highlight }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if vuln.recommendation %}
+                    <div class="bg-blue-50 border border-blue-200 rounded p-3">
+                        <h5 class="font-medium text-blue-800 mb-1">Recommendation:</h5>
+                        <p class="text-blue-700">{{ vuln.recommendation }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-3 flex items-center space-x-4 text-sm text-gray-500">
+                        <span>Risk Score: {{ vuln.risk_score }}/10</span>
+                        <span>Confidence: {{ (vuln.confidence * 100) | round(1) }}%</span>
+                        {% if vuln.function_name %}<span>Function: {{ vuln.function_name }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </section>
+
+        <!-- Scan Details -->
+        <section class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Scan Details</h2>
+            {% for scan in scan_results %}
+            <div class="border-b border-gray-200 pb-4 mb-4 last:border-b-0">
+                <h3 class="text-lg font-semibold text-gray-800">{{ scan.project_name }}</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2 text-sm">
+                    <div><span class="font-medium">Scan ID:</span> {{ scan.id }}</div>
+                    <div><span class="font-medium">Created:</span> {{ scan.created_at | format_timestamp }}</div>
+                    <div><span class="font-medium">Status:</span> {{ scan.status }}</div>
+                    <div><span class="font-medium">Contracts:</span> {{ scan.contracts | length }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+    </main>
+
+    {% if include_charts %}
+    <script>
+        {{ charts_js }}
+    </script>
+    {% endif %}
+</body>
+</html>

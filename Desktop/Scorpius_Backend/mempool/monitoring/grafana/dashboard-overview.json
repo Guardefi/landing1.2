@@ -1,0 +1,217 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Elite Mempool System - Overview",
+    "tags": ["elite-mempool", "overview"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Transaction Processing Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(scorpius_tx_ingested_total[5m])",
+            "legendFormat": "{{chain}} - {{status}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Transactions/sec"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Active WebSocket Connections",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "scorpius_api_active_websockets",
+            "legendFormat": "Active Connections"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "API Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(scorpius_api_request_duration_seconds_bucket[5m])) * 1000",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(scorpius_api_request_duration_seconds_bucket[5m])) * 1000",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time (ms)"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(scorpius_api_requests_total{status=~\"4..|5..\"}[5m]) / rate(scorpius_api_requests_total[5m]) * 100",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Error Rate (%)",
+            "max": 100,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "MEV Opportunities Detected",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "increase(mev_opportunities_detected_total[1h])",
+            "legendFormat": "{{pattern_type}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 6,
+        "title": "Gas Price Tracking",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "gas_price_gwei{speed=\"fast\"}",
+            "legendFormat": "{{chain}} - Fast"
+          },
+          {
+            "expr": "gas_price_gwei{speed=\"standard\"}",
+            "legendFormat": "{{chain}} - Standard"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Gas Price (Gwei)"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 7,
+        "title": "System Resource Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU Usage %"
+          },
+          {
+            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+            "legendFormat": "Memory Usage %"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Usage (%)",
+            "max": 100,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        }
+      },
+      {
+        "id": 8,
+        "title": "Database Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_tup_inserted[5m])",
+            "legendFormat": "Inserts/sec"
+          },
+          {
+            "expr": "rate(pg_stat_database_tup_updated[5m])",
+            "legendFormat": "Updates/sec"
+          },
+          {
+            "expr": "rate(pg_stat_database_tup_deleted[5m])",
+            "legendFormat": "Deletes/sec"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 32
+        }
+      },
+      {
+        "id": 9,
+        "title": "Alert Volume",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "increase(scorpius_api_alerts_sent[1h])",
+            "legendFormat": "{{severity}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 32
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s"
+  }
+}

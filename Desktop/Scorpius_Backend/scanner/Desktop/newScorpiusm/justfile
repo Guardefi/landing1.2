@@ -1,0 +1,501 @@
+# Justfile for Scorpius DeFi Security Platform
+# Usage: just <command>
+
+# Set shell for commands
+set shell := ["bash", "-c"]
+
+# Default command - show help
+default:
+    @just --list
+
+# Development commands
+# ===================
+
+# Start full development environment
+dev:
+    #!/bin/bash
+    echo "🦂 Starting Scorpius development environment..."
+
+    # Check if Docker is running
+    if ! docker info >/dev/null 2>&1; then
+        echo "❌ Docker is not running. Please start Docker first."
+        exit 1
+    fi
+
+    # Start backend services (PostgreSQL, Redis)
+    echo "📦 Starting database services..."
+    docker-compose up -d postgres redis
+
+    # Wait for database to be ready
+    echo "⏳ Waiting for database to be ready..."
+    sleep 5
+
+    # Install dependencies if needed
+    if [ ! -d "node_modules" ]; then
+        echo "📥 Installing frontend dependencies..."
+        npm install --legacy-peer-deps
+    fi
+
+    # Start frontend development server
+    echo "🚀 Starting frontend development server..."
+    npm run dev &
+    FRONTEND_PID=$!
+
+    # Start backend development server (if exists)
+    if [ -f "backend/main.py" ]; then
+        echo "🐍 Starting backend development server..."
+        cd backend
+        if [ ! -d ".venv" ]; then
+            python -m venv .venv
+            source .venv/bin/activate
+            pip install -r requirements.txt
+        else
+            source .venv/bin/activate
+        fi
+        uvicorn main:app --reload --host 0.0.0.0 --port 8000 &
+        BACKEND_PID=$!
+        cd ..
+    fi
+
+    echo "✅ Development environment started!"
+    echo "📱 Frontend: http://localhost:8080"
+    echo "🔗 Backend API: http://localhost:8000"
+    echo "📊 API Docs: http://localhost:8000/docs"
+    echo ""
+    echo "Press Ctrl+C to stop all services"
+
+    # Trap Ctrl+C to cleanup processes
+    trap 'echo "🛑 Stopping services..."; kill $FRONTEND_PID $BACKEND_PID 2>/dev/null; docker-compose down; exit 0' INT
+
+    # Wait for processes
+    wait
+
+# Start minimal development environment (frontend only)
+dev-minimal:
+    #!/bin/bash
+    echo "🦂 Starting minimal Scorpius development..."
+
+    if [ ! -d "node_modules" ]; then
+        echo "📥 Installing dependencies..."
+        npm install --legacy-peer-deps
+    fi
+
+    echo "🚀 Starting frontend only..."
+    npm run dev
+
+# Install all dependencies
+install:
+    #!/bin/bash
+    echo "📥 Installing all dependencies..."
+
+    # Frontend dependencies
+    echo "🎨 Installing frontend dependencies..."
+    npm install --legacy-peer-deps
+
+    # Backend dependencies (if requirements.txt exists)
+    if [ -f "backend/requirements.txt" ]; then
+        echo "🐍 Installing backend dependencies..."
+        cd backend
+        if [ ! -d ".venv" ]; then
+            python -m venv .venv
+        fi
+        source .venv/bin/activate
+        pip install -r requirements.txt
+        cd ..
+    fi
+
+    echo "✅ All dependencies installed!"
+
+# Quality commands
+# ================
+
+# Run all tests
+test:
+    #!/bin/bash
+    echo "🧪 Running all tests..."
+
+    # Frontend tests
+    echo "🎨 Running frontend tests..."
+    npm run test
+
+    # Backend tests (if pytest is available)
+    if [ -f "backend/requirements.txt" ] && command -v pytest >/dev/null; then
+        echo "🐍 Running backend tests..."
+        cd backend
+        if [ -d ".venv" ]; then
+            source .venv/bin/activate
+        fi
+        pytest --cov=. --cov-report=term-missing --cov-fail-under=20
+        cd ..
+    fi
+
+    echo "✅ All tests completed!"
+
+# Run only frontend tests
+test-frontend:
+    @echo "🎨 Running frontend tests..."
+    npm run test
+
+# Run frontend tests with coverage
+test-coverage:
+    @echo "📊 Running frontend tests with coverage..."
+    npm run test:coverage
+
+# Run backend tests
+test-backend:
+    #!/bin/bash
+    echo "🐍 Running backend tests..."
+    cd backend
+    if [ -d ".venv" ]; then
+        source .venv/bin/activate
+    fi
+    pytest --cov=. --cov-report=term-missing --cov-fail-under=20
+
+# Lint all code
+lint:
+    #!/bin/bash
+    echo "🔍 Linting all code..."
+
+    # Frontend linting
+    echo "🎨 Linting frontend code..."
+    npm run lint
+    npm run typecheck
+
+    # Backend linting
+    if [ -f "backend/requirements.txt" ]; then
+        echo "🐍 Linting backend code..."
+        cd backend
+        if [ -d ".venv" ]; then
+            source .venv/bin/activate
+        fi
+
+        # Run ruff (if available)
+        if command -v ruff >/dev/null; then
+            ruff check .
+            ruff format --check .
+        fi
+
+        # Run black (if available)
+        if command -v black >/dev/null; then
+            black --check .
+        fi
+
+        # Run isort (if available)
+        if command -v isort >/dev/null; then
+            isort --check --diff .
+        fi
+
+        cd ..
+    fi
+
+    echo "✅ Linting completed!"
+
+# Fix linting issues
+lint-fix:
+    #!/bin/bash
+    echo "🔧 Fixing linting issues..."
+
+    # Frontend
+    echo "🎨 Fixing frontend linting issues..."
+    npm run lint:fix || echo "Frontend lint fix completed with warnings"
+
+    # Backend
+    if [ -f "backend/requirements.txt" ]; then
+        echo "🐍 Fixing backend linting issues..."
+        cd backend
+        if [ -d ".venv" ]; then
+            source .venv/bin/activate
+        fi
+
+        if command -v ruff >/dev/null; then
+            ruff check --fix .
+            ruff format .
+        fi
+
+        if command -v black >/dev/null; then
+            black .
+        fi
+
+        if command -v isort >/dev/null; then
+            isort .
+        fi
+
+        cd ..
+    fi
+
+    echo "✅ Linting fixes applied!"
+
+# Format all code
+format:
+    #!/bin/bash
+    echo "✨ Formatting all code..."
+
+    # Frontend
+    npm run format
+
+    # Backend
+    if [ -f "backend/requirements.txt" ]; then
+        cd backend
+        if [ -d ".venv" ]; then
+            source .venv/bin/activate
+        fi
+
+        if command -v black >/dev/null; then
+            black .
+        fi
+
+        if command -v isort >/dev/null; then
+            isort .
+        fi
+
+        cd ..
+    fi
+
+    echo "✅ Code formatting completed!"
+
+# Database commands
+# =================
+
+# Reset database to clean state
+reset-db:
+    #!/bin/bash
+    echo "🗄️ Resetting database..."
+
+    # Stop any running database
+    docker-compose down postgres
+
+    # Remove database volume
+    docker volume rm $(docker-compose config --services | grep postgres | head -1)_postgres_data 2>/dev/null || true
+
+    # Start fresh database
+    docker-compose up -d postgres
+
+    # Wait for startup
+    echo "⏳ Waiting for database to start..."
+    sleep 5
+
+    # Run migrations if they exist
+    if [ -f "backend/alembic.ini" ]; then
+        echo "🔄 Running database migrations..."
+        cd backend
+        if [ -d ".venv" ]; then
+            source .venv/bin/activate
+        fi
+        alembic upgrade head
+        cd ..
+    fi
+
+    echo "✅ Database reset completed!"
+
+# Seed database with test data
+seed:
+    #!/bin/bash
+    echo "🌱 Seeding database with test data..."
+
+    cd backend
+    if [ -d ".venv" ]; then
+        source .venv/bin/activate
+    fi
+
+    # Run seeder script if it exists
+    if [ -f "seed_data.py" ]; then
+        python seed_data.py
+    elif [ -f "scripts/seed.py" ]; then
+        python scripts/seed.py
+    else
+        echo "⚠️ No seed script found (seed_data.py or scripts/seed.py)"
+    fi
+
+    cd ..
+    echo "✅ Database seeding completed!"
+
+# Database management commands
+# ============================
+
+# Reset database (WARNING: destroys all data)
+reset-db:
+    #!/bin/bash
+    echo "🔄 Resetting database..."
+    echo "⚠️  WARNING: This will destroy all data!"
+    read -p "Are you sure? (y/N): " confirm
+    if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
+        echo "🗑️  Stopping database..."
+        docker-compose down postgres
+        echo "🧹 Removing database volume..."
+        docker volume rm newscorpiusm_postgres_data 2>/dev/null || true
+        echo "🚀 Starting fresh database..."
+        docker-compose up -d postgres
+        echo "⏳ Waiting for database to be ready..."
+        sleep 10
+        echo "✅ Database reset complete!"
+    else
+        echo "❌ Database reset cancelled"
+    fi
+
+# Run database migrations
+migrate:
+    #!/bin/bash
+    echo "🔄 Running database migrations..."
+    cd backend
+    if [ -d ".venv" ]; then
+        source .venv/bin/activate
+    fi
+    
+    # Run Alembic migrations if available
+    if [ -f "alembic.ini" ]; then
+        alembic upgrade head
+    else
+        echo "⚠️  No migrations found (alembic.ini not present)"
+    fi
+    cd ..
+    echo "✅ Migrations completed!"
+
+# Seed database with test data
+seed:
+    #!/bin/bash
+    echo "🌱 Seeding database with test data..."
+    cd backend
+    if [ -d ".venv" ]; then
+        source .venv/bin/activate
+    fi
+    
+    # Run seed script if available
+    if [ -f "seed_data.py" ]; then
+        python seed_data.py
+    elif [ -f "scripts/seed.py" ]; then
+        python scripts/seed.py
+    else
+        echo "⚠️  No seed script found"
+        echo "💡 You can create backend/seed_data.py for test data"
+    fi
+    cd ..
+    echo "✅ Database seeded!"
+
+# Docker Compose management
+# =========================
+
+# Start all services with Docker Compose
+compose:
+    @echo "🐳 Starting all services with Docker Compose..."
+    docker-compose up -d
+
+# Stop all services
+compose-down:
+    @echo "🛑 Stopping all services..."
+    docker-compose down
+
+# View service logs
+logs:
+    @echo "📋 Viewing service logs..."
+    docker-compose logs -f
+
+# Check service status
+status:
+    @echo "📊 Checking service status..."
+    docker-compose ps
+
+# Start only database services
+services:
+    @echo "💾 Starting database services..."
+    docker-compose up -d postgres redis
+
+# Build Docker images
+build:
+    @echo "🔨 Building Docker images..."
+    docker-compose build
+
+# Clean Docker resources
+clean-docker:
+    #!/bin/bash
+    echo "🧹 Cleaning Docker resources..."
+    echo "⚠️  This will remove unused containers, networks, and images"
+    read -p "Continue? (y/N): " confirm
+    if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
+        docker-compose down -v
+        docker system prune -f
+        echo "✅ Docker cleanup complete!"
+    else
+        echo "❌ Docker cleanup cancelled"
+    fi
+
+# Security and maintenance commands
+# =================================
+
+# Run security audit
+security-audit:
+    #!/bin/bash
+    echo "🔒 Running security audit..."
+    
+    # Frontend security audit
+    echo "🎨 Auditing frontend dependencies..."
+    npm audit || echo "Frontend audit completed with warnings"
+    
+    # Backend security audit
+    if command -v safety >/dev/null 2>&1; then
+        echo "🐍 Auditing backend dependencies..."
+        cd backend
+        if [ -d ".venv" ]; then
+            source .venv/bin/activate
+        fi
+        safety check || echo "Backend audit completed with warnings"
+        cd ..
+    fi
+    
+    # Secret scanning
+    if command -v gitleaks >/dev/null 2>&1; then
+        echo "🔍 Scanning for secrets..."
+        gitleaks detect --config .gitleaks.toml --no-banner
+    fi
+    
+    echo "✅ Security audit complete!"
+
+# Run all quality checks
+check:
+    @echo "✅ Running all quality checks..."
+    @just lint
+    @just test
+    @just security-audit
+
+# Setup pre-commit hooks
+setup-hooks:
+    #!/bin/bash
+    echo "🪝 Setting up pre-commit hooks..."
+    if command -v pre-commit >/dev/null 2>&1; then
+        pre-commit install
+        echo "✅ Pre-commit hooks installed!"
+    else
+        echo "⚠️  pre-commit not found. Install with: pip install pre-commit"
+    fi
+
+# Show development environment info
+info:
+    #!/bin/bash
+    echo "📋 Scorpius Development Environment Info"
+    echo "========================================"
+    echo ""
+    echo "🐳 Docker:"
+    docker --version 2>/dev/null || echo "  ❌ Docker not installed"
+    docker-compose --version 2>/dev/null || echo "  ❌ Docker Compose not installed"
+    echo ""
+    echo "📦 Node.js:"
+    node --version 2>/dev/null || echo "  ❌ Node.js not installed"
+    npm --version 2>/dev/null || echo "  ❌ npm not installed"
+    echo ""
+    echo "🐍 Python:"
+    python --version 2>/dev/null || python3 --version 2>/dev/null || echo "  ❌ Python not installed"
+    echo ""
+    echo "🔧 Tools:"
+    just --version 2>/dev/null || echo "  ❌ just not installed"
+    git --version 2>/dev/null || echo "  ❌ git not installed"
+    gitleaks version 2>/dev/null || echo "  ❌ gitleaks not installed"
+    echo ""
+    echo "📊 Services:"
+    if command -v docker >/dev/null 2>&1; then
+        docker-compose ps 2>/dev/null || echo "  No services running"
+    fi
+    echo ""
+    echo "🌐 URLs:"
+    echo "  Frontend: http://localhost:8080"
+    echo "  Backend API: http://localhost:8000"
+    echo "  API Docs: http://localhost:8000/docs"
+```

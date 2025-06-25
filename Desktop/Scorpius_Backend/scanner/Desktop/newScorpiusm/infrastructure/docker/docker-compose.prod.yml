@@ -1,0 +1,47 @@
+networks:
+  app_network:
+    driver: bridge
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8000/health
+      timeout: 10s
+    restart: unless-stopped
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    ports:
+      - 80:80
+      - 443:443
+    restart: unless-stopped
+  postgres:
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    image: postgres:15-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+version: '3.8'
+volumes:
+  postgres_data: {}
+  redis_data: {}

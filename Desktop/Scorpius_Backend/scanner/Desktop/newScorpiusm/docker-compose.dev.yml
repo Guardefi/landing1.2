@@ -1,0 +1,407 @@
+# Docker Compose for Scorpius Development Environment
+# Usage: docker-compose -f docker-compose.dev.yml --profile dev up
+
+version: '3.8'
+
+services:
+  # Core Database Services (always running)
+  postgres:
+    image: postgres:15-alpine
+    container_name: scorpius-postgres-dev
+    profiles: ['dev', 'minimal', 'database']
+    environment:
+      POSTGRES_DB: scorpius_dev
+      POSTGRES_USER: scorpius
+      POSTGRES_PASSWORD: dev_password_123
+      POSTGRES_INITDB_ARGS: '--auth-host=scram-sha-256'
+    ports:
+      - '5432:5432'
+    volumes:
+      # Cached volume for faster restarts
+      - postgres_dev_data:/var/lib/postgresql/data
+      # Custom initialization scripts
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U scorpius -d scorpius_dev']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+
+  redis:
+    image: redis:7-alpine
+    container_name: scorpius-redis-dev
+    profiles: ['dev', 'minimal', 'cache']
+    command: redis-server --appendonly yes --appendfsync everysec
+    ports:
+      - '6379:6379'
+    volumes:
+      # Cached volume for persistence
+      - redis_dev_data:/data
+      # Custom redis configuration
+      - ./config-files/redis-dev.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+
+  # Backend API Service
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+      cache_from:
+        - scorpius-backend:dev-cache
+      target: development
+    container_name: scorpius-backend-dev
+    profiles: ['dev', 'backend']
+    ports:
+      - '8000:8000'
+      - '5678:5678' # debugpy port
+    environment:
+      # Development environment variables
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+
+      # Database connection
+      - DATABASE_URL=postgresql://scorpius:dev_password_123@postgres:5432/scorpius_dev
+      - REDIS_URL=redis://redis:6379/0
+
+      # FastAPI settings
+      - FASTAPI_HOST=0.0.0.0
+      - FASTAPI_PORT=8000
+      - FASTAPI_RELOAD=true
+      - FASTAPI_WORKERS=1
+
+      # Scanner service connection
+      - SCANNER_SERVICE_URL=http://scanner:8001
+
+      # Development secrets (not for production!)
+      - SECRET_KEY=dev-secret-key-32-chars-long-123456
+      - JWT_SECRET_KEY=dev-jwt-secret-key-32-chars-long-12
+
+      # External API keys (optional for development)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+
+      # Monitoring
+      - TELEMETRY_OTEL_ENDPOINT=http://otel-collector:4317
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    volumes:
+      # Hot reload - mount source code
+      - ./backend:/app/backend:cached
+      - ./pyproject.toml:/app/pyproject.toml:ro
+
+      # Cache volumes for faster rebuilds
+      - backend_cache:/app/.cache
+      - pip_cache:/root/.cache/pip
+
+      # Database migrations
+      - ./backend/alembic:/app/alembic:cached
+
+      # Logs and temporary files
+      - ./logs:/app/logs
+      - /tmp/scorpius:/tmp/scorpius
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      scanner:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+    # Development-specific settings
+    stdin_open: true
+    tty: true
+
+  # Vulnerability Scanner Service
+  scanner:
+    build:
+      context: .
+      dockerfile: scanner/Dockerfile
+      cache_from:
+        - scorpius-scanner:dev-cache
+    container_name: scorpius-scanner-dev
+    profiles: ['dev', 'scanner']
+    ports:
+      - '8001:8001'
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      # Scanner results persistence
+      - scanner_results:/app/results
+      # Scanner logs
+      - ./logs/scanner:/app/logs
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8001/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+
+  # Frontend Development Server
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+      cache_from:
+        - scorpius-frontend:dev-cache
+      target: development
+    container_name: scorpius-frontend-dev
+    profiles: ['dev', 'frontend']
+    ports:
+      - '8080:8080'
+      - '24678:24678' # Vite HMR port
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000/ws
+      - VITE_HMR_PORT=24678
+      - VITE_HOST=0.0.0.0
+      - VITE_PORT=8080
+      - CHOKIDAR_USEPOLLING=true # For Windows/Docker compatibility
+    volumes:
+      # Hot reload - mount source code
+      - ./src:/app/src:cached
+      - ./public:/app/public:cached
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json:ro
+      - ./vite.config.ts:/app/vite.config.ts:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./tailwind.config.ts:/app/tailwind.config.ts:ro
+
+      # Cache volumes for faster rebuilds
+      - node_modules_cache:/app/node_modules
+      - vite_cache:/app/.vite
+
+      # Exclude node_modules from host
+      - /app/node_modules
+    depends_on:
+      - backend
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+    stdin_open: true
+    tty: true
+
+  # Development Tools and Monitoring
+  # ================================
+
+  # OpenTelemetry Collector for observability
+  otel-collector:
+    image: otel/opentelemetry-collector:0.101.0
+    container_name: scorpius-otel-dev
+    profiles: ['dev', 'monitoring']
+    command: ['--config=/etc/otelcol/config.yaml']
+    ports:
+      - '4317:4317' # OTLP gRPC receiver
+      - '4318:4318' # OTLP HTTP receiver
+      - '8888:8888' # Prometheus metrics
+    volumes:
+      - ./config-files/otel-config-dev.yaml:/etc/otelcol/config.yaml:ro
+    depends_on:
+      - jaeger
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    container_name: scorpius-jaeger-dev
+    profiles: ['dev', 'monitoring']
+    ports:
+      - '16686:16686' # Web UI
+      - '14250:14250' # gRPC
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - LOG_LEVEL=debug
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: scorpius-prometheus-dev
+    profiles: ['dev', 'monitoring']
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./monitoring/prometheus-dev.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_dev_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d' # Keep 7 days for dev
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+
+  # Grafana for metrics visualization
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: scorpius-grafana-dev
+    profiles: ['dev', 'monitoring']
+    ports:
+      - '3000:3000'
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - grafana_dev_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+
+  # Development Database Tools
+  # ==========================
+
+  # Adminer for database management
+  adminer:
+    image: adminer:4.8.1
+    container_name: scorpius-adminer-dev
+    profiles: ['dev', 'tools']
+    ports:
+      - '8081:8080'
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+
+  # Redis Commander for Redis management
+  redis-commander:
+    image: ghcr.io/joeferner/redis-commander:latest
+    container_name: scorpius-redis-commander-dev
+    profiles: ['dev', 'tools']
+    ports:
+      - '8082:8081'
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+
+  # Mailhog for email testing
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: scorpius-mailhog-dev
+    profiles: ['dev', 'tools']
+    ports:
+      - '1025:1025' # SMTP server
+      - '8025:8025' # Web UI
+    restart: unless-stopped
+    networks:
+      - scorpius-dev
+
+# Named volumes for persistent data and caching
+volumes:
+  # Database persistence
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+  # Monitoring data
+  prometheus_dev_data:
+    driver: local
+  grafana_dev_data:
+    driver: local
+
+  # Build caches for faster rebuilds
+  backend_cache:
+    driver: local
+  pip_cache:
+    driver: local
+  node_modules_cache:
+    driver: local
+  vite_cache:
+    driver: local
+  scanner_results:
+    driver: local
+
+# Development network
+networks:
+  scorpius-dev:
+    driver: bridge
+    name: scorpius-dev-network
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+
+# Development-specific configurations
+x-development-notes: |
+  Development Environment Profiles:
+
+  1. Minimal (just databases):
+     docker-compose -f docker-compose.dev.yml --profile minimal up
+
+  2. Full development:
+     docker-compose -f docker-compose.dev.yml --profile dev up
+
+  3. Backend only:
+     docker-compose -f docker-compose.dev.yml --profile backend up
+
+  4. Frontend only:
+     docker-compose -f docker-compose.dev.yml --profile frontend up
+
+  5. With monitoring:
+     docker-compose -f docker-compose.dev.yml --profile dev --profile monitoring up
+
+  6. With dev tools:
+     docker-compose -f docker-compose.dev.yml --profile dev --profile tools up
+
+  Services:
+  - Frontend: http://localhost:8080
+  - Backend API: http://localhost:8000
+  - API Docs: http://localhost:8000/docs
+  - Grafana: http://localhost:3000 (admin/admin123)
+  - Prometheus: http://localhost:9090
+  - Jaeger: http://localhost:16686
+  - Adminer: http://localhost:8081
+  - Redis Commander: http://localhost:8082
+  - Mailhog: http://localhost:8025

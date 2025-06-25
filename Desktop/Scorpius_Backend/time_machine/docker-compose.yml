@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  time-machine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - TM_CONFIG_PATH=/app/config/time_machine.yaml
+      - TM_DATA_DIR=/app/store
+      - TM_LOG_LEVEL=INFO
+    volumes:
+      - ./store:/app/store
+      - ./logs:/app/logs
+      - ./config:/app/config
+    networks:
+      - time-machine-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a blockchain node (Anvil) for testing
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    command: anvil --host 0.0.0.0 --port 8545 --accounts 10 --balance 10000
+    ports:
+      - "8545:8545"
+    networks:
+      - time-machine-network
+    restart: unless-stopped
+
+  # Optional: Redis for caching and job queues
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - time-machine-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Optional: PostgreSQL for metadata storage
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: timemachine
+      POSTGRES_USER: timemachine
+      POSTGRES_PASSWORD: timemachine_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - time-machine-network
+    restart: unless-stopped
+
+networks:
+  time-machine-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:

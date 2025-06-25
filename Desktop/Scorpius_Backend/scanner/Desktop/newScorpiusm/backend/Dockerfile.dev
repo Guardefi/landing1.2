@@ -1,0 +1,98 @@
+# Multi-stage Dockerfile for FastAPI development with hot reload
+FROM python:3.11-slim as base
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r scorpius && useradd -r -g scorpius scorpius
+
+# Set working directory
+WORKDIR /app
+
+# Development stage with hot reload
+FROM base as development
+
+# Install development dependencies including watchfiles
+COPY backend/requirements.txt backend/requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+
+# Install FastAPI with watchfiles for auto-reload
+RUN pip install --no-cache-dir "fastapi[watchfiles]" uvicorn[standard]
+
+# Install development tools
+RUN pip install --no-cache-dir \
+    debugpy==1.8.0 \
+    ipdb==0.13.13 \
+    pytest-xdist==3.5.0 \
+    pytest-benchmark==4.0.0
+
+# Copy project files
+COPY pyproject.toml ./
+COPY backend/ ./backend/
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/.cache /tmp/scorpius
+
+# Change ownership to non-root user
+RUN chown -R scorpius:scorpius /app
+
+# Switch to non-root user
+USER scorpius
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Development server with hot reload
+CMD ["uvicorn", "backend.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--reload", \
+     "--reload-dir", "/app/backend", \
+     "--reload-include", "*.py", \
+     "--reload-include", "*.yaml", \
+     "--reload-include", "*.yml", \
+     "--reload-include", "*.json", \
+     "--log-level", "debug", \
+     "--access-log", \
+     "--use-colors"]
+
+# Production stage (for comparison)
+FROM base as production
+
+# Install only production dependencies
+COPY backend/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY backend/ ./backend/
+COPY pyproject.toml ./
+
+# Create directories and set permissions
+RUN mkdir -p /app/logs && chown -R scorpius:scorpius /app
+
+# Switch to non-root user
+USER scorpius
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Production server (no reload)
+CMD ["uvicorn", "backend.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "4", \
+     "--log-level", "info"]
