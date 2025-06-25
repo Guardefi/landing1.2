@@ -1,4 +1,7 @@
 import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 
 class OpportunityStatus(Enum):
@@ -97,10 +100,6 @@ class MEVOpportunity:
         return {
             "opportunity_id": self.opportunity_id,
             "strategy_type": self.strategy_type.value,
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
-
             "estimated_profit_usd": self.estimated_profit_usd,
             "estimated_gas_cost_usd": self.estimated_gas_cost_usd,
             "confidence_score": self.confidence_score,

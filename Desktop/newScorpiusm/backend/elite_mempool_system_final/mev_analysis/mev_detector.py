@@ -4,10 +4,97 @@ This module analyzes mempool transactions to detect arbitrage, sandwich attacks,
 liquidations, and other MEV opportunities.
 """
 
+import asyncio
+import logging
+import time
+from collections import deque
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set, Tuple
+from web3 import AsyncWeb3
 
-
+# Note: These imports will be created later in the development process
+try:
+    from ..core.utils import wei_to_ether
+    from ..models.mempool_event import MempoolEvent
+    from ..models.mev_opportunity import MEVOpportunity, MEVStrategyType
+except ImportError:
+    # Placeholder classes for development
+    class MempoolEvent:
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+    
+    class MEVOpportunity:
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+        def add_tag(self, tag): pass
+    
+    class MEVStrategyType:
+        SANDWICH = "sandwich"
+        ARBITRAGE = "arbitrage"
+        LIQUIDATION = "liquidation"
+    
+    def wei_to_ether(wei_value):
+        return float(wei_value) / 10**18 if wei_value else 0.0
 
 logger = logging.getLogger(__name__)
+
+
+def detect_mev_patterns(transaction_data: Dict[str, Any]) -> List[str]:
+    """
+    Public interface to detect MEV patterns in a transaction.
+    
+    Args:
+        transaction_data: Transaction data dictionary
+        
+    Returns:
+        List of detected MEV pattern names
+    """
+    patterns = []
+    
+    try:
+        # Quick pattern detection for API use
+        to_address = transaction_data.get('to_address', '').lower()
+        data = transaction_data.get('data', '')
+        gas_price = int(transaction_data.get('gas_price', 0))
+        
+        # Check for DEX interactions
+        dex_routers = [
+            '0x7a250d5630b4cf539739df2c5dacb4c659f2488d',  # Uniswap V2
+            '0xe592427a0aece92de3edee1f18e0157c05861564',  # Uniswap V3
+            '0x1111111254fb6c44bac0bed2854e76f90643097d',  # 1inch
+        ]
+        
+        is_dex_interaction = any(router.lower() == to_address for router in dex_routers)
+        
+        if is_dex_interaction and data and len(data) > 10:
+            # Check for high gas price (potential frontrunning/sandwich)
+            if gas_price > 100_000_000_000:  # > 100 Gwei
+                patterns.append('frontrunning')
+                if gas_price > 200_000_000_000:  # > 200 Gwei
+                    patterns.append('sandwich')
+            
+            # Check for complex data (potential arbitrage)
+            if len(data) > 1000:
+                patterns.append('arbitrage')
+        
+        # Check for flash loan patterns
+        flash_loan_sigs = ['0xab9c4b5d', '0x5cffe9de', '0x1b3f7e44']
+        method_sig = data[:10].lower() if data else ''
+        if method_sig in flash_loan_sigs:
+            patterns.append('flash_loan')
+            patterns.append('arbitrage')
+        
+        # Check for liquidation patterns
+        liquidation_sigs = ['0x96cd4ddb', '0xabd5a0e1', '0x1e4e0091']
+        if method_sig in liquidation_sigs:
+            patterns.append('liquidation')
+        
+    except Exception as e:
+        logger.error(f"Error detecting MEV patterns: {e}")
+    
+    return patterns
 
 
 @dataclass
@@ -599,20 +686,14 @@ class MEVDetector:
             for tx_hash, swap in self.pending_swaps.items()
             if current_time - swap.timestamp > max_age
         ]
-import logging
-import time
-from collections import deque
-from dataclasses import dataclass, field
-from typing import Any
-
-from web3 import AsyncWeb3
-
-from ..core.utils import wei_to_ether
-from ..models.mempool_event import MempoolEvent
-from ..models.mev_opportunity import MEVOpportunity, MEVStrategyType
-
+        
         for tx_hash in expired_swaps:
             del self.pending_swaps[tx_hash]
 
         if expired_swaps:
             logger.debug(f"Cleaned up {len(expired_swaps)} expired pending swaps")
+
+        # Remove old transactions from recent_transactions deque
+        while (self.recent_transactions and 
+               current_time - self.recent_transactions[0].timestamp > max_age):
+            self.recent_transactions.popleft()

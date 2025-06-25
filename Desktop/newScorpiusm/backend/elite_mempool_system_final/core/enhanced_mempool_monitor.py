@@ -4,10 +4,21 @@ This module provides real-time monitoring of the mempool using AsyncWeb3,
 enabling high-throughput transaction analysis with minimal latency.
 """
 
+import asyncio
+import logging
+import time
+from collections.abc import Callable, Coroutine
+from dataclasses import dataclass, field
+from typing import Any
 
+from web3 import AsyncWeb3, Web3
+from web3.exceptions import TransactionNotFound
+from web3.providers import AsyncBaseProvider, WebSocketProvider
+from web3.types import HexStr, TxData, TxReceipt
 
-
-# Relative imports assuming 'core' is a package and 'models' is a sibling package to 'core'
+from models.mempool_event import MempoolEvent, MempoolEventSeverity, MempoolEventType
+from .session_manager import SessionManager
+from .utils import async_retry, ether_to_wei
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +204,7 @@ class EnhancedMempoolMonitor:
         for url in self.rpc_urls:
             try:
                 if url.startswith("ws"):
-                    provider = WebsocketProviderV2(
+                    provider = WebSocketProvider(
                         url, request_timeout=self.request_timeout_for_provider
                     )
                 else:  # HTTP
@@ -322,7 +333,7 @@ class EnhancedMempoolMonitor:
                     logger.warning(
                         f"Provider {uri} not connected. Attempting reconnect (if WS)..."
                     )
-                    if isinstance(w3.provider, WebsocketProviderV2):
+                    if isinstance(w3.provider, WebSocketProvider):
                         try:
                             await w3.provider.connect()
                         except Exception as connect_e:
@@ -554,22 +565,6 @@ class EnhancedMempoolMonitor:
                     if self._active_web3
                     else "None"
                 ),
-import asyncio
-import logging
-import time
-from collections.abc import Callable, Coroutine
-from dataclasses import dataclass, field
-from typing import Any
-
-from web3 import AsyncWeb3, Web3
-from web3.exceptions import TransactionNotFound
-from web3.providers import AsyncBaseProvider, WebsocketProviderV2
-from web3.types import HexStr, TxData, TxReceipt
-
-from ..models.mempool_event import MempoolEvent, MempoolEventSeverity, MempoolEventType
-from .session_manager import SessionManager
-from .utils import async_retry, ether_to_wei
-
                 "is_running": self._is_running,
             }
         )

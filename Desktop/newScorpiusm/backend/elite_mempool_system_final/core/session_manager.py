@@ -1,4 +1,6 @@
 import asyncio
+import logging
+from aiohttp import ClientSession, ClientTimeout, TCPConnector
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,14 @@ class SessionManager:
         self._timeout = ClientTimeout(total=timeout_seconds)
         self._connector_limit = connector_limit
         self._lock = asyncio.Lock()
+
+    async def initialize(self) -> None:
+        """Initialize the session manager (for compatibility)."""
+        logger.info("Session manager initialized")
+
+    async def start(self) -> None:
+        """Start the session manager (for compatibility)."""
+        logger.info("Session manager started")
 
     async def get_session(self, key: str = "default") -> ClientSession:
         """
@@ -59,10 +69,11 @@ class SessionManager:
         """
         async with self._lock:
             session = self._sessions.pop(key, None)
-import logging
-
-from aiohttp import ClientSession, ClientTimeout, TCPConnector
-
             if session and not session.closed:
                 logger.info(f"Closing ClientSession for key '{key}'")
                 await session.close()
+
+    async def stop(self) -> None:
+        """Stop the session manager and close all sessions."""
+        await self.close_all()
+        logger.info("Session manager stopped")

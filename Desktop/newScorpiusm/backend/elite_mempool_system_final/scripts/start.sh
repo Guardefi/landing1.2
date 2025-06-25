@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Scorpius Mempool Elite - Startup Script
-# This script initializes and starts all services
+# Elite Mempool System - Production Startup Script
+# Comprehensive startup with health checks and monitoring
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -13,11 +13,12 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-PROJECT_NAME="scorpius-elite"
-COMPOSE_FILE="docker-compose.yml"
-ENV_FILE=".env"
+PROJECT_NAME="elite-mempool-system"
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
+ENV_FILE="${ENV_FILE:-.env}"
+LOG_LEVEL="${LOG_LEVEL:-INFO}"
 
-echo -e "${BLUE}🚀 Starting Scorpius Mempool Elite Platform${NC}"
+echo -e "${BLUE}🚀 Starting Elite Mempool System Platform${NC}"
 echo "=================================================="
 
 # Check if Docker is running

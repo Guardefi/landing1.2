@@ -1,4 +1,10 @@
 import logging
+import os
+import sys
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +25,6 @@ def load_config(config_dir: Path | None = None) -> dict[str, Any]:
         config_dir = Path(__file__).parent
 
     config_path = config_dir / CONFIG_FILE_NAME
-
-import os
-import sys
-from pathlib import Path
-from typing import Any, Dict, Optional
-
-import yaml
 
     config: dict[str, Any] = {}
     if config_path.exists():

@@ -1,30 +1,65 @@
 """
-Elite Mempool System - Main Launcher
-This is the primary entry point for the Elite Mempool System.
+Elite Mempool System - Enterprise Main Launcher
+This is the primary entry point for the Elite Mempool System with enhanced features.
 """
 
+import asyncio
+import logging
+import signal
+import sys
+import time
+from pathlib import Path
+from typing import Dict, Optional, Any
 
-
+import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 # Import core components
+from core.enhanced_mempool_monitor import EnhancedMempoolMonitor
+from core.session_manager import SessionManager
+from core.utils import ether_to_wei
 
 # Import execution components
+from execution.execution_engine import ExecutionEngine
 
 # Import analysis components
+from mev_analysis.mev_detector import MEVDetector
 
 # Import models
+from models.mempool_event import MempoolEvent, MempoolEventType, MempoolEventSeverity
+from models.mev_opportunity import MEVOpportunity
 
 # Import configuration
+from config import load_config
+
+# Import API routers
+from api.routers.websocket import connection_manager, router as websocket_router
+
+# Import Web3
+from web3 import AsyncWeb3
+from web3.providers import AsyncHTTPProvider
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('elite_mempool_system.log')
+    ]
+)
 
 logger = logging.getLogger(__name__)
 
 
 class EliteMempoolSystem:
     """
-    Main system orchestrator for the Elite Mempool System.
+    Main system orchestrator for the Elite Mempool System with enterprise features.
     """
 
-    def __init__(self, config_path: Path | None = None):
+    def __init__(self, config_path: Optional[Path] = None):
         """
         Initialize the Elite Mempool System.
 
@@ -36,38 +71,53 @@ class EliteMempoolSystem:
         self.shutdown_event = asyncio.Event()
 
         # Core components
-        self.session_manager: SessionManager | None = None
-        self.web3_instances: dict[str, AsyncWeb3] = {}
-        self.mempool_monitors: dict[str, EnhancedMempoolMonitor] = {}
-        self.mev_detectors: dict[str, MEVDetector] = {}
-        self.execution_engines: dict[str, ExecutionEngine] = {}
+        self.session_manager: Optional[SessionManager] = None
+        self.mempool_monitors: Dict[str, EnhancedMempoolMonitor] = {}
+        self.mev_detectors: Dict[str, MEVDetector] = {}
+        self.execution_engines: Dict[str, ExecutionEngine] = {}
+        self.web3_instances: Dict[str, AsyncWeb3] = {}
 
         # FastAPI application
-        self.app: FastAPI | None = None
+        self.app: Optional[FastAPI] = None
 
-        # Statistics
+        # Statistics and metrics
         self.system_stats = {
             "start_time": 0.0,
+            "total_transactions_processed": 0,
+            "total_mev_opportunities": 0,
+            "total_alerts_sent": 0,
             "uptime_seconds": 0.0,
+            "active_connections": 0,
+            "networks_monitored": 0,
             "opportunities_detected": 0,
             "opportunities_executed": 0,
             "total_profit_eth": 0.0,
-            "active_networks": 0,
+            "active_networks": 0
+        }
+
+        # Performance monitoring
+        self.performance_metrics = {
+            "avg_processing_time_ms": 0.0,
+            "peak_processing_time_ms": 0.0,
+            "transactions_per_second": 0.0,
+            "memory_usage_mb": 0.0,
+            "cpu_usage_percent": 0.0
         }
 
         self._setup_logging()
+        self._setup_signal_handlers()
 
     def _setup_logging(self) -> None:
         """Setup system logging configuration."""
         log_level = self.config.get("log_level", "INFO")
-
+        
         logging.basicConfig(
             level=getattr(logging, log_level),
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.StreamHandler(sys.stdout),
-                logging.FileHandler("elite_mempool_system.log"),
-            ],
+                logging.StreamHandler(),
+                logging.FileHandler('elite_mempool_system.log')
+            ]
         )
 
         # Set specific logger levels
@@ -76,6 +126,17 @@ class EliteMempoolSystem:
         logging.getLogger("urllib3").setLevel(logging.WARNING)
 
         logger.info(f"Logging configured at {log_level} level")
+
+    def _setup_signal_handlers(self) -> None:
+        """Setup signal handlers for graceful shutdown."""
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
+
+    def _signal_handler(self, signum: int, frame) -> None:
+        """Handle shutdown signals."""
+        logger.info(f"Received signal {signum}, initiating graceful shutdown...")
+        if not self.shutdown_event.is_set():
+            self.shutdown_event.set()
 
     async def initialize(self) -> None:
         """Initialize all system components."""
@@ -105,7 +166,7 @@ class EliteMempoolSystem:
 
         except Exception as e:
             logger.error(f"System initialization failed: {e}", exc_info=True)
-            raise e from e
+            raise
 
     async def _initialize_web3_instances(self) -> None:
         """Initialize Web3 instances for configured networks."""
@@ -175,9 +236,7 @@ class EliteMempoolSystem:
                     session_manager=self.session_manager,
                     max_stored_txs=mempool_config.get("max_stored_txs", 10000),
                     poll_interval=mempool_config.get("poll_interval_seconds", 0.1),
-                    cleanup_interval=mempool_config.get(
-                        "cleanup_interval_seconds", 60.0
-                    ),
+                    cleanup_interval=mempool_config.get("cleanup_interval_seconds", 60.0),
                     reconnect_delay=mempool_config.get("reconnect_delay_seconds", 5.0),
                     request_timeout=mempool_config.get("request_timeout_seconds", 10.0),
                 )
@@ -193,9 +252,7 @@ class EliteMempoolSystem:
                 logger.info(f"Mempool monitor initialized for {network_name}")
 
             except Exception as e:
-                logger.error(
-                    f"Failed to initialize mempool monitor for {network_name}: {e}"
-                )
+                logger.error(f"Failed to initialize mempool monitor for {network_name}: {e}")
 
     async def _initialize_mev_detectors(self) -> None:
         """Initialize MEV detectors for active networks."""
@@ -208,16 +265,16 @@ class EliteMempoolSystem:
                 chain_id = network_config.get("chain_id")
 
                 detector = MEVDetector(
-                    web3=web3_instance, network_id=chain_id, config=mev_config
+                    web3=web3_instance, 
+                    network_id=chain_id, 
+                    config=mev_config
                 )
 
                 self.mev_detectors[network_name] = detector
                 logger.info(f"MEV detector initialized for {network_name}")
 
             except Exception as e:
-                logger.error(
-                    f"Failed to initialize MEV detector for {network_name}: {e}"
-                )
+                logger.error(f"Failed to initialize MEV detector for {network_name}: {e}")
 
     async def _initialize_execution_engines(self) -> None:
         """Initialize execution engines for active networks."""
@@ -232,9 +289,7 @@ class EliteMempoolSystem:
                 # Merge network-specific config with execution config
                 engine_config = {**execution_config}
                 if "flashbots_rpc_url" in network_config:
-                    engine_config["flashbots_rpc_url"] = network_config[
-                        "flashbots_rpc_url"
-                    ]
+                    engine_config["flashbots_rpc_url"] = network_config["flashbots_rpc_url"]
 
                 engine = ExecutionEngine(
                     web3=web3_instance,
@@ -247,9 +302,7 @@ class EliteMempoolSystem:
                 logger.info(f"Execution engine initialized for {network_name}")
 
             except Exception as e:
-                logger.error(
-                    f"Failed to initialize execution engine for {network_name}: {e}"
-                )
+                logger.error(f"Failed to initialize execution engine for {network_name}: {e}")
 
     def _initialize_fastapi(self) -> None:
         """Initialize FastAPI application with routes."""
@@ -259,12 +312,22 @@ class EliteMempoolSystem:
             version="1.0.0",
         )
 
+        # Add middleware
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],  # Configure appropriately for production
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        self.app.add_middleware(GZipMiddleware, minimum_size=1000)
+
         # Add basic health check endpoint
         @self.app.get("/health")
         async def health_check():
             return {
                 "status": "healthy",
-                "uptime": time.time() - self.system_stats["start_time"],
+                "uptime": time.time() - self.system_stats["start_time"] if self.is_running else 0,
                 "active_networks": len(self.web3_instances),
             }
 
@@ -277,6 +340,9 @@ class EliteMempoolSystem:
         @self.app.get("/api/v1/stats")
         async def system_stats():
             return await self._get_system_stats()
+
+        # Include WebSocket router
+        self.app.include_router(websocket_router, prefix="/ws")
 
         logger.info("FastAPI application initialized")
 
@@ -300,13 +366,11 @@ class EliteMempoolSystem:
                 return
 
             detector = self.mev_detectors[network_name]
-            opportunities = await detector.analyze_mempool_event(event)
+            opportunities = await detector.detect_mev_patterns(event)
 
             if opportunities:
                 self.system_stats["opportunities_detected"] += len(opportunities)
-                logger.info(
-                    f"Detected {len(opportunities)} MEV opportunities from tx {event.tx_hash}"
-                )
+                logger.info(f"Detected {len(opportunities)} MEV opportunities from tx {event.tx_hash}")
 
                 # Execute opportunities if configured
                 await self._handle_mev_opportunities(network_name, opportunities)
@@ -314,9 +378,7 @@ class EliteMempoolSystem:
         except Exception as e:
             logger.error(f"Error handling mempool event {event.tx_hash}: {e}")
 
-    async def _handle_mev_opportunities(
-        self, network_name: str, opportunities: list[MEVOpportunity]
-    ) -> None:
+    async def _handle_mev_opportunities(self, network_name: str, opportunities: list[MEVOpportunity]) -> None:
         """
         Handle detected MEV opportunities.
 
@@ -336,9 +398,7 @@ class EliteMempoolSystem:
             for opportunity in opportunities:
                 # Check if opportunity meets execution criteria
                 if opportunity.estimated_profit_usd < min_profit_usd:
-                    logger.debug(
-                        f"Opportunity {opportunity.opportunity_id} below minimum profit threshold"
-                    )
+                    logger.debug(f"Opportunity {opportunity.opportunity_id} below minimum profit threshold")
                     continue
 
                 # Execute the opportunity
@@ -347,15 +407,12 @@ class EliteMempoolSystem:
 
                 if result.success:
                     self.system_stats["opportunities_executed"] += 1
-                    if result.profit_realized:
+                    if hasattr(result, 'profit_realized') and result.profit_realized:
                         self.system_stats["total_profit_eth"] += result.profit_realized
-                    logger.info(
-                        f"Opportunity executed successfully: {opportunity.opportunity_id}"
-                    )
+                    logger.info(f"Opportunity executed successfully: {opportunity.opportunity_id}")
                 else:
-                    logger.warning(
-                        f"Opportunity execution failed: {opportunity.opportunity_id}, error: {result.error_message}"
-                    )
+                    error_msg = getattr(result, 'error_message', 'Unknown error')
+                    logger.warning(f"Opportunity execution failed: {opportunity.opportunity_id}, error: {error_msg}")
 
         except Exception as e:
             logger.error(f"Error handling MEV opportunities: {e}")
@@ -387,7 +444,7 @@ class EliteMempoolSystem:
         except Exception as e:
             logger.error(f"Failed to start system: {e}", exc_info=True)
             await self.stop()
-            raise e from e
+            raise
 
     async def stop(self) -> None:
         """Stop the Elite Mempool System."""
@@ -407,7 +464,8 @@ class EliteMempoolSystem:
 
             # Cleanup execution engines
             for network_name, engine in self.execution_engines.items():
-                await engine.cleanup()
+                if hasattr(engine, 'cleanup'):
+                    await engine.cleanup()
                 logger.info(f"Cleaned up execution engine for {network_name}")
 
             # Close session manager
@@ -442,7 +500,8 @@ class EliteMempoolSystem:
 
                 # Cleanup MEV detectors
                 for detector in self.mev_detectors.values():
-                    await detector.cleanup_expired_data()
+                    if hasattr(detector, 'cleanup_expired_data'):
+                        await detector.cleanup_expired_data()
 
                 logger.debug("Periodic cleanup completed")
 
@@ -451,7 +510,7 @@ class EliteMempoolSystem:
             except Exception as e:
                 logger.error(f"Error in periodic cleanup: {e}")
 
-    async def _get_system_status(self) -> dict[str, Any]:
+    async def _get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status."""
         status = {
             "system": {
@@ -474,17 +533,18 @@ class EliteMempoolSystem:
 
         # Get network-specific status
         for network_name, monitor in self.mempool_monitors.items():
-            monitor_stats = monitor.get_stats()
-            detector_stats = (
-                self.mev_detectors.get(network_name, {}).get_stats()
-                if network_name in self.mev_detectors
-                else {}
-            )
-            engine_stats = (
-                self.execution_engines.get(network_name, {}).get_stats()
-                if network_name in self.execution_engines
-                else {}
-            )
+            monitor_stats = monitor.get_stats() if hasattr(monitor, 'get_stats') else {}
+            detector_stats = {}
+            if network_name in self.mev_detectors:
+                detector = self.mev_detectors[network_name]
+                if hasattr(detector, 'get_stats'):
+                    detector_stats = detector.get_stats()
+            
+            engine_stats = {}
+            if network_name in self.execution_engines:
+                engine = self.execution_engines[network_name]
+                if hasattr(engine, 'get_stats'):
+                    engine_stats = engine.get_stats()
 
             status["networks"][network_name] = {
                 "monitor": monitor_stats,
@@ -494,7 +554,7 @@ class EliteMempoolSystem:
 
         return status
 
-    async def _get_system_stats(self) -> dict[str, Any]:
+    async def _get_system_stats(self) -> Dict[str, Any]:
         """Get system statistics."""
         stats = self.system_stats.copy()
         stats["uptime_seconds"] = (
@@ -506,33 +566,32 @@ class EliteMempoolSystem:
         total_opportunities = 0
 
         for monitor in self.mempool_monitors.values():
-            monitor_stats = monitor.get_stats()
-            total_txs_processed += monitor_stats.get("txs_processed_for_callbacks", 0)
+            if hasattr(monitor, 'get_stats'):
+                monitor_stats = monitor.get_stats()
+                total_txs_processed += monitor_stats.get("txs_processed_for_callbacks", 0)
 
         for detector in self.mev_detectors.values():
-            detector_stats = detector.get_stats()
-            total_opportunities += detector_stats.get("opportunities_detected", 0)
+            if hasattr(detector, 'get_stats'):
+                detector_stats = detector.get_stats()
+                total_opportunities += detector_stats.get("opportunities_detected", 0)
 
-        stats.update(
-            {
-                "total_txs_processed": total_txs_processed,
-                "total_opportunities_detected": total_opportunities,
-            }
-        )
+        stats.update({
+            "total_txs_processed": total_txs_processed,
+            "total_opportunities_detected": total_opportunities,
+        })
 
         return stats
 
     async def run_server(self) -> None:
         """Run the FastAPI server."""
         if not self.app:
-            raise RuntimeError("FastAPI app not initialized") from None
+            raise RuntimeError("FastAPI app not initialized")
 
         api_config = self.config.get("api", {})
         host = api_config.get("host", "127.0.0.1")
         port = api_config.get("port", 8000)
 
         config = uvicorn.Config(app=self.app, host=host, port=port, log_level="info")
-
         server = uvicorn.Server(config)
         await server.serve()
 
@@ -540,16 +599,6 @@ class EliteMempoolSystem:
 async def main():
     """Main entry point for the Elite Mempool System."""
     system = None
-
-    def signal_handler(signum, frame):
-        """Handle shutdown signals."""
-        logger.info(f"Received signal {signum}, initiating shutdown...")
-        if system:
-            asyncio.create_task(system.stop())
-
-    # Set up signal handlers
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
 
     try:
         # Initialize and start the system
@@ -561,27 +610,6 @@ async def main():
         await system.run_server()
 
     except KeyboardInterrupt:
-import asyncio
-import logging
-import signal
-import sys
-import time
-from pathlib import Path
-from typing import Any
-
-import uvicorn
-from core.enhanced_mempool_monitor import EnhancedMempoolMonitor
-from core.session_manager import SessionManager
-from execution.execution_engine import ExecutionEngine
-from fastapi import FastAPI
-from mev_analysis.mev_detector import MEVDetector
-from models.mempool_event import MempoolEvent
-from models.mev_opportunity import MEVOpportunity
-from web3 import AsyncWeb3
-from web3.providers import AsyncHTTPProvider
-
-from config import load_config
-
         logger.info("Keyboard interrupt received")
     except Exception as e:
         logger.error(f"System error: {e}", exc_info=True)

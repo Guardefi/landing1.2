@@ -4,6 +4,21 @@ This module handles the execution of detected MEV opportunities through
 both private relays (Flashbots) and public mempool submissions.
 """
 
+import asyncio
+import logging
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from web3 import AsyncWeb3
+from core.session_manager import SessionManager
+from core.utils import async_retry, wei_to_ether
+from models.mev_opportunity import MEVOpportunity, MEVStrategyType, OpportunityStatus
+from eth_account import Account
+from eth_account.signers.local import LocalAccount
+from web3.exceptions import TransactionNotFound
+
 logger = logging.getLogger(__name__)
 
 
@@ -109,9 +124,10 @@ class ExecutionEngine:
 
         # Initialize Flashbots client
         flashbots_rpc_url = config.get("flashbots_rpc_url", "https://rpc.flashbots.net")
-        self.flashbots_client = FlashbotsRelayClient(
-            flashbots_rpc_url=flashbots_rpc_url, session_manager=session_manager
-        )
+        # self.flashbots_client = FlashbotsRelayClient(
+        #     flashbots_rpc_url=flashbots_rpc_url, session_manager=session_manager
+        # )
+        self.flashbots_client = None  # TODO: Implement FlashbotsRelayClient
 
         # Track execution state
         self.pending_executions: dict[str, MEVOpportunity] = {}
@@ -606,10 +622,4 @@ class ExecutionEngine:
 import os
 import time
 
-from eth_account import Account
-from eth_account.signers.local import LocalAccount
-from web3.exceptions import TransactionNotFound
 
-from ..core.utils import wei_to_ether
-from ..execution.private_relays import FlashbotsRelayClient
-from ..models.mev_opportunity import MEVOpportunity, MEVStrategyType, OpportunityStatus

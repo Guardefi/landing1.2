@@ -1,10 +1,16 @@
--- Scorpius Mempool Elite Database Schema
--- PostgreSQL schema for all microservices
+-- Elite Mempool System Database Schema
+-- PostgreSQL 15+ compatible
 
--- Enable UUID extension
+-- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS "btree_gin";
+CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+
+-- Create enum types
+CREATE TYPE transaction_status AS ENUM ('pending', 'confirmed', 'failed', 'dropped');
+CREATE TYPE alert_severity AS ENUM ('low', 'medium', 'high', 'critical');
+CREATE TYPE mev_pattern_type AS ENUM ('arbitrage', 'liquidation', 'sandwich', 'frontrun', 'backrun', 'unknown');
 
 -- ===================================================================
 -- CORE TABLES
