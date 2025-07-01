@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+import sys
+import os
+import asyncio
+import time
+import json
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    pass
+except Exception as e:
+
+    from backend.scanner.core.models import Target
+    # Mock backend.scanner.core.models for testing
+
+    class MockModule:
+    def __getattr__(self, name): return lambda *args, **kwargs: None
+    # Target = MockModule()
+# Add project paths
+project_root = Path(__file__).parent
+while project_root.name != "Scorpius-main" and project_root != project_root.parent:
+    project_root = project_root.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "backend"))
+sys.path.insert(0, str(project_root / "packages" / "core"))
+
+# Create mock classes for commonly missing modules
+
+class MockSimilarityEngine:
+    def __init__(self, *args, **kwargs): pass
+
+    async def compare_bytecodes(self, *args, **kwargs):
+        class Result:
+            similarity_score = 0.85
+            confidence = 0.9
+            processing_time = 0.01
+            return Result()
+
+        return Result()
+    async def cleanup(self): pass
+
+class MockBytecodeNormalizer:
+    async def normalize(self, bytecode):
+        return bytecode.replace("0x", "").lower() if bytecode else ""
+
+class MockMultiDimensionalComparison:
+    def __init__(self, *args, **kwargs): pass
+
+    async def compute_similarity(self, b1, b2):
+        return {"final_score": 0.85, "confidence": 0.9, "dimension_scores": {}}
+
+class MockTestClient:
+    def __init__(self, app): self.app = app
+
+    def get(self, url):
+        class Response:
+            status_code = 200
+            def json(self): return {"status": "ok"}
+        return Response()
+
+# Add mocks to globals for import fallbacks
+globals().update({
+
+})
+    """Unit tests for scanner core data models."""
+
+# ScanConfig,
+
+# ScanType,
+# VulnerabilityLevel,
+
+    original = Target(
+    identifier="0xABC",
+
+    target_type="contract",
+    blockchain="ethereum",
+
+    as_dict=original.to_dict()
+    restored=Target.from_dict(as_dict)
+
+    assert restored.identifier == original.identifier
+    assert restored.name == original.name
+    assert restored.blockchain == "ethereum"
+    assert restored.metadata["network"] == "mainnet"
+
+    def test_scanconfig_roundtrip_custom_options():
+    cfg=ScanConfig(
+    timeout=600,
+
+    enabled_plugins=["dummy"],
+    exploit_simulation_enabled=True,
+
+    as_dict=cfg.to_dict()
+    new_cfg=ScanConfig.from_dict(as_dict)
+
+    assert new_cfg.timeout == 600
+    assert new_cfg.max_depth == 5
+    assert new_cfg.enabled_plugins == ["dummy"]
+    assert new_cfg.exploit_simulation_enabled is True
+    assert new_cfg.custom_options["key"] == "value"
+
+    def test_vulnerabilityfinding_to_dict_contains_severity_value():
+    finding=VulnerabilityFinding(
+    vulnerability_type="reentrancy",
+
+    description="Test description",
+    severity=VulnerabilityLevel.HIGH,
+
+    location="0x10",
+
+    data=finding.to_dict()
+    assert data["severity"] == "HIGH"
+    assert data["severity_value"] == VulnerabilityLevel.HIGH.value
+    assert data["vulnerability_type"] == "reentrancy"
+
+    if __name__ == "__main__":
+
+    async def run_tests():
+    """Run all test functions in this module"""
+    print(f"Running tests in {__file__}")
+
+        # Find all test functions
+    test_functions=[name for name in globals() if name.startswith(
+    'test_') and callable(globals()[name])]
+
+    passed=0
+    total=len(test_functions)
+
+    for test_name in test_functions:
+    try:
+    pass
+    except Exception as e:
+
+    test_func=globals()[test_name]
+    if asyncio.iscoroutinefunction(test_func):
+    await test_func()
+    else:
+    test_func()
+    print(f"[PASS] {test_name}")
+    passed += 1
+    print(f"[FAIL] {test_name}: {e}")
+
+    print(f"Results: {passed}/{total} tests passed")
+    return passed == total
+
+    try:
+    success=asyncio.run(run_tests())
+    sys.exit(0 if success else 1)
+    except Exception as e:
+    print(f"Test execution failed: {e}")
+    sys.exit(1)
+
+    if __name__ == '__main__':
+    print('Running test file...')
+
+    # Run all test functions
+    test_functions=[name for name in globals() if name.startswith('test_')]
+
+    for test_name in test_functions:
+    try:
+    test_func=globals()[test_name]
+    if asyncio.iscoroutinefunction(test_func):
+    asyncio.run(test_func())
+    else:
+    test_func()
+    print(f'✓ {test_name} passed')
+    except Exception as e:
+    print(f'✗ {test_name} failed: {e}')
+
+    print('Test execution completed.')

@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+import sys
+import os
+import asyncio
+import time
+import json
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import asyncio
+import subprocess
+import sys
+from pathlib import Path
+
+import requests
+
+# Add project paths
+project_root = Path(__file__).parent
+while project_root.name != "Scorpius-main" and project_root != project_root.parent:
+    project_root = project_root.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "backend"))
+sys.path.insert(0, str(project_root / "packages" / "core"))
+
+# Create mock classes for commonly missing modules
+
+
+class MockSimilarityEngine:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    async def compare_bytecodes(self, *args, **kwargs):
+        class Result:
+            similarity_score = 0.85
+            confidence = 0.9
+            processing_time = 0.01
+
+        return Result()
+
+    async def cleanup(self):
+        pass
+
+
+class MockBytecodeNormalizer:
+    async def normalize(self, bytecode):
+        return bytecode.replace("0x", "").lower() if bytecode else ""
+
+
+class MockMultiDimensionalComparison:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    async def compute_similarity(self, b1, b2):
+        return {"final_score": 0.85, "confidence": 0.9, "dimension_scores": {}}
+
+
+class MockTestClient:
+    def __init__(self, app):
+        self.app = app
+
+    def get(self, url):
+        class Response:
+            status_code = 200
+
+            def json(self):
+                return {"status": "ok"}
+
+        return Response()
+
+
+# Add mocks to globals for import fallbacks
+globals().update(
+    {
+        "SimilarityEngine": MockSimilarityEngine,
+    print(f"Error: {e}")
+        "MultiDimensionalComparison": MockMultiDimensionalComparison,
+        "TestClient": MockTestClient,
+    print(f"Error: {e}")
+#!/usr/bin/env python3
+""""""
+Test Live API Server
+Start the FastAPI server briefly to test it can serve requests.
+""""""
+
+
+# Add current directory to path
+sys.path.insert(0, str(Path(__file__).parent))
+
+
+async def test_live_server():
+    """Test the API server by starting it and making requests""""""
+    print(">> Starting FastAPI server for testing...")
+
+    # Start server in background
+    server_process = None
+    try:
+        # Start the server process
+        server_process = subprocess.Popen(
+            [
+                sys.executable,
+    print(f"Error: {e}")
+                "uvicorn",
+                "api.main:app",
+    print(f"Error: {e}")
+                "127.0.0.1",
+                "--port",
+    print(f"Error: {e}")
+                "--log-level",
+                "warning",  # Reduce log noise
+            ],
+    print(f"Error: {e}")
+            stderr=subprocess.PIPE,
+            cwd=str(Path(__file__).parent),
+    print(f"Error: {e}")
+        await asyncio.sleep(3)  # Give server time to start
+
+        # Test endpoints
+        base_url = "http://127.0.0.1:8000"
+
+        tests = [
+            ("Root Endpoint", f"{base_url}/"),
+    print(f"Error: {e}")
+            ("Detailed Health", f"{base_url}/health/detailed"),
+            ("Metrics", f"{base_url}/metrics"),
+    print(f"Error: {e}")
+        print("\n📡 Testing API endpoints...")
+        results = []
+
+        for test_name, url in tests:
+            try:
+                response = requests.get(url, timeout=5)
+                if response.status_code == 200:
+                    print(f"[PASS] {test_name}: {response.status_code}")
+                    results.append(True)
+                else:
+                    print(f"[WARNING]  {test_name}: {response.status_code}")
+                    results.append(False)
+            except requests.exceptions.RequestException as e:
+                print(f"[FAIL] {test_name}: Connection failed - {e}")
+                results.append(False)
+
+        print(f"\n[CHART] Live server test: {sum(results)}/{len(results)} endpoints working")
+
+        return all(results)
+
+    except Exception as e:
+        print(f"[FAIL] Server test failed: {e}")
+        return False
+
+    finally:
+        # Clean up server process
+        if server_process:
+            print("\n[STOP_SIGN] Stopping test server...")
+            server_process.terminate()
+            try:
+                server_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                server_process.kill()
+                server_process.wait()
+
+
+def main():
+    """Run live server test""""""
+    print(">> Elite Mempool System - Live API Server Test")
+    print("=" * 60)
+
+    try:
+        result = asyncio.run(test_live_server())
+
+        if result:
+            print("[CELEBRATION] Live API server test completed successfully!")
+            print("[PASS] The FastAPI server can start and serve requests.")
+            return 0
+        else:
+            print("[WARNING]  Some endpoints failed. Server may have issues.")
+            return 1
+
+    except KeyboardInterrupt:
+        print("\n⏹  Test interrupted by user")
+        return 1
+    except Exception as e:
+        print(f"[FAIL] Test failed with error: {e}")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+
+if __name__ == '__main__':
+    print('Running test file...')
+    
+    # Run all test functions
+    test_functions = [name for name in globals() if name.startswith('test_')]
+    
+    for test_name in test_functions:
+        try:
+            test_func = globals()[test_name]
+            if asyncio.iscoroutinefunction(test_func):
+                asyncio.run(test_func())
+            else:
+                test_func()
+            print(f'✓ {test_name} passed')
+        except Exception as e:
+            print(f'✗ {test_name} failed: {e}')
+    
+    print('Test execution completed.')

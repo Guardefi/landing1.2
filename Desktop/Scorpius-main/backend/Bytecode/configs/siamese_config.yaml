@@ -1,0 +1,175 @@
+# Siamese Network Training Configuration
+
+# Model Architecture
+model:
+  vocab_size: 10000
+  embedding_dim: 256
+  hidden_dim: 512
+  num_lstm_layers: 2
+  bidirectional: true
+  attention_heads: 8
+  dropout: 0.3
+  
+  # Position encoding
+  max_position_embeddings: 5000
+  
+  # Graph convolution
+  graph_conv_kernel_size: 3
+  
+  # Similarity layers
+  similarity_hidden_dims: [512, 256, 128]
+  similarity_dropout: 0.4
+
+# Training Parameters
+training:
+  # Basic training settings
+  epochs: 100
+  batch_size: 32
+  learning_rate: 1e-4
+  weight_decay: 1e-4
+  
+  # Loss function
+  criterion: "BCELoss"
+  contrastive_loss_margin: 2.0
+  contrastive_loss_weight: 0.1
+  
+  # Optimizer
+  optimizer: "AdamW"
+  optimizer_params:
+    betas: [0.9, 0.999]
+    eps: 1e-8
+  
+  # Learning rate scheduler
+  scheduler: "CosineAnnealingLR"
+  scheduler_params:
+    T_max: 100
+    eta_min: 1e-6
+  
+  # Gradient clipping
+  max_grad_norm: 1.0
+  
+  # Early stopping
+  early_stopping:
+    patience: 15
+    min_delta: 0.001
+    monitor: "val_f1_score"
+    mode: "max"
+
+# Data Configuration
+data:
+  # Dataset paths
+  train_data_path: "data/train_pairs.json"
+  val_data_path: "data/val_pairs.json"
+  test_data_path: "data/test_pairs.json"
+  
+  # Data preprocessing
+  max_sequence_length: 1000
+  pad_sequences: true
+  truncate_sequences: true
+  
+  # Data augmentation
+  enable_augmentation: true
+  augmentation_probability: 0.1
+  
+  # Data splitting
+  validation_split: 0.2
+  test_split: 0.1
+  stratify: true
+  random_seed: 42
+
+# Tokenizer Configuration
+tokenizer:
+  vocab_size: 10000
+  special_tokens:
+    pad_token: "<PAD>"
+    unk_token: "<UNK>"
+    start_token: "<START>"
+    end_token: "<END>"
+  
+  # EVM-specific settings
+  include_push_variants: true
+  include_dup_variants: true
+  include_swap_variants: true
+  normalize_opcodes: false
+
+# Training Monitoring
+monitoring:
+  # Metrics to track
+  track_metrics:
+    - "loss"
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "auc_roc"
+    - "auc_pr"
+  
+  # Logging frequency
+  log_frequency: 10  # batches
+  validation_frequency: 1  # epochs
+  
+  # Checkpointing
+  save_best_only: true
+  save_frequency: 5  # epochs
+  checkpoint_dir: "checkpoints/siamese/"
+  
+  # Visualization
+  plot_training_curves: true
+  plot_confusion_matrix: true
+  plot_roc_curve: true
+
+# Hardware Configuration
+hardware:
+  # Device settings
+  device: "auto"  # auto, cpu, cuda, cuda:0, etc.
+  mixed_precision: true
+  
+  # Multi-GPU settings
+  data_parallel: false
+  distributed_training: false
+  
+  # Memory optimization
+  gradient_checkpointing: false
+  pin_memory: true
+  num_workers: 4
+
+# Hyperparameter Tuning
+hyperparameter_tuning:
+  enable: false
+  
+  # Search space
+  search_space:
+    learning_rate:
+      type: "loguniform"
+      low: 1e-5
+      high: 1e-2
+    hidden_dim:
+      type: "choice"
+      choices: [256, 512, 768, 1024]
+    dropout:
+      type: "uniform"
+      low: 0.1
+      high: 0.5
+    batch_size:
+      type: "choice"
+      choices: [16, 32, 64]
+  
+  # Search algorithm
+  algorithm: "random"  # random, tpe, etc.
+  max_trials: 50
+  objective: "val_f1_score"
+  direction: "maximize"
+
+# Model Export
+export:
+  # Export formats
+  export_onnx: true
+  export_torchscript: true
+  
+  # Export settings
+  onnx_opset_version: 11
+  optimize_for_inference: true
+  
+  # Quantization
+  enable_quantization: false
+  quantization_backend: "fbgemm"  # fbgemm, qnnpack

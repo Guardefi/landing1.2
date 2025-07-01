@@ -1,0 +1,85 @@
+# Security-Hardened Multi-stage Dockerfile Template
+# This template implements security best practices for Python microservices
+
+# === STAGE 1: Base with security hardening ===
+ARG PYTHON_VERSION=3.11
+FROM python@sha256:7e61c0ad2f7ba28cd4b78df90f9e6ec83b3fa5ad5265b0e7b5a8e5e6e6c9b3e2 AS base
+
+# Security labels
+LABEL maintainer="Scorpius Enterprise Platform"
+LABEL org.opencontainers.image.title="Scorpius Microservice"
+LABEL org.opencontainers.image.description="Enterprise-grade microservice with security hardening"
+LABEL org.opencontainers.image.vendor="Scorpius"
+LABEL org.opencontainers.image.licenses="proprietary"
+
+# Security environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_ROOT_USER_ACTION=ignore \
+    DEBIAN_FRONTEND=noninteractive
+
+# Create non-root user
+RUN groupadd -r scorpius --gid=999 && \
+    useradd -r -g scorpius --uid=999 --home-dir=/app --shell=/bin/bash scorpius
+
+# Install security updates and minimal system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# === STAGE 2: Dependencies ===
+FROM base AS dependencies
+
+WORKDIR /tmp
+
+# Copy requirements files
+COPY requirements*.txt ./
+
+# Install Python dependencies with security flags
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
+
+# === STAGE 3: Runtime ===
+FROM base AS runtime
+
+WORKDIR /app
+
+# Copy installed packages from dependencies stage
+COPY --from=dependencies /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=dependencies /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY --chown=scorpius:scorpius . .
+
+# Set secure permissions
+RUN chmod -R o-rwx /app && \
+    chmod -R g-w /app
+
+# Switch to non-root user
+USER scorpius
+
+# Security: Drop capabilities and set read-only filesystem
+# These should be set in Kubernetes deployment manifests:
+# securityContext:
+#   runAsNonRoot: true
+#   runAsUser: 999
+#   runAsGroup: 999
+#   readOnlyRootFilesystem: true
+#   allowPrivilegeEscalation: false
+#   capabilities:
+#     drop: ["ALL"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/healthz || exit 1
+
+# Default port
+EXPOSE 8000
+
+# Run application
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

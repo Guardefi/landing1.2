@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-config
+  namespace: production
+  labels:
+    app: scorpius-backup
+data:
+  backup-cron.yaml: |
+    schedule: "0 2 * * *"
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 1
+    jobTemplate:
+      spec:
+        template:
+          spec:
+            containers:
+            - name: backup
+              image: registry.example.com/scorpius/backup:latest
+              env:
+              - name: DATABASE_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: scorpius-secrets
+                    key: database-url
+              - name: S3_BUCKET
+                value: scorpius-backups
+              - name: S3_REGION
+                value: us-east-1
+              - name: S3_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: aws-credentials
+                    key: access-key
+              - name: S3_SECRET_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: aws-credentials
+                    key: secret-key
+              volumeMounts:
+              - name: backup-scripts
+                mountPath: /backup
+            volumes:
+            - name: backup-scripts
+              configMap:
+                name: backup-scripts
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: production
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: registry.example.com/scorpius/backup:latest
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: scorpius-secrets
+                  key: database-url
+            - name: S3_BUCKET
+              value: scorpius-backups
+            - name: S3_REGION
+              value: us-east-1
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: access-key
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: secret-key
+            volumeMounts:
+            - name: backup-scripts
+              mountPath: /backup
+          volumes:
+          - name: backup-scripts
+            configMap:
+              name: backup-scripts
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-scripts
+  namespace: production
+data:
+  backup.sh: |
+    #!/bin/bash
+    
+    BACKUP_FILE="scorpius-backup-$(date +'%Y%m%d-%H%M%S').sql.gz"
+    
+    # Create backup
+    pg_dump -h postgres -U scorpius scorpius | gzip > /tmp/$BACKUP_FILE
+    
+    # Upload to S3
+    aws s3 cp /tmp/$BACKUP_FILE s3://$S3_BUCKET/$BACKUP_FILE
+    
+    # Clean up
+    rm /tmp/$BACKUP_FILE
+    
+    # Delete backups older than 7 days
+    aws s3 rm s3://$S3_BUCKET/scorpius-backup-$(date --date="7 days ago" +'%Y%m%d')*.sql.gz --recursive

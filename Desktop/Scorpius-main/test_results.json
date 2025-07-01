@@ -1,0 +1,471 @@
+{
+  "total_found": 80,
+  "total_run": 76,
+  "passed": 7,
+  "failed": 69,
+  "skipped": 1,
+  "errors": 0,
+  "details": [
+    {
+      "file": "monitoring\\test_monitoring.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\monitoring\\test_monitoring.py\", line 180, in <module>\n    print(\"\\U0001f50d Running Monitoring System Tests...\")\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Python313\\Lib\\encodings\\cp1252.py\", line 19, in encode\n    return codecs.charmap_encode(input,self.errors,encoding_table)[0]\n           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nUnicodeEncodeError: 'charmap' codec can't encode character '\\U0001f50d' in position 0: character maps to <undefined>\n"
+    },
+    {
+      "file": "reporting\\test_system.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\reporting\\test_system.py\", line 235, in main\n    success = asyncio.run(test_basic_functionality())\n  File \"C:\\Python313\\Lib\\asyncio\\runners.py\", line 195, in run\n    return runner.run(main)\n           ~~~~~~~~~~^^^^^^\n  File \"C:\\Python313\\Lib\\asyncio\\runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"C:\\Python313\\Lib\\asyncio\\base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\reporting\\test_system.py\", line 203, in test_basic_functionality\n    print(\"\\U0001f50d Testing Scorpius Enterprise Reporting System\")\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Python313\\Lib\\encodings\\cp1252.py\", line 19, in encode\n    return codecs.charmap_encode(input,self.errors,encoding_table)[0]\n           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nUnicodeEncodeError: 'charmap' codec can't encode character '\\U0001f50d' in position 0: character maps to <undefined>\n"
+    },
+    {
+      "file": "tests\\test_api_gateway_basic.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": ""
+    },
+    {
+      "file": "tests\\test_backend_comprehensive.py",
+      "status": "passed",
+      "returncode": 0,
+      "stderr": "C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\tests\\test_backend_comprehensive.py:164: RuntimeWarning: coroutine 'test_async_retry_utility.<locals>.test_retry_success' was never awaited\n  print(f\"[WARN] Async retry utility test failed (using mocks): {e}\")\nRuntimeWarning: Enable tracemalloc to get the object allocation traceback\nC:\\Users\\ADMIN\\Desktop\\Scorpius-main\\tests\\test_backend_comprehensive.py:195: RuntimeWarning: coroutine 'test_rpc_decorator.<locals>.test_rpc_function' was never awaited\n  print(f\"[WARN] RPC decorator test failed (using mocks): {e}\")\nRuntimeWarning: Enable tracemalloc to get the object allocation traceback\nC:\\Users\\ADMIN\\Desktop\\Scorpius-main\\tests\\test_backend_comprehensive.py:319: RuntimeWarning: coroutine 'MockWalletAnalyzer.analyze_wallet' was never awaited\n  print(f\"[WARN] Wallet analyzer test failed (using mocks): {e}\")\nRuntimeWarning: Enable tracemalloc to get the object allocation traceback\n"
+    },
+    {
+      "file": "tests\\api\\test_static_api.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\tests\\api\\test_static_api.py\", line 63\n    BASE_URL = \"http://localhost:8000\"\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "tests\\unit\\test_retry.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": ""
+    },
+    {
+      "file": "tests\\unit\\test_rpc_decorator.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": ""
+    },
+    {
+      "file": "tests\\unit\\bytecode\\test_api_main.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\tests\\unit\\bytecode\\test_api_main.py\", line 71\n    sys.path.append(\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "tests\\unit\\bytecode\\test_comparison_engine.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\tests\\unit\\bytecode\\test_comparison_engine.py\", line 91\n    class MockModule:\n                     ^\nIndentationError: unindent does not match any outer indentation level\n"
+    },
+    {
+      "file": "tests\\unit\\bytecode\\test_similarity_engine.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": ""
+    },
+    {
+      "file": "services\\bridge-service\\tests\\test_bridge-service.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\services\\bridge-service\\tests\\test_bridge-service.py\", line 66\n    class TestBridgeService:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "services\\api-gateway\\tests\\test_api-gateway.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\services\\api-gateway\\tests\\test_api-gateway.py\", line 66\n    class TestApiGateway:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "services\\api-gateway\\tests\\test_routes.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\services\\api-gateway\\tests\\test_routes.py\", line 59\n    except Exception as e:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "reporting\\tests\\test_api_routes.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\reporting\\tests\\test_api_routes.py\", line 59\n    if __name__ == \"__main__\":\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "reporting\\tests\\test_diff_engine.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\reporting\\tests\\test_diff_engine.py\", line 59\n    if __name__ == \"__main__\":\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "reporting\\tests\\test_writer_html.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\reporting\\tests\\test_writer_html.py\", line 59\n    if __name__ == \"__main__\":\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "packages\\core\\tests\\test_api.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\packages\\core\\tests\\test_api.py\", line 57\n    if __name__ == \"__main__\":\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "packages\\core\\tests\\test_mev_bot.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\packages\\core\\tests\\test_mev_bot.py\", line 60\n    \"\"\"\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "packages\\core\\tests\\test_system.py",
+      "status": "passed",
+      "returncode": 0,
+      "stderr": ""
+    },
+    {
+      "file": "packages\\backend\\reporting\\tests\\test_app.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\packages\\backend\\reporting\\tests\\test_app.py\", line 66\n    sys.path.insert(0, str(Path(__file__).parent.parent))\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\honeypot\\test_api.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": ""
+    },
+    {
+      "file": "backend\\honeypot\\test_comprehensive.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\honeypot\\test_comprehensive.py\", line 71\n    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\honeypot\\test_performance.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\honeypot\\test_performance.py\", line 80\n    print(f\"Error: {str(e)}\")\n                            ^\nSyntaxError: ':' expected after dictionary key\n"
+    },
+    {
+      "file": "backend\\honeypot\\test_react_integration.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\honeypot\\test_react_integration.py\", line 115\n    ],\n    ^\nSyntaxError: closing parenthesis ']' does not match opening parenthesis '(' on line 109\n"
+    },
+    {
+      "file": "backend\\mempool\\test_api_startup.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\mempool\\test_api_startup.py\", line 64\n    \"\"\"\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\mempool\\test_database_api.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\mempool\\test_database_api.py\", line 63\n    \"\"\"\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\mempool\\test_live_api.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\mempool\\test_live_api.py\", line 111\n    },\n    ^\nSyntaxError: closing parenthesis '}' does not match opening parenthesis '[' on line 100\n"
+    },
+    {
+      "file": "backend\\quantum\\test_api_integration.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": ""
+    },
+    {
+      "file": "backend\\scanner\\test_docker_plugins.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\scanner\\test_docker_plugins.py\", line 77\n    \"\"\"\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\scanner\\test_enhanced_scanner.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\scanner\\test_enhanced_scanner.py\", line 76\n    \"\"\"\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\scanner\\test_plugins.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\scanner\\test_plugins.py\", line 82\n    \"\"\"\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\wallet_guard\\tests\\test_wallet_guard.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\wallet_guard\\tests\\test_wallet_guard.py\", line 66\n    class TestWalletGuard:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\utils\\tests\\test_utils.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\utils\\tests\\test_utils.py\", line 66\n    class TestUtils:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_api.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\usage_metering\\tests\\test_api.py\", line 67\n    class TestUsageAPI:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_integration.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\usage_metering\\tests\\test_integration.py\", line 70\n    class TestIntegration:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_metrics_exporter.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\usage_metering\\tests\\test_metrics_exporter.py\", line 64\n    class TestMetricsExporter:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_stripe_service.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\usage_metering\\tests\\test_stripe_service.py\", line 66\n    class TestStripeService:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_usage_metering.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\usage_metering\\tests\\test_usage_metering.py\", line 66\n    class TestUsageMetering:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_usage_tracker.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\usage_metering\\tests\\test_usage_tracker.py\", line 85\n    class TestUsageTracker:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\time_machine\\tests\\test_comprehensive.py",
+      "status": "passed",
+      "returncode": 0,
+      "stderr": ""
+    },
+    {
+      "file": "backend\\time_machine\\tests\\test_replay_smoke.py",
+      "status": "passed",
+      "returncode": 0,
+      "stderr": ""
+    },
+    {
+      "file": "backend\\time_machine\\tests\\test_time_machine.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\time_machine\\tests\\test_time_machine.py\", line 66\n    class TestTimeMachine:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\scanner\\tests\\test_models.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\scanner\\tests\\test_models.py\", line 67\n    \"\"\"Unit tests for scanner core data models.\"\"\"\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\scanner\\tests\\test_plugin_manager.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\scanner\\tests\\test_plugin_manager.py\", line 20\n    class MockModule:\n    ^^^^^\nSyntaxError: invalid syntax\n"
+    },
+    {
+      "file": "backend\\scanner\\tests\\test_scanner.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\scanner\\tests\\test_scanner.py\", line 66\n    class TestScanner:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\scanner\\tests\\integration\\test_enhanced_scanner.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\scanner\\tests\\integration\\test_enhanced_scanner.py\", line 79\n    VULNERABLE_REENTRANCY_CONTRACT = \"\"\"\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\quantum\\tests\\test_enterprise.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\quantum\\tests\\test_enterprise.py\", line 69\n    sys.path.insert(0, os.path.join(os.path.dirname(__file__), \"..\"))\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\quantum\\tests\\test_quantum.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\quantum\\tests\\test_quantum.py\", line 66\n    class TestQuantum:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\middleware\\tests\\test_middleware.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\middleware\\tests\\test_middleware.py\", line 66\n    class TestMiddleware:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\mev_bot\\tests\\test_guardian_types.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\mev_bot\\tests\\test_guardian_types.py\", line 20\n    class MockModule:\n    ^^^^^\nSyntaxError: invalid syntax\n"
+    },
+    {
+      "file": "backend\\mev_bot\\tests\\test_mev_bot.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\mev_bot\\tests\\test_mev_bot.py\", line 66\n    class TestMevBot:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\mempool\\tests\\test_mempool.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\mempool\\tests\\test_mempool.py\", line 66\n    class TestMempool:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\mempool\\tests\\integration\\test_api.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\mempool\\tests\\integration\\test_api.py\", line 67\n    def test_health_check(self, test_client: TestClient):\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\mempool\\tests\\unit\\test_mempool_monitor.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\mempool\\tests\\unit\\test_mempool_monitor.py\", line 86\n    def test_creation(self):\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\honeypot\\tests\\test_honeypot.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\honeypot\\tests\\test_honeypot.py\", line 66\n    class TestHoneypot:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\honeypot\\tests\\test_risk_level.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\honeypot\\tests\\test_risk_level.py\", line 77\n    \"\"\"Tests for HoneypotDetector risk level calculation.\"\"\"\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\honeypot\\tests\\test_static_engine.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\honeypot\\tests\\test_static_engine.py\", line 73\n    def test_static_engine_init():\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\decorators\\tests\\test_decorators.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\decorators\\tests\\test_decorators.py\", line 66\n    class TestDecorators:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\config\\tests\\test_config.py",
+      "status": "passed",
+      "returncode": 0,
+      "stderr": ""
+    },
+    {
+      "file": "backend\\Bytecode\\api\\test_enterprise_command_router.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\Bytecode\\api\\test_enterprise_command_router.py\", line 87, in <module>\n    client = TestClient(app)\n  File \"C:\\Users\\ADMIN\\AppData\\Roaming\\Python\\Python313\\site-packages\\starlette\\testclient.py\", line 399, in __init__\n    super().__init__(\n    ~~~~~~~~~~~~~~~~^\n        app=self.app,\n        ^^^^^^^^^^^^^\n    ...<4 lines>...\n        cookies=cookies,\n        ^^^^^^^^^^^^^^^^\n    )\n    ^\nTypeError: Client.__init__() got an unexpected keyword argument 'app'\n"
+    },
+    {
+      "file": "backend\\Bytecode\\api\\test_with_server.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\Bytecode\\api\\test_with_server.py\", line 314\n    ],\n    ^\nSyntaxError: closing parenthesis ']' does not match opening parenthesis '(' on line 307\n"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_api_endpoints.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\Bytecode\\tests\\test_api_endpoints.py\", line 171\n    ],\n    ^\nSyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 168\n"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_basic.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\Bytecode\\tests\\test_basic.py\", line 377\n    )\n    ^\nSyntaxError: unmatched ')'\n"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_Bytecode.py",
+      "status": "passed",
+      "returncode": 0,
+      "stderr": ""
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_comparison_engine.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\Bytecode\\tests\\test_comparison_engine.py\", line 84\n    from core.comparison_engine import MultiDimensionalComparison, SimilarityEngine\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_core_modules.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\Bytecode\\tests\\test_core_modules.py\", line 110\n    from core.comparison_engine import MultiDimensionalComparison, SimilarityEngine\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_corrected_validation.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\Bytecode\\tests\\test_corrected_validation.py\", line 101\n    print(\"[OK] SimilarityEngine imported successfully\")\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_normalizer.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\Bytecode\\tests\\test_normalizer.py\", line 72\n    class TestBytecodeNormalizer:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_similarity_engine.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\Bytecode\\tests\\test_similarity_engine.py\", line 130\n    ],\n    ^\nSyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 121\n"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_validation.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\Bytecode\\tests\\test_validation.py\", line 99\n    from core.comparison_engine import MultiDimensionalComparison, SimilarityEngine\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\bridge\\tests\\test_bridge.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\bridge\\tests\\test_bridge.py\", line 66\n    class TestBridge:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\bridge\\tests\\unit\\test_bridge_transaction.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\bridge\\tests\\unit\\test_bridge_transaction.py\", line 22\n    print(f\"Error: {str(e)}\")\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\auth_proxy\\tests\\test_auth_proxy.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\auth_proxy\\tests\\test_auth_proxy.py\", line 66\n    class TestAuthProxy:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "backend\\audit_trail\\tests\\test_audit_trail.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\backend\\audit_trail\\tests\\test_audit_trail.py\", line 66\n    class TestAuditTrail:\nIndentationError: unexpected indent\n"
+    },
+    {
+      "file": "comprehensive_integration_test.py",
+      "status": "failed",
+      "returncode": 1,
+      "stderr": "  File \"C:\\Users\\ADMIN\\Desktop\\Scorpius-main\\comprehensive_integration_test.py\", line 109\n    class MockBytecodeNormalizer:\nIndentationError: expected an indented block after function definition on line 106\n"
+    },
+    {
+      "file": "simple_working_test.py",
+      "status": "skipped",
+      "message": "No __main__ block"
+    },
+    {
+      "file": "packages\\core\\tests\\simple_test.py",
+      "status": "passed",
+      "returncode": 0,
+      "stderr": ""
+    }
+  ]
+}

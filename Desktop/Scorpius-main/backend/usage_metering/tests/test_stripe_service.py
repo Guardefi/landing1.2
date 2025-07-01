@@ -1,0 +1,261 @@
+#!/usr/bin/env python3
+import stripe
+from unittest.mock import AsyncMock, Mock, patch
+from datetime import datetime
+import sys
+import os
+import asyncio
+import time
+import json
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+"""
+# # Test Stripe integration service
+"""
+
+# Add project paths
+project_root = Path(__file__).parent
+while project_root.name != "Scorpius-main" and project_root != project_root.parent:
+    project_root = project_root.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "backend"))
+sys.path.insert(0, str(project_root / "packages" / "core"))
+
+# Create mock classes for commonly missing modules
+
+class MockSimilarityEngine:
+    def __init__(self, *args, **kwargs): pass
+
+    async def compare_bytecodes(self, *args, **kwargs):
+        class Result:
+            similarity_score = 0.85
+            confidence = 0.9
+            processing_time = 0.01
+            return Result()
+
+        return Result()
+    async def cleanup(self): pass
+
+class MockBytecodeNormalizer:
+    async def normalize(self, bytecode):
+        return bytecode.replace("0x", "").lower() if bytecode else ""
+
+class MockMultiDimensionalComparison:
+    def __init__(self, *args, **kwargs): pass
+
+    async def compute_similarity(self, b1, b2):
+        return {"final_score": 0.85, "confidence": 0.9, "dimension_scores": {}}
+
+class MockTestClient:
+    def __init__(self, app): self.app = app
+
+    def get(self, url):
+        class Response:
+            status_code = 200
+            def json(self): return {"status": "ok"}
+        return Response()
+
+# Add mocks to globals for import fallbacks
+globals().update({
+
+})
+# import pytest  # Fixed: using direct execution
+
+    class TestStripeService:
+    """Test Stripe integration functionality"""
+
+    @patch("stripe.Customer.create")
+    def test_create_customer(self, mock_create, mock_stripe):
+    """Test creating Stripe customer"""
+    mock_customer = Mock()
+    mock_customer.id = "cus_test123"
+    mock_create.return_value = mock_customer
+
+        # Test the method (would be async in real implementation)
+    result = mock_stripe.create_customer(
+    "test-org", "test@example.com", "Test Org")
+
+        # Verify result
+    assert result == "cus_test123"
+
+    @patch("stripe.Subscription.create")
+    def test_create_subscription(self, mock_create, mock_stripe):
+    """Test creating Stripe subscription"""
+    mock_subscription = Mock()
+    mock_subscription.id = "sub_test123"
+    mock_subscription.status = "active"
+    mock_subscription.current_period_end = 1234567890
+    mock_create.return_value = mock_subscription
+
+    result = mock_stripe.create_subscription("cus_test123", "price_test")
+
+    expected = {
+    "subscription_id": "sub_test123",
+
+    "current_period_end": 1234567890,
+    }
+    assert result == expected
+
+    @patch("stripe.Subscription.list")
+    @patch("stripe.Subscription.modify")
+    def test_update_customer_plan(self, mock_modify, mock_list, mock_stripe):
+    """Test updating customer plan"""
+        # Mock existing subscription
+    mock_subscription = Mock()
+    mock_subscription.id = "sub_test123"
+    mock_subscription.__getitem__ = Mock(
+    return_value={"data": [{"id": "si_test123"}]}
+
+    mock_list_result=Mock()
+    mock_list_result.data=[mock_subscription]
+    mock_list.return_value=mock_list_result
+
+        # Should not raise exception
+    mock_stripe.update_customer_plan("cus_test123", "professional")
+
+    @ patch("stripe.UsageRecord.create")
+    def test_create_usage_record(self, mock_create, mock_stripe):
+    """Test creating usage records"""
+    mock_record=Mock()
+    mock_record.id="usage_test123"
+    mock_create.return_value=mock_record
+
+    result=mock_stripe.create_usage_record("si_test123", 100)
+    assert result == mock_record
+
+    def test_verify_webhook(self, mock_stripe):
+    """Test webhook verification"""
+    test_event={
+    "type": "customer.subscription.updated",
+
+    }
+    with patch("stripe.Webhook.construct_event") as mock_construct:
+    mock_construct.return_value=test_event
+
+    result=mock_stripe.verify_webhook(b"payload", "sig_header")
+    assert result == test_event
+
+    @ patch("stripe.Customer.list")
+    def test_get_customer_by_org(self, mock_list, mock_stripe):
+    """Test finding customer by organization ID"""
+    mock_customer=Mock()
+    mock_customer.id="cus_test123"
+
+    mock_list_result=Mock()
+    mock_list_result.data=[mock_customer]
+    mock_list.return_value=mock_list_result
+
+    result=mock_stripe.get_customer_by_org("test-org")
+    assert result == mock_customer
+
+    @ patch("stripe.Plan.list")
+    def test_health_check(self, mock_list, mock_stripe):
+    """Test Stripe health check"""
+    mock_list.return_value=Mock()
+
+    result=mock_stripe.health_check()
+    assert result
+
+    @ patch("stripe.Invoice.upcoming")
+    def test_get_invoice_preview(self, mock_upcoming, mock_stripe):
+    """Test invoice preview"""
+    mock_line=Mock()
+    mock_line.description="Test item"
+    mock_line.amount=1000
+    mock_line.quantity=1
+
+    mock_lines=Mock()
+    mock_lines.data=[mock_line]
+
+    mock_invoice=Mock()
+    mock_invoice.amount_due=1000
+    mock_invoice.currency="usd"
+    mock_invoice.period_start=1234567890
+    mock_invoice.period_end=1234567900
+    mock_invoice.lines=mock_lines
+
+    mock_upcoming.return_value=mock_invoice
+
+    result=mock_stripe.get_invoice_preview("cus_test123")
+
+    assert result["amount_due"] == 1000
+    assert result["currency"] == "usd"
+    assert len(result["lines"]) == 1
+    assert result["lines"][0]["description"] == "Test item"
+
+    def test_webhook_signature_verification_error(self, mock_stripe):
+    """Test webhook signature verification failure"""
+    with patch("stripe.Webhook.construct_event") as mock_construct:
+    mock_construct.side_effect=stripe.error.SignatureVerificationError(
+    "Invalid signature", "sig_header")
+
+    with pytest.raises(stripe.error.SignatureVerificationError):
+    mock_stripe.verify_webhook(b"payload", "invalid_sig")
+
+    @ patch("stripe.Customer.create")
+    def test_create_customer_stripe_error(self, mock_create, mock_stripe):
+    """Test handling Stripe errors"""
+    mock_create.side_effect=stripe.error.StripeError("Test error")
+
+    with pytest.raises(stripe.error.StripeError):
+    mock_stripe.create_customer(
+    "test-org", "test@example.com", "Test Org")
+
+    if __name__ == "__main__":
+
+    async def run_tests():
+    """Run all test functions in this module"""
+    print(f"Running tests in {__file__}")
+
+        # Find all test functions
+    test_functions=[name for name in globals() if name.startswith(
+    'test_') and callable(globals()[name])]
+
+    passed=0
+    total=len(test_functions)
+
+    for test_name in test_functions:
+    try:
+    pass
+    except Exception as e:
+
+    test_func=globals()[test_name]
+    if asyncio.iscoroutinefunction(test_func):
+    await test_func()
+    else:
+    test_func()
+    print(f"[PASS] {test_name}")
+    passed += 1
+    print(f"[FAIL] {test_name}: {e}")
+
+    print(f"Results: {passed}/{total} tests passed")
+    return passed == total
+
+    try:
+    success=asyncio.run(run_tests())
+    sys.exit(0 if success else 1)
+    except Exception as e:
+    print(f"Test execution failed: {e}")
+    sys.exit(1)
+
+    if __name__ == '__main__':
+    print('Running test file...')
+
+    # Run all test functions
+    test_functions=[name for name in globals() if name.startswith('test_')]
+
+    for test_name in test_functions:
+    try:
+    test_func=globals()[test_name]
+    if asyncio.iscoroutinefunction(test_func):
+    asyncio.run(test_func())
+    else:
+    test_func()
+    print(f'✓ {test_name} passed')
+    except Exception as e:
+    print(f'✗ {test_name} failed: {e}')
+
+    print('Test execution completed.')

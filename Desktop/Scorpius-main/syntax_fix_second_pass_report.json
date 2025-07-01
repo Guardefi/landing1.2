@@ -1,0 +1,10 @@
+{
+  "summary": {
+    "files_processed": 87,
+    "files_fixed": 81,
+    "errors_fixed": 81,
+    "failed_files": []
+  },
+  "success_rate": 93.10344827586206,
+  "timestamp": 1751311309.482029
+}

@@ -1,0 +1,64 @@
+# Fly.io configuration for Scorpius Frontend - Staging Environment
+app = "scorpius-frontend-staging"
+primary_region = "ord"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[experimental]
+  auto_rollback = true
+
+[build]
+  dockerfile = "Dockerfile.prod"
+
+[env]
+  NODE_ENV = "production"
+  VITE_API_BASE_URL = "https://api.staging.scorpius.security"
+  VITE_ENVIRONMENT = "staging"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/"
+
+[vm]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 80
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 500
+    soft_limit = 250
+
+# Static file serving configuration
+[[statics]]
+  guest_path = "/usr/share/nginx/html"
+  url_prefix = "/"
+
+# Custom domain (configure after deployment)
+# [[custom_domains]]
+#   name = "staging.scorpius.security"

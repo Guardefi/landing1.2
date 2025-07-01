@@ -1,0 +1,17 @@
+# Environment Configuration Template
+# Copy this file to config/environments/ for each environment
+
+[development]
+debug = true
+log_level = DEBUG
+database_url = "postgresql://user:pass@localhost:5432/scorpius_dev"
+
+[staging]
+debug = false
+log_level = INFO
+database_url = "postgresql://user:pass@staging-db:5432/scorpius_staging"
+
+[production]
+debug = false
+log_level = WARNING
+database_url = "postgresql://user:pass@prod-db:5432/scorpius_prod"

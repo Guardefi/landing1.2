@@ -1,0 +1,175 @@
+# Secure Docker Compose Configuration
+# This file replaces hardcoded secrets with environment variables and external secrets
+
+name: scorpius-secure
+
+services:
+  # === CORE INFRASTRUCTURE ===
+  redis:
+    image: redis:7-alpine@sha256:e647cfe134bf5e8e74983e8d5ec6fb73b8c47c5e3e51d3e76b73b1e74b27c3a6
+    container_name: scorpius-redis-secure
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_secure:/data
+    networks:
+      - scorpius-secure-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+    user: "999:999"
+    read_only: true
+    tmpfs:
+      - /tmp
+    profiles:
+      - secure
+
+  postgres:
+    image: postgres:15-alpine@sha256:c6c8f85e81f6f5e3f4e0b9b4f8f5f8d9b4f5f8d9b4f5f8d9b4f5f8d9b4f5f8d9
+    container_name: scorpius-postgres-secure
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_secure:/var/lib/postgresql/data
+      - ./infrastructure/sql:/docker-entrypoint-initdb.d:ro
+    networks:
+      - scorpius-secure-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+    user: "postgres"
+    profiles:
+      - secure
+
+  # === CORE ORCHESTRATOR ===
+  orchestrator:
+    build:
+      context: .
+      dockerfile: packages/core/Dockerfile
+      target: production
+    container_name: scorpius-orchestrator-secure
+    environment:
+      - ENVIRONMENT=production
+      - AWS_REGION=${AWS_REGION}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - scorpius-secure-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    user: "999:999"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/tmp
+    profiles:
+      - secure
+
+  # === API GATEWAY ===
+  api-gateway:
+    build:
+      context: services/api-gateway
+      dockerfile: Dockerfile.prod
+    container_name: scorpius-api-gateway-secure
+    environment:
+      - ENVIRONMENT=production
+      - AWS_REGION=${AWS_REGION}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - WEB3_PROVIDER_URL=${WEB3_PROVIDER_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+    depends_on:
+      orchestrator:
+        condition: service_healthy
+    networks:
+      - scorpius-secure-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    user: "scorpius:scorpius"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/tmp
+    profiles:
+      - secure
+
+  # === MEV BOT ===
+  mev-bot:
+    build:
+      context: backend/mev_bot
+      dockerfile: Dockerfile
+    container_name: scorpius-mev-bot-secure
+    environment:
+      - ENVIRONMENT=production
+      - AWS_REGION=${AWS_REGION}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - WEB3_PROVIDER_URL=${WEB3_PROVIDER_URL}
+      - COINBASE_API_KEY=${COINBASE_API_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - scorpius-secure-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    user: "mevuser"
+    read_only: true
+    tmpfs:
+      - /tmp
+    profiles:
+      - secure
+
+volumes:
+  redis_data_secure:
+    driver: local
+  postgres_data_secure:
+    driver: local
+
+networks:
+  scorpius-secure-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

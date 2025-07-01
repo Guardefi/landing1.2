@@ -1,0 +1,200 @@
+{
+  "name": "Scorpius Enterprise Platform Development Container",
+  "dockerFile": "Dockerfile.devcontainer",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true,
+      "username": "scorpius",
+      "userUid": 1000,
+      "userGid": 1000
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": true,
+      "azureDnsAutoDetection": true,
+      "installDockerBuildx": true,
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "latest",
+      "helm": "latest",
+      "minikube": "none"
+    },
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "latest",
+      "tflint": "latest",
+      "terragrunt": "latest"
+    },
+    "ghcr.io/devcontainers/features/aws-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18",
+      "nodeGypDependencies": true,
+      "installYarnUsingApt": true
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11",
+      "installTools": true,
+      "optimize": true,
+      "enableShared": true,
+      "installJupyterlab": true,
+      "configureGitCredentialHelper": true
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.flake8",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.mypy-type-checker",
+        "ms-toolsai.jupyter",
+        "ms-vscode.vscode-typescript-next",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "hashicorp.terraform",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "ms-vscode.docker",
+        "github.copilot",
+        "github.copilot-chat",
+        "ms-azuretools.vscode-azureterraform",
+        "ms-azuretools.vscode-docker",
+        "grafana.vscode-jsonnet",
+        "prometheus-community.promql",
+        "github.vscode-github-actions",
+        "ms-vscode.makefile-tools",
+        "streetsidesoftware.code-spell-checker",
+        "davidanson.vscode-markdownlint",
+        "shardulm94.trailing-spaces",
+        "esbenp.prettier-vscode",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.flake8Enabled": true,
+        "python.linting.mypyEnabled": true,
+        "python.formatting.provider": "black",
+        "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+        "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+        "python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
+        "python.sortImports.path": "/usr/local/py-utils/bin/isort",
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestArgs": [
+          "tests"
+        ],
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit",
+          "source.fixAll": "explicit"
+        },
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/.pytest_cache": true,
+          "**/node_modules": true,
+          "**/.git": false
+        },
+        "files.watcherExclude": {
+          "**/.git/objects/**": true,
+          "**/.git/subtree-cache/**": true,
+          "**/node_modules/*/**": true,
+          "**/__pycache__/**": true
+        },
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/usr/bin/zsh"
+          }
+        },
+        "git.autofetch": true,
+        "git.enableSmartCommit": true,
+        "docker.showStartPage": false,
+        "kubernetes.vs-kubernetes.draft-folder": ".draft",
+        "kubernetes.vs-kubernetes.kubectl-path.linux": "/usr/local/bin/kubectl",
+        "makefile.configureOnOpen": true,
+        "yaml.schemas": {
+          "https://json.schemastore.org/kustomization": "kustomization.yaml",
+          "https://json.schemastore.org/chart": "Chart.yaml",
+          "https://json.schemastore.org/github-workflow": ".github/workflows/*.yml"
+        }
+      }
+    }
+  },
+
+  "runArgs": [
+    "--init",
+    "--security-opt", "seccomp=unconfined",
+    "--security-opt", "apparmor=unconfined"
+  ],
+
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind",
+    "source=${localWorkspaceFolder}/.devcontainer/scripts,target=/usr/local/share/devcontainer-scripts,type=bind,readonly"
+  ],
+
+  "forwardPorts": [
+    3000,
+    8000,
+    8080,
+    9090,
+    3001,
+    5432,
+    6379,
+    9003
+  ],
+
+  "portsAttributes": {
+    "3000": {
+      "label": "Frontend",
+      "onAutoForward": "notify"
+    },
+    "8000": {
+      "label": "API Gateway",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Documentation",
+      "onAutoForward": "silent"
+    },
+    "9090": {
+      "label": "Prometheus",
+      "onAutoForward": "silent"
+    },
+    "3001": {
+      "label": "Grafana",
+      "onAutoForward": "silent"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "ignore"
+    },
+    "6379": {
+      "label": "Redis",
+      "onAutoForward": "ignore"
+    },
+    "9003": {
+      "label": "OpenCost",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "postCreateCommand": "/usr/local/share/devcontainer-scripts/setup.sh",
+  "postStartCommand": "/usr/local/share/devcontainer-scripts/start.sh",
+
+  "remoteUser": "scorpius",
+  
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+
+  "shutdownAction": "stopContainer"
+}

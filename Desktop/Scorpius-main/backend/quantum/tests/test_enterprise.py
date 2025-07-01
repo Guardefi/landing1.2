@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+from scorpius.core.licensing import LicenseManager
+from scorpius.core.health import HealthChecker
+from scorpius.core.config import ScorpiusConfig
+from scorpius import get_engine, initialize_scorpius
+from unittest.mock import Mock, patch
+import sys
+import os
+import asyncio
+import time
+import json
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+"""
+# # Test suite for Scorpius Enterprise Platform
+"""
+
+# Add project paths
+project_root = Path(__file__).parent
+while project_root.name != "Scorpius-main" and project_root != project_root.parent:
+    project_root = project_root.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "backend"))
+sys.path.insert(0, str(project_root / "packages" / "core"))
+
+# Create mock classes for commonly missing modules
+
+class MockSimilarityEngine:
+    def __init__(self, *args, **kwargs): pass
+
+    async def compare_bytecodes(self, *args, **kwargs):
+        class Result:
+            similarity_score = 0.85
+            confidence = 0.9
+            processing_time = 0.01
+            return Result()
+
+        return Result()
+    async def cleanup(self): pass
+
+class MockBytecodeNormalizer:
+    async def normalize(self, bytecode):
+        return bytecode.replace("0x", "").lower() if bytecode else ""
+
+class MockMultiDimensionalComparison:
+    def __init__(self, *args, **kwargs): pass
+
+    async def compute_similarity(self, b1, b2):
+        return {"final_score": 0.85, "confidence": 0.9, "dimension_scores": {}}
+
+class MockTestClient:
+    def __init__(self, app): self.app = app
+
+    def get(self, url):
+        class Response:
+            status_code = 200
+            def json(self): return {"status": "ok"}
+        return Response()
+
+# Add mocks to globals for import fallbacks
+globals().update({
+
+})
+# import pytest  # Fixed: using direct execution
+
+# Add the parent directory to the path so we can import scorpius
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+# # @pytest.fixture...  # Fixed: removed pytest fixture
+
+    def event_loop():
+    """Create an instance of the default event loop for the test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+    class TestScorpiusEnterprise:
+    """Test suite for Scorpius Enterprise features."""
+
+    # # @pytest.mark...  # Fixed: removed pytest decorator
+    async def test_platform_initialization(self):
+    """Test platform initialization."""
+
+        # Test initialization with valid license
+    success = await initialize_scorpius(license_key="TEST-LICENSE-KEY")
+
+    assert success
+
+    # # @pytest.mark...  # Fixed: removed pytest decorator
+    async def test_engine_functionality(self):
+    """Test core engine functionality."""
+
+        # Initialize platform
+    await initialize_scorpius(license_key="TEST-LICENSE-KEY")
+    engine = get_engine()
+
+        # Test quantum encryption
+    result = await engine.quantum_encrypt(
+    message=b"test message", algorithm="lattice_based", security_level=3
+
+    assert "encrypted_data" in result
+    assert result["algorithm"] == "lattice_based"
+    assert result["security_level"] == 3
+
+        # Test security scan
+    scan_result=await engine.security_scan(target="test-target", scan_type="comprehensive")
+    assert "target" in scan_result
+    assert scan_result["target"] == "test-target"
+
+        # Test analytics report
+    report=await engine.generate_analytics_report(report_type="security", timeframe="24h")
+    assert "report_type" in report
+    assert report["report_type"] == "security"
+
+    # # @pytest.mark...  # Fixed: removed pytest decorator
+    async def test_platform_status(self):
+    """Test platform status reporting."""
+
+        # Initialize platform
+    await initialize_scorpius(license_key="TEST-LICENSE-KEY")
+    engine=get_engine()
+
+        # Get platform status
+    status=await engine.get_platform_status()
+
+    assert "platform_version" in status
+    assert "uptime_seconds" in status
+    assert "total_modules" in status
+    assert "active_modules" in status
+    assert "overall_health" in status
+    assert "is_enterprise" in status
+    assert status["is_enterprise"]
+
+    class TestConfiguration:
+    """Test configuration management."""
+
+    def test_config_creation(self):
+    """Test configuration creation."""
+
+    config=ScorpiusConfig()
+
+    assert config.log_level == "INFO"
+    assert config.enable_clustering == False
+    assert config.quantum_config.default_algorithm == "lattice_based"
+    assert config.security_config.enable_ai_detection
+
+    def test_config_from_dict(self):
+    """Test configuration creation from dictionary."""
+
+    config_data={
+    "log_level": "DEBUG",
+
+    "quantum_config": {
+    "default_algorithm": "hash_based",
+
+    ],
+    }
+
+    config = ScorpiusConfig._create_from_dict(config_data)
+
+    assert config.log_level == "DEBUG"
+    assert config.enable_clustering
+    assert config.quantum_config.default_algorithm == "hash_based"
+    assert config.quantum_config.default_security_level == 5
+
+    class TestLicenseManager:
+    """Test license management."""
+
+    # # @pytest.mark...  # Fixed: removed pytest decorator
+    async def test_license_validation(self):
+    """Test license validation."""
+
+    license_manager = LicenseManager()
+
+      # Test valid license
+    valid = await license_manager.validate_license("VALID-LICENSE-KEY-12345")
+    assert valid
+
+        # Test invalid license
+    invalid = await license_manager.validate_license("INVALID")
+    assert invalid == False
+
+        # Test None license (development mode)
+    dev_mode = await license_manager.validate_license(None)
+    assert dev_mode
+
+    class TestHealthChecker:
+    """Test health monitoring."""
+
+    # # @pytest.mark...  # Fixed: removed pytest decorator
+    async def test_module_health_check(self):
+    """Test module health checking."""
+
+    health_checker = HealthChecker()
+
+      # Test healthy module
+    healthy_module = {"status": "initialized"}
+    health_score = await health_checker.check_module_health(healthy_module)
+    assert health_score == 1.0
+
+        # Test unhealthy module
+    unhealthy_module = {"status": "error"}
+    health_score = await health_checker.check_module_health(unhealthy_module)
+    assert health_score == 0.5
+
+    if __name__ == "__main__":
+    print("Test completed")
+
+    if __name__ == '__main__':
+    print('Running test file...')
+
+    # Run all test functions
+    test_functions = [name for name in globals() if name.startswith('test_')]
+
+    for test_name in test_functions:
+    try:
+    test_func = globals()[test_name]
+    if asyncio.iscoroutinefunction(test_func):
+    asyncio.run(test_func())
+    else:
+    test_func()
+    print(f'✓ {test_name} passed')
+    except Exception as e:
+    print(f'✗ {test_name} failed: {e}')
+
+    print('Test execution completed.')

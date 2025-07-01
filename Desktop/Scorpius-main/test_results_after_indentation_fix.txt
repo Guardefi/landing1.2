@@ -1,0 +1,1079 @@
+>> Scorpius Enterprise Test Runner
+============================================================
+Found 81 test files
+
+[1/81] Processing: test_audit_trail.py
+
+============================================================
+Running: backend\audit_trail\tests\test_audit_trail.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\audit_trail\tests\test_audit_trail.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[2/81] Processing: test_auth_proxy.py
+
+============================================================
+Running: backend\auth_proxy\tests\test_auth_proxy.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\auth_proxy\tests\test_auth_proxy.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[3/81] Processing: test_bridge.py
+
+============================================================
+Running: backend\bridge\tests\test_bridge.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\bridge\tests\test_bridge.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[4/81] Processing: test_bridge_transaction.py
+
+============================================================
+Running: backend\bridge\tests\unit\test_bridge_transaction.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\bridge\tests\unit\test_bridge_transaction.py", line 22
+    print(f"Error: {str(e)}")
+IndentationError: unexpected indent
+...
+
+[5/81] Processing: run_tests.py
+
+============================================================
+Running: backend\Bytecode\api\run_tests.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\api\run_tests.py", line 49
+    ]
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 44
+...
+
+[6/81] Processing: test_enterprise_command_router.py
+
+============================================================
+Running: backend\Bytecode\api\test_enterprise_command_router.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\api\test_enterprise_command_router.py", line 585
+    ) as mock_honeypot:
+    ^
+SyntaxError: unmatched ')'
+...
+
+[7/81] Processing: test_with_server.py
+
+============================================================
+Running: backend\Bytecode\api\test_with_server.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\api\test_with_server.py", line 314
+    ],
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '(' on line 307
+...
+
+[8/81] Processing: test_api_endpoints.py
+
+============================================================
+Running: backend\Bytecode\tests\test_api_endpoints.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\tests\test_api_endpoints.py", line 171
+    ],
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 168
+...
+
+[9/81] Processing: test_basic.py
+
+============================================================
+Running: backend\Bytecode\tests\test_basic.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\tests\test_basic.py", line 377
+    )
+    ^
+SyntaxError: unmatched ')'
+...
+
+[10/81] Processing: test_Bytecode.py
+
+============================================================
+Running: backend\Bytecode\tests\test_Bytecode.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[PASS] SUCCESS
+OUTPUT: Running tests in C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\tests\test_Bytecode.py
+Results: 0/0 tests passed
+...
+
+[11/81] Processing: test_comparison_engine.py
+
+============================================================
+Running: backend\Bytecode\tests\test_comparison_engine.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\tests\test_comparison_engine.py", line 84
+    from core.comparison_engine import MultiDimensionalComparison, SimilarityEngine
+IndentationError: unexpected indent
+...
+
+[12/81] Processing: test_core_modules.py
+
+============================================================
+Running: backend\Bytecode\tests\test_core_modules.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\tests\test_core_modules.py", line 110
+    from core.comparison_engine import MultiDimensionalComparison, SimilarityEngine
+IndentationError: unexpected indent
+...
+
+[13/81] Processing: test_corrected_validation.py
+
+============================================================
+Running: backend\Bytecode\tests\test_corrected_validation.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\tests\test_corrected_validation.py", line 101
+    print("[OK] SimilarityEngine imported successfully")
+IndentationError: unexpected indent
+...
+
+[14/81] Processing: test_normalizer.py
+
+============================================================
+Running: backend\Bytecode\tests\test_normalizer.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\tests\test_normalizer.py", line 74
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[15/81] Processing: test_similarity_engine.py
+
+============================================================
+Running: backend\Bytecode\tests\test_similarity_engine.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\tests\test_similarity_engine.py", line 130
+    ],
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 121
+...
+
+[16/81] Processing: test_validation.py
+
+============================================================
+Running: backend\Bytecode\tests\test_validation.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\Bytecode\tests\test_validation.py", line 99
+    from core.comparison_engine import MultiDimensionalComparison, SimilarityEngine
+IndentationError: unexpected indent
+...
+
+[17/81] Processing: test_config.py
+
+============================================================
+Running: backend\config\tests\test_config.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[PASS] SUCCESS
+OUTPUT: Running tests in C:\Users\ADMIN\Desktop\Scorpius-main\backend\config\tests\test_config.py
+Results: 0/0 tests passed
+...
+
+[18/81] Processing: test_decorators.py
+
+============================================================
+Running: backend\decorators\tests\test_decorators.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\decorators\tests\test_decorators.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[19/81] Processing: final_test_report.py
+
+============================================================
+Running: backend\honeypot\final_test_report.py
+============================================================
+Analysis: main=False, pytest=False, unittest=False
+[SKIP] No main execution block
+
+[20/81] Processing: run_tests.py
+
+============================================================
+Running: backend\honeypot\run_tests.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\honeypot\run_tests.py", line 53
+    ]
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 47
+...
+
+[21/81] Processing: test_api.py
+
+============================================================
+Running: backend\honeypot\test_api.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+
+[22/81] Processing: test_comprehensive.py
+
+============================================================
+Running: backend\honeypot\test_comprehensive.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\honeypot\test_comprehensive.py", line 72
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[23/81] Processing: test_performance.py
+
+============================================================
+Running: backend\honeypot\test_performance.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\honeypot\test_performance.py", line 351
+    result['avg_time'] * 1000: .2f}",
+                                ^
+SyntaxError: invalid decimal literal
+...
+
+[24/81] Processing: test_react_integration.py
+
+============================================================
+Running: backend\honeypot\test_react_integration.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\honeypot\test_react_integration.py", line 116
+    ],
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '(' on line 110
+...
+
+[25/81] Processing: test_honeypot.py
+
+============================================================
+Running: backend\honeypot\tests\test_honeypot.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\honeypot\tests\test_honeypot.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[26/81] Processing: test_risk_level.py
+
+============================================================
+Running: backend\honeypot\tests\test_risk_level.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\honeypot\tests\test_risk_level.py", line 81
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[27/81] Processing: test_static_engine.py
+
+============================================================
+Running: backend\honeypot\tests\test_static_engine.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\honeypot\tests\test_static_engine.py", line 75
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[28/81] Processing: test_api_startup.py
+
+============================================================
+Running: backend\mempool\test_api_startup.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\mempool\test_api_startup.py", line 67
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[29/81] Processing: test_database_api.py
+
+============================================================
+Running: backend\mempool\test_database_api.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\mempool\test_database_api.py", line 66
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[30/81] Processing: test_live_api.py
+
+============================================================
+Running: backend\mempool\test_live_api.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\mempool\test_live_api.py", line 111
+    },
+    ^
+SyntaxError: closing parenthesis '}' does not match opening parenthesis '[' on line 100
+...
+
+[31/81] Processing: test_api.py
+
+============================================================
+Running: backend\mempool\tests\integration\test_api.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\mempool\tests\integration\test_api.py", line 73
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[32/81] Processing: test_mempool.py
+
+============================================================
+Running: backend\mempool\tests\test_mempool.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\mempool\tests\test_mempool.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[33/81] Processing: test_mempool_monitor.py
+
+============================================================
+Running: backend\mempool\tests\unit\test_mempool_monitor.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\mempool\tests\unit\test_mempool_monitor.py", line 92
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[34/81] Processing: test_guardian_types.py
+
+============================================================
+Running: backend\mev_bot\tests\test_guardian_types.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\mev_bot\tests\test_guardian_types.py", line 20
+    class MockModule:
+    ^^^^^
+SyntaxError: invalid syntax
+...
+
+[35/81] Processing: test_mev_bot.py
+
+============================================================
+Running: backend\mev_bot\tests\test_mev_bot.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\mev_bot\tests\test_mev_bot.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[36/81] Processing: test_middleware.py
+
+============================================================
+Running: backend\middleware\tests\test_middleware.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\middleware\tests\test_middleware.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[37/81] Processing: test_api_integration.py
+
+============================================================
+Running: backend\quantum\test_api_integration.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+
+[38/81] Processing: test_enterprise.py
+
+============================================================
+Running: backend\quantum\tests\test_enterprise.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\quantum\tests\test_enterprise.py", line 70
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[39/81] Processing: test_quantum.py
+
+============================================================
+Running: backend\quantum\tests\test_quantum.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\quantum\tests\test_quantum.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[40/81] Processing: test_docker_plugins.py
+
+============================================================
+Running: backend\scanner\test_docker_plugins.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\scanner\test_docker_plugins.py", line 80
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[41/81] Processing: test_enhanced_scanner.py
+
+============================================================
+Running: backend\scanner\test_enhanced_scanner.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\scanner\test_enhanced_scanner.py", line 79
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[42/81] Processing: test_plugins.py
+
+============================================================
+Running: backend\scanner\test_plugins.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\scanner\test_plugins.py", line 85
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[43/81] Processing: test_enhanced_scanner.py
+
+============================================================
+Running: backend\scanner\tests\integration\test_enhanced_scanner.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\scanner\tests\integration\test_enhanced_scanner.py", line 80
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[44/81] Processing: test_models.py
+
+============================================================
+Running: backend\scanner\tests\test_models.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\scanner\tests\test_models.py", line 71
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[45/81] Processing: test_plugin_manager.py
+
+============================================================
+Running: backend\scanner\tests\test_plugin_manager.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\scanner\tests\test_plugin_manager.py", line 20
+    class MockModule:
+    ^^^^^
+SyntaxError: invalid syntax
+...
+
+[46/81] Processing: test_scanner.py
+
+============================================================
+Running: backend\scanner\tests\test_scanner.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\scanner\tests\test_scanner.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[47/81] Processing: test_comprehensive.py
+
+============================================================
+Running: backend\time_machine\tests\test_comprehensive.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\time_machine\tests\test_comprehensive.py", line 196
+    ]
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 181
+...
+
+[48/81] Processing: test_replay_smoke.py
+
+============================================================
+Running: backend\time_machine\tests\test_replay_smoke.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\time_machine\tests\test_replay_smoke.py", line 177
+    ],
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 171
+...
+
+[49/81] Processing: test_time_machine.py
+
+============================================================
+Running: backend\time_machine\tests\test_time_machine.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\time_machine\tests\test_time_machine.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[50/81] Processing: test_api.py
+
+============================================================
+Running: backend\usage_metering\tests\test_api.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\usage_metering\tests\test_api.py", line 69
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[51/81] Processing: test_integration.py
+
+============================================================
+Running: backend\usage_metering\tests\test_integration.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\usage_metering\tests\test_integration.py", line 72
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[52/81] Processing: test_metrics_exporter.py
+
+============================================================
+Running: backend\usage_metering\tests\test_metrics_exporter.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\usage_metering\tests\test_metrics_exporter.py", line 66
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[53/81] Processing: test_stripe_service.py
+
+============================================================
+Running: backend\usage_metering\tests\test_stripe_service.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\usage_metering\tests\test_stripe_service.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[54/81] Processing: test_usage_metering.py
+
+============================================================
+Running: backend\usage_metering\tests\test_usage_metering.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\usage_metering\tests\test_usage_metering.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[55/81] Processing: test_usage_tracker.py
+
+============================================================
+Running: backend\usage_metering\tests\test_usage_tracker.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\usage_metering\tests\test_usage_tracker.py", line 87
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[56/81] Processing: test_utils.py
+
+============================================================
+Running: backend\utils\tests\test_utils.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\utils\tests\test_utils.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[57/81] Processing: test_wallet_guard.py
+
+============================================================
+Running: backend\wallet_guard\tests\test_wallet_guard.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\backend\wallet_guard\tests\test_wallet_guard.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[58/81] Processing: comprehensive_integration_test.py
+
+============================================================
+Running: comprehensive_integration_test.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\comprehensive_integration_test.py", line 109
+    class MockBytecodeNormalizer:
+IndentationError: expected an indented block after function definition on line 106
+...
+
+[59/81] Processing: test_monitoring.py
+
+============================================================
+Running: monitoring\test_monitoring.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR: Traceback (most recent call last):
+  File "C:\Users\ADMIN\Desktop\Scorpius-main\monitoring\test_monitoring.py", line 180, in <module>
+    print("\U0001f50d Running Monitoring System Tests...")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode char...
+
+[60/81] Processing: test_app.py
+
+============================================================
+Running: packages\backend\reporting\tests\test_app.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\packages\backend\reporting\tests\test_app.py", line 67
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[61/81] Processing: simple_test.py
+
+============================================================
+Running: packages\core\tests\simple_test.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\packages\core\tests\simple_test.py", line 278
+    """
+    ^
+SyntaxError: unterminated triple-quoted string literal (detected at line 278)
+...
+
+[62/81] Processing: test_api.py
+
+============================================================
+Running: packages\core\tests\test_api.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\packages\core\tests\test_api.py", line 61
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[63/81] Processing: test_mev_bot.py
+
+============================================================
+Running: packages\core\tests\test_mev_bot.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\packages\core\tests\test_mev_bot.py", line 63
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[64/81] Processing: test_system.py
+
+============================================================
+Running: packages\core\tests\test_system.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\packages\core\tests\test_system.py", line 394
+    """
+    ^
+SyntaxError: unterminated triple-quoted string literal (detected at line 394)
+...
+
+[65/81] Processing: test_system.py
+
+============================================================
+Running: reporting\test_system.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR: Traceback (most recent call last):
+  File "C:\Users\ADMIN\Desktop\Scorpius-main\reporting\test_system.py", line 235, in main
+    success = asyncio.run(test_basic_functionality())
+  File "C:\Python313\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python313\Lib\asyncio\base_events....
+
+[66/81] Processing: test_api_routes.py
+
+============================================================
+Running: reporting\tests\test_api_routes.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\reporting\tests\test_api_routes.py", line 61
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[67/81] Processing: test_diff_engine.py
+
+============================================================
+Running: reporting\tests\test_diff_engine.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\reporting\tests\test_diff_engine.py", line 61
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[68/81] Processing: test_writer_html.py
+
+============================================================
+Running: reporting\tests\test_writer_html.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\reporting\tests\test_writer_html.py", line 61
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[69/81] Processing: test_api-gateway.py
+
+============================================================
+Running: services\api-gateway\tests\test_api-gateway.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\services\api-gateway\tests\test_api-gateway.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[70/81] Processing: test_routes.py
+
+============================================================
+Running: services\api-gateway\tests\test_routes.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\services\api-gateway\tests\test_routes.py", line 63
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[71/81] Processing: test_bridge-service.py
+
+============================================================
+Running: services\bridge-service\tests\test_bridge-service.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\services\bridge-service\tests\test_bridge-service.py", line 68
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[72/81] Processing: simple_working_test.py
+
+============================================================
+Running: simple_working_test.py
+============================================================
+Analysis: main=False, pytest=False, unittest=False
+[SKIP] No main execution block
+
+[73/81] Processing: test_static_api.py
+
+============================================================
+Running: tests\api\test_static_api.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\tests\api\test_static_api.py", line 63
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[74/81] Processing: security_tests.py
+
+============================================================
+Running: tests\security\security_tests.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\tests\security\security_tests.py", line 108
+    ],
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 104
+...
+
+[75/81] Processing: test_api_gateway_basic.py
+
+============================================================
+Running: tests\test_api_gateway_basic.py
+============================================================
+Analysis: main=True, pytest=False, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\tests\test_api_gateway_basic.py", line 217
+    ]
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '{' on line 210
+...
+
+[76/81] Processing: test_backend_comprehensive.py
+
+============================================================
+Running: tests\test_backend_comprehensive.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\tests\test_backend_comprehensive.py", line 314
+    )
+    ^
+SyntaxError: unmatched ')'
+...
+
+[77/81] Processing: test_api_main.py
+
+============================================================
+Running: tests\unit\bytecode\test_api_main.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\tests\unit\bytecode\test_api_main.py", line 71
+    'SimilarityEngine': MockSimilarityEngine,
+IndentationError: unexpected indent
+...
+
+[78/81] Processing: test_comparison_engine.py
+
+============================================================
+Running: tests\unit\bytecode\test_comparison_engine.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\tests\unit\bytecode\test_comparison_engine.py", line 95
+    from core.comparison_engine import MultiDimensionalComparison, SimilarityEngine
+IndentationError: unexpected indent
+...
+
+[79/81] Processing: test_similarity_engine.py
+
+============================================================
+Running: tests\unit\bytecode\test_similarity_engine.py
+============================================================
+Analysis: main=True, pytest=True, unittest=True
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\tests\unit\bytecode\test_similarity_engine.py", line 125
+    ]
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '(' on line 86
+...
+
+[80/81] Processing: test_retry.py
+
+============================================================
+Running: tests\unit\test_retry.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\tests\unit\test_retry.py", line 79
+    {
+    ^
+SyntaxError: '{' was never closed
+...
+
+[81/81] Processing: test_rpc_decorator.py
+
+============================================================
+Running: tests\unit\test_rpc_decorator.py
+============================================================
+Analysis: main=True, pytest=True, unittest=False
+[FAIL] FAILED
+Return code: 1
+STDERR:   File "C:\Users\ADMIN\Desktop\Scorpius-main\tests\unit\test_rpc_decorator.py", line 90
+    {
+    ^
+SyntaxError: '{' was never closed
+...
+
+============================================================
+TEST EXECUTION SUMMARY
+============================================================
+Total found: 81
+Total run: 81
+Passed: 2
+Failed: 77
+Skipped: 2
+Errors: 0
+Success rate: 2.5%
+
+Detailed results saved to enterprise_test_results.json

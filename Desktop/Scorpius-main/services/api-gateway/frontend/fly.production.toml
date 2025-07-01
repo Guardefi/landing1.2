@@ -1,0 +1,81 @@
+# Fly.io configuration for Scorpius Frontend - Production Environment
+app = "scorpius-frontend-prod"
+primary_region = "ord"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[experimental]
+  auto_rollback = true
+
+[build]
+  dockerfile = "Dockerfile.prod"
+
+[env]
+  NODE_ENV = "production"
+  VITE_API_BASE_URL = "https://api.scorpius.security"
+  VITE_ENVIRONMENT = "production"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 2
+  max_machines_running = 5
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "15s"
+    interval = "60s"
+    method = "GET"
+    timeout = "10s"
+    path = "/"
+
+[vm]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 80
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 1000
+    soft_limit = 500
+
+# Production auto-scaling
+[deploy]
+  strategy = "rolling"
+  max_unavailable = 0.33
+
+# Health checks
+[[checks]]
+  name = "frontend_health"
+  type = "http"
+  interval = "30s"
+  timeout = "5s"
+  path = "/"
+
+# Static file serving with CDN optimization
+[[statics]]
+  guest_path = "/usr/share/nginx/html"
+  url_prefix = "/"
+
+# Custom domains
+[[custom_domains]]
+  name = "scorpius.security"
+
+[[custom_domains]]
+  name = "www.scorpius.security"

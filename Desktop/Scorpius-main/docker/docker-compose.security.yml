@@ -1,0 +1,142 @@
+# Production Security Configuration for Docker Compose
+# Add this as docker-compose.security.yml and run with:
+# docker-compose -f docker-compose.enterprise.yml -f docker-compose.security.yml up -d
+
+version: '3.8'
+
+services:
+  # Security hardening for API Gateway
+  api-gateway:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=1G
+      - /var/cache:noexec,nosuid,size=500M
+    user: "1000:1000"
+    environment:
+      - SECURITY_HEADERS_ENABLED=true
+      - RATE_LIMITING_ENABLED=true
+      - CORS_STRICT_MODE=true
+
+  # Security hardening for all backend services
+  bridge-service: &backend-security
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=500M
+    user: "1000:1000"
+
+  bytecode-service:
+    <<: *backend-security
+
+  honeypot-service:
+    <<: *backend-security
+
+  mempool-service:
+    <<: *backend-security
+
+  quantum-service:
+    <<: *backend-security
+
+  time-machine-service:
+    <<: *backend-security
+
+  # Security hardening for scanners
+  scanner-slither: &scanner-security
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    user: "1000:1000"
+    # Note: Scanners need docker socket access, so read-only is not possible
+
+  scanner-mythril:
+    <<: *scanner-security
+
+  scanner-mythx:
+    <<: *scanner-security
+
+  scanner-manticore:
+    <<: *scanner-security
+
+  # Security hardening for databases
+  postgres:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    user: "999:999"  # postgres user
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c log_statement=all
+      -c log_connections=on
+      -c log_disconnections=on
+      -c log_checkpoints=on
+      -c log_lock_waits=on
+
+  redis:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    user: "999:999"  # redis user
+
+  # Security hardening for monitoring
+  prometheus:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100M
+    user: "65534:65534"  # nobody user
+
+  grafana:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100M
+    user: "472:472"  # grafana user
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SECURITY_LOGIN_REMEMBER_DAYS=1
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SECURITY_COOKIE_SAMESITE=strict
+      - GF_SECURITY_STRICT_TRANSPORT_SECURITY=true
+      - GF_SECURITY_X_CONTENT_TYPE_OPTIONS=true
+      - GF_SECURITY_X_XSS_PROTECTION=true
+
+  # Remove admin tools in production (comment out for production)
+  pgadmin:
+    profiles:
+      - debug
+      
+  redis-commander:
+    profiles:
+      - debug
+
+# Production network security
+networks:
+  scorpius-enterprise:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "false"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.driver.mtu: "1500"
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1

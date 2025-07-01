@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package bridge;
+
+service BridgeService {
+    rpc Transfer(TransferRequest) returns (TransferResponse) {}
+    rpc GetBridgeStatus(StatusRequest) returns (StatusResponse) {}
+}
+
+message TransferRequest {
+    string source_chain = 1;
+    string destination_chain = 2;
+    string token_address = 3;
+    string amount = 4;
+    string recipient_address = 5;
+}
+
+message TransferResponse {
+    string tx_hash = 1;
+    string status = 2;
+    int64 timestamp = 3;
+}
+
+message StatusRequest {
+    string tx_hash = 1;
+}
+
+message StatusResponse {
+    string status = 1;
+    int64 timestamp = 2;
+    string error_message = 3;
+}

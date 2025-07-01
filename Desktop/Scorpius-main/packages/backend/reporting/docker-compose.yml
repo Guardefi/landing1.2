@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  reporting:
+    build: .
+    ports:
+      - "8007:8007"
+    environment:
+      - SECRET_KEY=dev_secret_key_change_in_production
+      - DATABASE_URL=postgresql://scorpius:scorpius@postgres:5432/scorpius
+      - REDIS_URL=redis://redis:6379/0
+      - AWS_REGION=us-east-1
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           - QLDB_LEDGER_NAME=scorpius-audit
+      - DEBUG=true
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./reports:/app/reports
+      - ./audit_logs:/app/audit_logs
+      - ./certs:/app/certs
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - scorpius-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=scorpius
+      - POSTGRES_USER=scorpius
+      - POSTGRES_PASSWORD=scorpius
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Use different port to avoid conflict
+    restart: unless-stopped
+    networks:
+      - scorpius-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"  # Use different port to avoid conflict
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - scorpius-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - scorpius-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/dashboards:/etc/grafana/provisioning/dashboards
+    restart: unless-stopped
+    networks:
+      - scorpius-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  scorpius-network:
+    driver: bridge

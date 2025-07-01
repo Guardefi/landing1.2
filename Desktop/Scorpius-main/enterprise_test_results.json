@@ -1,0 +1,415 @@
+{
+  "total_found": 81,
+  "total_run": 81,
+  "passed": 3,
+  "failed": 76,
+  "skipped": 2,
+  "errors": 0,
+  "details": [
+    {
+      "file": "backend\\audit_trail\\tests\\test_audit_trail.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\auth_proxy\\tests\\test_auth_proxy.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\bridge\\tests\\test_bridge.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\bridge\\tests\\unit\\test_bridge_transaction.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\api\\run_tests.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\api\\test_enterprise_command_router.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\api\\test_with_server.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_api_endpoints.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_basic.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_Bytecode.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_comparison_engine.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_core_modules.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_corrected_validation.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_normalizer.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_similarity_engine.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\Bytecode\\tests\\test_validation.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\config\\tests\\test_config.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\decorators\\tests\\test_decorators.py",
+      "status": "passed",
+      "message": "Test completed successfully"
+    },
+    {
+      "file": "backend\\honeypot\\final_test_report.py",
+      "status": "skipped",
+      "message": "No main execution block found"
+    },
+    {
+      "file": "backend\\honeypot\\run_tests.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\honeypot\\test_api.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\honeypot\\test_comprehensive.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\honeypot\\test_performance.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\honeypot\\test_react_integration.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\honeypot\\tests\\test_honeypot.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\honeypot\\tests\\test_risk_level.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\honeypot\\tests\\test_static_engine.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\mempool\\test_api_startup.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\mempool\\test_database_api.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\mempool\\test_live_api.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\mempool\\tests\\integration\\test_api.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\mempool\\tests\\test_mempool.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\mempool\\tests\\unit\\test_mempool_monitor.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\mev_bot\\tests\\test_guardian_types.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\mev_bot\\tests\\test_mev_bot.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\middleware\\tests\\test_middleware.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\quantum\\test_api_integration.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\quantum\\tests\\test_enterprise.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\quantum\\tests\\test_quantum.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\scanner\\test_docker_plugins.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\scanner\\test_enhanced_scanner.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\scanner\\test_plugins.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\scanner\\tests\\integration\\test_enhanced_scanner.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\scanner\\tests\\test_models.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\scanner\\tests\\test_plugin_manager.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\scanner\\tests\\test_scanner.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\time_machine\\tests\\test_comprehensive.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\time_machine\\tests\\test_replay_smoke.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\time_machine\\tests\\test_time_machine.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_api.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_integration.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_metrics_exporter.py",
+      "status": "passed",
+      "message": "Test completed successfully"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_stripe_service.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_usage_metering.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\usage_metering\\tests\\test_usage_tracker.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\utils\\tests\\test_utils.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "backend\\wallet_guard\\tests\\test_wallet_guard.py",
+      "status": "passed",
+      "message": "Test completed successfully"
+    },
+    {
+      "file": "comprehensive_integration_test.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "monitoring\\test_monitoring.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "packages\\backend\\reporting\\tests\\test_app.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "packages\\core\\tests\\simple_test.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "packages\\core\\tests\\test_api.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "packages\\core\\tests\\test_mev_bot.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "packages\\core\\tests\\test_system.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "reporting\\test_system.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "reporting\\tests\\test_api_routes.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "reporting\\tests\\test_diff_engine.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "reporting\\tests\\test_writer_html.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "services\\api-gateway\\tests\\test_api-gateway.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "services\\api-gateway\\tests\\test_routes.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "services\\bridge-service\\tests\\test_bridge-service.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "simple_working_test.py",
+      "status": "skipped",
+      "message": "No main execution block found"
+    },
+    {
+      "file": "tests\\api\\test_static_api.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "tests\\security\\security_tests.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "tests\\test_api_gateway_basic.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "tests\\test_backend_comprehensive.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "tests\\unit\\bytecode\\test_api_main.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "tests\\unit\\bytecode\\test_comparison_engine.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "tests\\unit\\bytecode\\test_similarity_engine.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "tests\\unit\\test_retry.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    },
+    {
+      "file": "tests\\unit\\test_rpc_decorator.py",
+      "status": "failed",
+      "message": "Exit code 1"
+    }
+  ]
+}
