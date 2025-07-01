@@ -1,0 +1,118 @@
+{
+  "number": "0x64",
+  "hash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+  "parentHash": "0x0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba",
+  "timestamp": "0x6571a2c0",
+  "gasUsed": "0x5208",
+  "gasLimit": "0x1c9c380",
+  "baseFeePerGas": "0x7",
+  "difficulty": "0x2",
+  "totalDifficulty": "0xc8",
+  "size": "0x27f",
+  "transactions": [
+    {
+      "hash": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      "nonce": "0x1",
+      "blockHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "blockNumber": "0x64",
+      "transactionIndex": "0x0",
+      "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "value": "0xde0b6b3a7640000",
+      "gas": "0x5208",
+      "gasPrice": "0x4a817c800",
+      "input": "0x",
+      "type": "0x2",
+      "accessList": [],
+      "chainId": "0x7a69",
+      "v": "0x1",
+      "r": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "s": "0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"
+    },
+    {
+      "hash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "nonce": "0x2",
+      "blockHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "blockNumber": "0x64",
+      "transactionIndex": "0x1",
+      "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "value": "0x6f05b59d3b20000",
+      "gas": "0x5208",
+      "gasPrice": "0x4a817c800",
+      "input": "0x",
+      "type": "0x2",
+      "accessList": [],
+      "chainId": "0x7a69",
+      "v": "0x1",
+      "r": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "s": "0x3333333333333333333333333333333333333333333333333333333333333333"
+    }
+  ],
+  "receipts": [
+    {
+      "transactionHash": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      "transactionIndex": "0x0",
+      "blockHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "blockNumber": "0x64",
+      "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "cumulativeGasUsed": "0x5208",
+      "gasUsed": "0x5208",
+      "contractAddress": null,
+      "logs": [],
+      "status": "0x1",
+      "type": "0x2"
+    },
+    {
+      "transactionHash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "transactionIndex": "0x1",
+      "blockHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "blockNumber": "0x64",
+      "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "to": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "cumulativeGasUsed": "0xa410",
+      "gasUsed": "0x5208",
+      "contractAddress": null,
+      "logs": [],
+      "status": "0x1",
+      "type": "0x2"
+    }
+  ],
+  "state": {
+    "accounts": {
+      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266": {
+        "balance": "0x21e19e0c9bab23f5800000",
+        "nonce": "0x2",
+        "code": "0x",
+        "storage": {}
+      },
+      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8": {
+        "balance": "0x21e19e0c9bab2400000000",
+        "nonce": "0x1",
+        "code": "0x",
+        "storage": {}
+      },
+      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC": {
+        "balance": "0x21e19e0c9bab2400000000",
+        "nonce": "0x0",
+        "code": "0x",
+        "storage": {}
+      }
+    },
+    "stateRoot": "0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba"
+  },
+  "metadata": {
+    "timestamp_readable": "2023-12-07T10:30:00Z",
+    "gas_efficiency": 0.85,
+    "tx_types": {
+      "simple_transfer": 2,
+      "contract_call": 0,
+      "contract_creation": 0
+    },
+    "network": "local",
+    "chain_id": 31337,
+    "block_time": 12,
+    "validator": "0x0000000000000000000000000000000000000000"
+  }
+}

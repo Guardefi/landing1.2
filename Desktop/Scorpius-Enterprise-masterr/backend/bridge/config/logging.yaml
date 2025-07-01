@@ -1,0 +1,66 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  default:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  json:
+    format: "%(message)s"
+    class: pythonjsonlogger.jsonlogger.JsonFormatter
+  detailed:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: default
+    stream: ext://sys.stdout
+  
+  file:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: detailed
+    filename: logs/scorpius_bridge.log
+    maxBytes: 10485760  # 10MB
+    backupCount: 5
+    encoding: utf8
+  
+  json_file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filename: logs/scorpius_bridge.json
+    maxBytes: 10485760  # 10MB
+    backupCount: 5
+    encoding: utf8
+
+loggers:
+  scorpius_bridge:
+    level: DEBUG
+    handlers: [console, file, json_file]
+    propagate: false
+  
+  scorpius_bridge.blockchain:
+    level: INFO
+    handlers: [console, file, json_file]
+    propagate: false
+  
+  scorpius_bridge.validators:
+    level: INFO
+    handlers: [console, file, json_file]
+    propagate: false
+  
+  uvicorn:
+    level: INFO
+    handlers: [console]
+    propagate: false
+  
+  sqlalchemy:
+    level: WARNING
+    handlers: [console]
+    propagate: false
+
+root:
+  level: INFO
+  handlers: [console]

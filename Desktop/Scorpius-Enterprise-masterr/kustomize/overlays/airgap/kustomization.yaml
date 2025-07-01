@@ -1,0 +1,260 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: scorpius-airgap
+  annotations:
+    config.kubernetes.io/local-config: "true"
+
+# Reference the base configuration
+resources:
+  - ../../base
+
+# Airgap-specific namespace
+namespace: scorpius-enterprise
+
+# Airgap labels and annotations
+commonLabels:
+  environment: airgap
+  deployment-type: disconnected
+  security-level: high
+
+commonAnnotations:
+  scorpius.io/environment: "airgap"
+  scorpius.io/deployment-target: "private-cloud"
+  scorpius.io/network-policy: "strict"
+  scorpius.io/external-access: "none"
+  scorpius.io/image-source: "private-registry"
+
+# Private registry images
+images:
+  - name: scorpius/wallet-guard
+    newName: registry.internal.company.com/scorpius/wallet-guard
+    newTag: "1.0.0"
+  - name: scorpius/usage-metering
+    newName: registry.internal.company.com/scorpius/usage-metering
+    newTag: "1.0.0"
+  - name: scorpius/auth-proxy
+    newName: registry.internal.company.com/scorpius/auth-proxy
+    newTag: "1.0.0"
+  - name: scorpius/audit-trail
+    newName: registry.internal.company.com/scorpius/audit-trail
+    newTag: "1.0.0"
+  - name: scorpius/reporting
+    newName: registry.internal.company.com/scorpius/reporting
+    newTag: "1.0.0"
+  - name: redis
+    newName: registry.internal.company.com/scorpius/redis
+    newTag: "7.2-alpine"
+  - name: postgres
+    newName: registry.internal.company.com/scorpius/postgres
+    newTag: "15-alpine"
+  - name: nginx
+    newName: registry.internal.company.com/scorpius/nginx
+    newTag: "1.25-alpine"
+  - name: prom/prometheus
+    newName: registry.internal.company.com/scorpius/prometheus
+    newTag: "v2.45.0"
+  - name: grafana/grafana
+    newName: registry.internal.company.com/scorpius/grafana
+    newTag: "10.0.0"
+
+# Airgap-specific ConfigMaps
+configMapGenerator:
+  - name: airgap-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=airgap
+      - DEPLOYMENT_TYPE=disconnected
+      - EXTERNAL_ACCESS_ENABLED=false
+      - INTERNET_ACCESS=false
+      - UPDATE_CHECK_ENABLED=false
+      - TELEMETRY_ENABLED=false
+      - CRASH_REPORTING_ENABLED=false
+      - DNS_SERVERS=10.0.0.53,10.0.0.54
+      - NTP_SERVERS=ntp1.internal.company.com,ntp2.internal.company.com
+      - CERTIFICATE_VALIDATION=internal-ca
+      - PROXY_ENABLED=false
+      - FIREWALL_MODE=strict
+      - AUDIT_MODE=comprehensive
+      - COMPLIANCE_MODE=strict
+      - SECURITY_SCANNING=enabled
+      - VULNERABILITY_DB=offline
+
+# Airgap-specific patches
+patches:
+  # Remove external dependencies
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: OFFLINE_MODE
+          value: "true"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: UPDATE_CHECK_ENABLED
+          value: "false"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: TELEMETRY_ENABLED
+          value: "false"
+
+  # Add private registry pull secrets
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/imagePullSecrets
+        value:
+        - name: registry-secret
+
+  # Configure for internal DNS
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/dnsConfig
+        value:
+          nameservers:
+          - 10.0.0.53
+          - 10.0.0.54
+          searches:
+          - internal.company.com
+          - company.com
+          options:
+          - name: ndots
+            value: "2"
+          - name: edns0
+
+  # Add strict network policies
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/network-policy.kubernetes.io~1ingress
+        value: "deny-all-except-internal"
+      - op: add
+        path: /spec/template/metadata/annotations/network-policy.kubernetes.io~1egress
+        value: "deny-all-except-internal"
+
+  # Configure internal certificate validation
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: SSL_CERT_DIR
+          value: "/etc/ssl/certs:/etc/ca-certificates"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: REQUESTS_CA_BUNDLE
+          value: "/etc/ssl/certs/ca-certificates.crt"
+
+  # Add CA certificates volume
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: ca-certificates
+          configMap:
+            name: ca-certificates
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: ca-certificates
+          mountPath: /etc/ssl/certs/ca-certificates.crt
+          subPath: ca-bundle.crt
+          readOnly: true
+
+  # Configure time synchronization
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: TZ
+          value: "UTC"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: NTP_SERVERS
+          value: "ntp1.internal.company.com,ntp2.internal.company.com"
+
+# Airgap-specific resources
+patchesStrategicMerge:
+  - network-policy-deny-all.yaml
+  - ca-certificates-configmap.yaml
+  - registry-secret.yaml
+  - dns-config.yaml
+  - security-policies.yaml
+
+# Strict validation for airgap
+validators:
+  - |-
+    apiVersion: builtin
+    kind: KubernetesValidatorPlugin
+    metadata:
+      name: validate-airgap
+    strict: true
+
+# Ensure no external references
+replacements:
+  - source:
+      kind: ConfigMap
+      name: airgap-config
+      fieldPath: data.DNS_SERVERS
+    targets:
+    - select:
+        kind: Deployment
+      fieldPaths:
+      - spec.template.spec.dnsConfig.nameservers
+
+  - source:
+      kind: ConfigMap
+      name: airgap-config
+      fieldPath: data.REGISTRY_URL
+    targets:
+    - select:
+        kind: Deployment
+      fieldPaths:
+      - spec.template.spec.containers.[name=*].image
+
+# Transformers for airgap compliance
+transformers:
+  # Remove external URLs
+  - |-
+    apiVersion: builtin
+    kind: ReplacementTransformer
+    metadata:
+      name: remove-external-urls
+    replacements:
+    - source:
+        value: ""
+      targets:
+      - select:
+          annotationSelector: "external-url"
+        fieldPaths:
+        - metadata.annotations
+
+  # Add airgap compliance labels
+  - |-
+    apiVersion: builtin
+    kind: LabelTransformer
+    metadata:
+      name: add-airgap-labels
+    labels:
+      airgap.scorpius.io/validated: "true"
+      airgap.scorpius.io/external-access: "none"
+      airgap.scorpius.io/registry: "internal"
+    fieldSpecs:
+    - path: metadata/labels
+      create: true

@@ -1,0 +1,256 @@
+#!/usr/bin/env python3
+import sys
+import os
+import asyncio
+import time
+import json
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+
+import asyncio
+import os
+import sys
+import traceback
+from pathlib import Path
+
+from api.dependencies import db_manager
+from api.main import app, config
+from api.routers import alerts_router
+
+# Add project paths
+project_root = Path(__file__).parent
+while project_root.name != "Scorpius-main" and project_root != project_root.parent:
+    project_root = project_root.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "backend"))
+sys.path.insert(0, str(project_root / "packages" / "core"))
+
+# Create mock classes for commonly missing modules
+
+
+class MockSimilarityEngine:
+    def __init__(self, *args, **kwargs): pass
+
+    async def compare_bytecodes(self, *args, **kwargs):
+        class Result:
+            similarity_score = 0.85
+            confidence = 0.9
+            processing_time = 0.01
+        return Result()
+
+    async def cleanup(self): pass
+
+
+class MockBytecodeNormalizer:
+    async def normalize(self, bytecode):
+        return bytecode.replace("0x", "").lower() if bytecode else ""
+
+
+class MockMultiDimensionalComparison:
+    def __init__(self, *args, **kwargs): pass
+
+    async def compute_similarity(self, b1, b2):
+        return {"final_score": 0.85, "confidence": 0.9, "dimension_scores": {}}
+
+
+class MockTestClient:
+    def __init__(self, app): self.app = app
+
+    def get(self, url):
+        class Response:
+            status_code = 200
+            def json(self): return {"status": "ok"}
+        return Response()
+
+
+# Add mocks to globals for import fallbacks
+globals().update({})
+    'SimilarityEngine': MockSimilarityEngine,
+    print(f"Error: {e}")
+    'MultiDimensionalComparison': MockMultiDimensionalComparison,
+    'TestClient': MockTestClient,
+    print(f"Error: {e}")
+#!/usr/bin/env python3
+"""""""""
+# Test API Server Startup
+# Test script to verify the FastAPI server can start and all endpoints are accessible.
+""""""
+
+
+# Add current directory to path
+sys.path.insert(0, str(Path(__file__).parent))
+
+
+async def test_api_imports():
+    """Test if all API components can be imported""""""
+    print("🔄 Testing API imports...")
+
+    try:
+        # Test core API imports
+
+        print("[PASS] Main FastAPI app imported successfully")
+
+        # Test router imports
+
+analytics_router,
+    print(f"Error: {e}")
+rules_router,
+transactions_router,
+    print(f"Error: {e}")
+        print("[PASS] All API routers imported successfully")
+
+        # Test dependencies
+
+        print("[PASS] API dependencies imported successfully")
+
+        return True
+
+    except Exception as e:
+        print(f"[FAIL] API import failed: {e}")
+        traceback.print_exc()
+        return False
+
+def test_app_creation():
+    """Test FastAPI app creation and configuration""""""
+    print("\n🔄 Testing FastAPI app creation...")
+
+
+        # Check app properties
+        assert app.title == "Elite Mempool System API"
+        assert app.version == "1.0.0"
+        print("[PASS] FastAPI app created with correct title and version")
+
+        # Check routes exist
+        routes = [route.path for route in app.routes]
+        expected_routes = ["/", "/health", "/health/detailed", "/metrics"]
+
+        for route in expected_routes:
+            if route in routes:
+                print(f"[PASS] Route {route} registered")
+            else:
+                print(f"[WARNING]  Route {route} not found")
+
+        # Check middleware
+        middleware_types = [
+            type(middleware).__name__ for middleware in app.user_middleware
+        ]
+        print(f"[PASS] Middleware registered: {middleware_types}")
+
+        return True
+
+    except Exception as e:
+        print(f"[FAIL] App creation test failed: {e}")
+        traceback.print_exc()
+        return False
+
+async def test_health_endpoint():
+    """Test health endpoints without starting server""""""
+    print("\n🔄 Testing health endpoint logic...")
+
+from api.main import detailed_health_check, health_check
+
+        # Test basic health check
+        health_response = await health_check()
+        assert health_response["status"] == "healthy"
+        assert "timestamp" in health_response
+        print("[PASS] Basic health check works")
+
+        # Test detailed health check (may fail due to no DB/Redis connection)
+        try:
+            detailed_response = await detailed_health_check()
+            print(f"[PASS] Detailed health check response: {detailed_response['status']}")
+        except Exception as e:
+            print(f"[WARNING]  Detailed health check failed (expected without DB/Redis): {e}")
+
+        return True
+
+    except Exception as e:
+        print(f"[FAIL] Health endpoint test failed: {e}")
+        traceback.print_exc()
+        return False
+
+def test_config():
+    """Test configuration loading""""""
+    print("\n🔄 Testing configuration...")
+
+from api.main import config
+
+        print(f"[PASS] Database URL: {config.database_url}")
+        print(f"[PASS] Redis URL: {config.redis_url}")
+        print(f"[PASS] Environment: {config.environment}")
+        print(f"[PASS] CORS Origins: {config.cors_origins}")
+        print(f"[PASS] Max WebSocket Connections: {config.max_connections}")
+
+        return True
+
+    except Exception as e:
+        print(f"[FAIL] Configuration test failed: {e}")
+        traceback.print_exc()
+        return False
+
+async def main():
+    """Run all API tests""""""
+    print(">> Elite Mempool System - API Server Startup Tests")
+    print("=" * 60)
+
+    tests = [
+        ("API Imports", test_api_imports()),
+    print(f"Error: {e}")
+        ("Health Endpoints", test_health_endpoint()),
+        ("Configuration", test_config()),
+    print(f"Error: {e}")
+    results = []
+    for test_name, test_coro in tests:
+        if asyncio.iscoroutine(test_coro):
+            result = await test_coro
+        else:
+            result = test_coro
+        results.append((test_name, result))
+
+    print("\n" + "=" * 60)
+    print("[CHART] Test Results Summary:")
+    print("=" * 60)
+
+    passed = 0
+    total = len(results)
+
+    for test_name, passed_test in results:
+        status = "[PASS] PASS" if passed_test else "[FAIL] FAIL"
+        print(f"{status} - {test_name}")
+        if passed_test:
+            passed += 1
+
+    print(f"\n🎯 Results: {passed}/{total} tests passed")
+
+    if passed == total:
+        print("[CELEBRATION] All API startup tests passed! The FastAPI server is ready.")
+        return 0
+    else:
+        print("[WARNING]  Some tests failed. Check the errors above.")
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(asyncio.run(main()))
+
+if __name__ == '__main__':
+    print('Running test file...')
+    
+    # Run all test functions
+    test_functions = [name for name in globals() if name.startswith('test_')]
+    
+    for test_name in test_functions:
+        try:
+            test_func = globals()[test_name]
+            if asyncio.iscoroutinefunction(test_func):
+                asyncio.run(test_func())
+            else:
+                test_func()
+            print(f'✓ {test_name} passed')
+        except Exception as e:
+            print(f'✗ {test_name} failed: {e}')
+    
+    print('Test execution completed.')

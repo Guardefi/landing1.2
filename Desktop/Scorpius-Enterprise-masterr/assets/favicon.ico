@@ -1,0 +1,23 @@
+<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="favicon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00ff9f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Shield background -->
+  <rect width="32" height="32" fill="#0a0a0a" rx="6"/>
+  
+  <!-- Shield icon -->
+  <path d="M8 6 L16 2 L24 6 L24 18 C24 24 16 28 16 28 C16 28 8 24 8 18 Z" 
+        fill="url(#favicon-gradient)" stroke="#00ff9f" stroke-width="1"/>
+  
+  <!-- Inner shield -->
+  <path d="M11 8 L16 6 L21 8 L21 17 C21 21 16 23 16 23 C16 23 11 21 11 17 Z" 
+        fill="#0a0a0a" opacity="0.7"/>
+  
+  <!-- Checkmark -->
+  <path d="M13 15 L15 17 L19 12" 
+        stroke="#00ff9f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,50 @@
+{
+  "name": "scorpius-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx --fix"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.7.15",
+    "@heroicons/react": "^2.2.0",
+    "@hookform/resolvers": "^3.1.1",
+    "@tanstack/react-query": "^4.29.7",
+    "@types/node": "^20.3.1",
+    "axios": "^1.4.0",
+    "clsx": "^1.2.1",
+    "lucide-react": "^0.259.0",
+    "prismjs": "^1.29.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.45.1",
+    "react-hot-toast": "^2.4.1",
+    "react-router-dom": "^6.30.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "recharts": "^2.7.2",
+    "socket.io-client": "^4.7.1",
+    "tailwindcss": "^3.3.3",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@types/prismjs": "^1.26.0",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "@types/react-syntax-highlighter": "^15.5.7",
+    "@typescript-eslint/eslint-plugin": "^5.61.0",
+    "@typescript-eslint/parser": "^5.61.0",
+    "@vitejs/plugin-react": "^4.0.1",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.44.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.1",
+    "postcss": "^8.4.24",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.0"
+  }
+}

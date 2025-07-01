@@ -1,0 +1,202 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: scorpius-chaos-workflow
+  namespace: litmus
+  labels:
+    subject: "scorpius-platform"
+spec:
+  arguments:
+    parameters:
+    - name: adminModeNamespace
+      value: litmus
+  entrypoint: chaos-workflow
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+  serviceAccountName: litmus-admin
+  templates:
+  - name: chaos-workflow
+    dag:
+      tasks:
+      - name: install-chaos-experiments
+        template: install-chaos-experiments
+      - name: pod-delete-chaos
+        dependencies: [install-chaos-experiments]
+        template: pod-delete-chaos
+      - name: network-latency-chaos
+        dependencies: [install-chaos-experiments]
+        template: network-latency-chaos
+      - name: memory-stress-chaos
+        dependencies: [install-chaos-experiments]
+        template: memory-stress-chaos
+      - name: rds-failover-chaos
+        dependencies: [install-chaos-experiments]
+        template: rds-failover-chaos
+      - name: revert-chaos
+        dependencies: [pod-delete-chaos, network-latency-chaos, memory-stress-chaos, rds-failover-chaos]
+        template: revert-chaos
+
+  - name: install-chaos-experiments
+    container:
+      image: litmuschaos/k8s:latest
+      command: [sh, -c]
+      args:
+        - "kubectl apply -f https://hub.litmuschaos.io/api/chaos/master?file=charts/generic/experiments.yaml -n {{workflow.parameters.adminModeNamespace}} | sleep 30"
+
+  - name: pod-delete-chaos
+    inputs:
+      artifacts:
+      - name: pod-delete-chaos
+        path: /tmp/chaosengine-pod-delete.yaml
+        raw:
+          data: |
+            apiVersion: litmuschaos.io/v1alpha1
+            kind: ChaosEngine
+            metadata:
+              name: pod-delete-chaos
+              namespace: {{workflow.parameters.adminModeNamespace}}
+            spec:
+              appinfo:
+                appns: scorpius
+                applabel: "app=backend"
+                appkind: deployment
+              engineState: "active"
+              chaosServiceAccount: litmus-admin
+              monitoring: true
+              experiments:
+              - name: pod-delete
+                spec:
+                  components:
+                    env:
+                    - name: TOTAL_CHAOS_DURATION
+                      value: "60"
+                    - name: CHAOS_INTERVAL
+                      value: "10"
+                    - name: FORCE
+                      value: "true"
+                    - name: PODS_AFFECTED_PERC
+                      value: "50"
+    container:
+      image: litmuschaos/litmus-checker:latest
+      args: ["-file=/tmp/chaosengine-pod-delete.yaml","-saveName=/tmp/engine-name"]
+
+  - name: network-latency-chaos
+    inputs:
+      artifacts:
+      - name: network-latency-chaos
+        path: /tmp/chaosengine-network-latency.yaml
+        raw:
+          data: |
+            apiVersion: litmuschaos.io/v1alpha1
+            kind: ChaosEngine
+            metadata:
+              name: network-latency-chaos
+              namespace: {{workflow.parameters.adminModeNamespace}}
+            spec:
+              appinfo:
+                appns: scorpius
+                applabel: "app=backend"
+                appkind: deployment
+              engineState: "active"
+              chaosServiceAccount: litmus-admin
+              monitoring: true
+              experiments:
+              - name: pod-network-latency
+                spec:
+                  components:
+                    env:
+                    - name: TOTAL_CHAOS_DURATION
+                      value: "60"
+                    - name: NETWORK_LATENCY
+                      value: "2000"
+                    - name: CONTAINER_RUNTIME
+                      value: "containerd"
+                    - name: SOCKET_PATH
+                      value: "/run/containerd/containerd.sock"
+    container:
+      image: litmuschaos/litmus-checker:latest
+      args: ["-file=/tmp/chaosengine-network-latency.yaml","-saveName=/tmp/engine-name"]
+
+  - name: memory-stress-chaos
+    inputs:
+      artifacts:
+      - name: memory-stress-chaos
+        path: /tmp/chaosengine-memory-stress.yaml
+        raw:
+          data: |
+            apiVersion: litmuschaos.io/v1alpha1
+            kind: ChaosEngine
+            metadata:
+              name: memory-stress-chaos
+              namespace: {{workflow.parameters.adminModeNamespace}}
+            spec:
+              appinfo:
+                appns: scorpius
+                applabel: "app=backend"
+                appkind: deployment
+              engineState: "active"
+              chaosServiceAccount: litmus-admin
+              monitoring: true
+              experiments:
+              - name: pod-memory-hog
+                spec:
+                  components:
+                    env:
+                    - name: TOTAL_CHAOS_DURATION
+                      value: "60"
+                    - name: MEMORY_CONSUMPTION
+                      value: "256"
+                    - name: NUMBER_OF_WORKERS
+                      value: "1"
+                    - name: CONTAINER_RUNTIME
+                      value: "containerd"
+                    - name: SOCKET_PATH
+                      value: "/run/containerd/containerd.sock"
+    container:
+      image: litmuschaos/litmus-checker:latest
+      args: ["-file=/tmp/chaosengine-memory-stress.yaml","-saveName=/tmp/engine-name"]
+
+  - name: rds-failover-chaos
+    inputs:
+      artifacts:
+      - name: rds-failover-chaos
+        path: /tmp/chaosengine-rds-failover.yaml
+        raw:
+          data: |
+            apiVersion: litmuschaos.io/v1alpha1
+            kind: ChaosEngine
+            metadata:
+              name: rds-failover-chaos
+              namespace: {{workflow.parameters.adminModeNamespace}}
+            spec:
+              appinfo:
+                appns: scorpius
+                applabel: "app=backend"
+                appkind: deployment
+              engineState: "active"
+              chaosServiceAccount: litmus-admin
+              monitoring: true
+              experiments:
+              - name: rds-instance-stop
+                spec:
+                  components:
+                    env:
+                    - name: TOTAL_CHAOS_DURATION
+                      value: "120"
+                    - name: CHAOS_INTERVAL
+                      value: "30"
+                    - name: RDS_INSTANCE_IDENTIFIER
+                      value: "scorpius-rds"
+                    - name: AWS_REGION
+                      value: "us-west-2"
+    container:
+      image: litmuschaos/litmus-checker:latest
+      args: ["-file=/tmp/chaosengine-rds-failover.yaml","-saveName=/tmp/engine-name"]
+
+  - name: revert-chaos
+    container:
+      image: litmuschaos/k8s:latest
+      command: [sh, -c]
+      args:
+        - "kubectl delete chaosengine --all -n {{workflow.parameters.adminModeNamespace}}"

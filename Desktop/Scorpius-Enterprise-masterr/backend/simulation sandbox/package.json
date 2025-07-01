@@ -1,0 +1,147 @@
+{
+  "name": "scorpius-contract-sandbox",
+  "version": "1.0.0",
+  "description": "Enterprise Smart Contract Security Testing and Exploit Simulation Platform",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "test:unit": "jest --config=tests/jest.config.js",
+    "test:integration": "jest --config=tests/jest.integration.config.js",
+    "test:e2e": "jest --config=tests/jest.e2e.config.js",
+    "test:security": "npm run test:unit -- tests/security",
+    "test:performance": "npm run test:unit -- tests/performance",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/**/*.js tests/**/*.js",
+    "lint:fix": "eslint src/**/*.js tests/**/*.js --fix",
+    "format": "prettier --write src/**/*.js tests/**/*.js",
+    "build": "node scripts/build/compile-contracts.js",
+    "deploy:local": "node scripts/deploy/deploy-local.js",
+    "deploy:testnet": "node scripts/deploy/deploy-testnet.js",
+    "deploy:mainnet": "node scripts/deploy/deploy-mainnet.js",
+    "setup": "node scripts/setup/init-database.js && node scripts/setup/seed-data.js",
+    "audit:contracts": "node scripts/security/audit-contracts.js",
+    "scan:vulnerabilities": "node scripts/security/scan-vulnerabilities.js",
+    "generate:docs": "node tools/code-generation/documentation-generator.js",
+    "docker:build": "docker build -f deployments/docker/Dockerfile -t scorpius-sandbox .",
+    "docker:run": "docker-compose -f deployments/docker/docker-compose.yml up",
+    "k8s:deploy": "kubectl apply -f deployments/kubernetes/base/"
+  },
+  "keywords": [
+    "blockchain",
+    "smart-contracts",
+    "security",
+    "testing",
+    "exploit",
+    "simulation",
+    "defi",
+    "ethereum",
+    "solidity"
+  ],
+  "author": "Scorpius Security Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.3.1",
+    "winston": "^3.10.0",
+    "winston-daily-rotate-file": "^4.7.1",
+    "joi": "^17.9.2",
+    "uuid": "^9.0.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "ioredis": "^5.3.2",
+    "rate-limit-redis": "^4.2.0",
+    "ethers": "^6.7.1",
+    "solc": "^0.8.21",
+    "ganache": "^7.9.1",
+    "hardhat": "^2.17.1",
+    "@openzeppelin/contracts": "^4.9.3",
+    "web3": "^4.1.1",
+    "axios": "^1.5.0",
+    "node-cron": "^3.0.2",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.32.5",
+    "pdfkit": "^0.13.0",
+    "nodemailer": "^6.9.4",
+    "socket.io": "^4.7.2",
+    "bull": "^4.11.3",
+    "pg": "^8.11.3",
+    "sequelize": "^6.32.1",
+    "mysql2": "^3.6.0",
+    "mongodb": "^5.8.1",
+    "mongoose": "^7.5.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.54.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-jest": "^27.6.0",
+    "prettier": "^3.1.0",
+    "nodemon": "^3.0.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "@types/jest": "^29.5.8",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.2",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "rimraf": "^5.0.5",
+    "wait-on": "^7.2.0",
+    "artillery": "^2.0.3",
+    "newman": "^6.0.0",
+    "nyc": "^15.1.0",
+    "sinon": "^17.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scorpius-security/contract-sandbox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/scorpius-security/contract-sandbox/issues"
+  },
+  "homepage": "https://github.com/scorpius-security/contract-sandbox#readme",
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.json": [
+      "prettier --write",
+      "git add"
+    ],
+    "*.md": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.test.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ]
+  }
+} 

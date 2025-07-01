@@ -1,0 +1,206 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Scorpius Usage Metering Dashboard",
+    "description": "Monitor usage patterns, billing events, and organization metrics",
+    "tags": ["scorpius", "usage", "billing"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Total Organizations",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "scorpius_total_organizations",
+            "legendFormat": "Total Orgs"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 100
+                },
+                {
+                  "color": "red",
+                  "value": 1000
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Usage Events Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(scorpius_usage_total[5m])",
+            "legendFormat": "Usage Events/sec"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Events/sec"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 6,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Plan Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "scorpius_plan_distribution",
+            "legendFormat": "{{plan}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "Feature Usage by Plan",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "scorpius_feature_usage_total",
+            "legendFormat": "{{feature}} ({{plan}})"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Usage Count"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Billing Events",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(scorpius_billing_events_total[5m])",
+            "legendFormat": "{{event_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Events/sec"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 6,
+        "title": "API Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(scorpius_usage_api_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(scorpius_usage_api_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time (s)"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 7,
+        "title": "Top Organizations by Usage",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, scorpius_org_usage_total)",
+            "legendFormat": "{{org_id}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 8,
+        "title": "Daily Usage Trends",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "increase(scorpius_usage_total[1d])",
+            "legendFormat": "{{feature}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Daily Usage"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 24
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "schemaVersion": 27,
+    "version": 1
+  }
+}

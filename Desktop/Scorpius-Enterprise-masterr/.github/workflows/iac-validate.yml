@@ -1,0 +1,67 @@
+name: IaC Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate:
+    name: Validate IaC
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.7
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y jq
+        curl -L https://github.com/terraform-linters/tflint/releases/download/v0.45.1/tflint_linux_amd64.zip -o tflint.zip
+        unzip tflint.zip
+        sudo mv tflint /usr/local/bin/
+        curl -L https://github.com/terraform-validator/checkov/releases/download/v3.0.1/checkov_linux_amd64.zip -o checkov.zip
+        unzip checkov.zip
+        sudo mv checkov /usr/local/bin/
+
+    - name: Validate Terraform
+      working-directory: infrastructure/terraform
+      run: |
+        terraform init
+        terraform validate
+        tflint
+        checkov -d . --framework terraform
+
+    - name: Validate Helm Charts
+      working-directory: infrastructure/helm
+      run: |
+        helm lint .
+        helm template . | kubectl create -f - --dry-run=client
+
+    - name: Validate Kubernetes Manifests
+      working-directory: infrastructure/kubernetes
+      run: |
+        kubectl create -f . --dry-run=client
+
+    - name: Validate OpenAPI Specs
+      working-directory: api
+      run: |
+        curl -s https://raw.githubusercontent.com/OAI/OpenAPI-Specification/master/schemas/v3.0/schema.json > openapi-schema.json
+        jq -s '.[0] as $schema | .[1] | .openapi == "3.0.0"' openapi-schema.json openapi.yaml
+
+    - name: Upload Validation Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: iac-validation-report
+        path: |
+          infrastructure/terraform/*.tfplan
+          infrastructure/terraform/*.tfstate
+          infrastructure/terraform/*.tfvars
+          infrastructure/kubernetes/*.yaml
+          api/openapi.yaml

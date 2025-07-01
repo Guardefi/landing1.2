@@ -1,0 +1,149 @@
+# Alertmanager configuration for Scorpius Enterprise Platform
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@scorpius.enterprise'
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route configuration
+route:
+  group_by: ['alertname', 'severity', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'web.hook'
+  routes:
+    # Critical alerts go to multiple channels
+    - match:
+        severity: critical
+      receiver: critical-alerts
+      group_wait: 5s
+      repeat_interval: 5m
+
+    # SLA violations get special handling
+    - match_re:
+        sla: latency|error_rate|availability
+      receiver: sla-violations
+      group_wait: 30s
+      repeat_interval: 30m
+
+    # Infrastructure alerts
+    - match:
+        component: infrastructure
+      receiver: infrastructure-team
+      
+    # Service-specific routing
+    - match:
+        service: api-gateway
+      receiver: platform-team
+
+    - match:
+        service: wallet-guard
+      receiver: security-team
+
+    - match:
+        service: usage-metering
+      receiver: billing-team
+
+# Receivers configuration
+receivers:
+  - name: 'web.hook'
+    webhook_configs:
+      - url: 'http://webhook-service:5000/alerts'
+        send_resolved: true
+
+  - name: 'critical-alerts'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#scorpius-critical'
+        title: '🚨 CRITICAL: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        text: |
+          {{ range .Alerts }}
+          *Service:* {{ .Labels.service }}
+          *Severity:* {{ .Labels.severity }}
+          *Description:* {{ .Annotations.description }}
+          {{ if .Annotations.runbook_url }}*Runbook:* {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        send_resolved: true
+        
+    email_configs:
+      - to: 'oncall@scorpius.enterprise'
+        subject: 'CRITICAL Alert: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        body: |
+          Critical alert triggered in Scorpius Enterprise Platform:
+          
+          {{ range .Alerts }}
+          Service: {{ .Labels.service }}
+          Severity: {{ .Labels.severity }}
+          Summary: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          
+          Time: {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+
+  - name: 'sla-violations'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#scorpius-sla'
+        title: '📊 SLA Violation: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        text: |
+          {{ range .Alerts }}
+          *Service:* {{ .Labels.service }}
+          *SLA Type:* {{ .Labels.sla }}
+          *Description:* {{ .Annotations.description }}
+          *Status:* {{ if .Status }}{{ .Status }}{{ else }}FIRING{{ end }}
+          {{ end }}
+        send_resolved: true
+        
+    webhook_configs:
+      - url: 'http://sla-tracker:8080/violations'
+        send_resolved: true
+
+  - name: 'infrastructure-team'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#infrastructure'
+        title: '🏗️ Infrastructure Alert: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        send_resolved: true
+
+  - name: 'platform-team'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#platform-team'
+        title: '🔧 Platform Alert: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        send_resolved: true
+
+  - name: 'security-team'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#security-team'
+        title: '🔒 Security Alert: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        send_resolved: true
+
+  - name: 'billing-team'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#billing-team'
+        title: '💰 Billing Alert: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        send_resolved: true
+
+# Inhibition rules
+inhibit_rules:
+  # Inhibit all other alerts if service is down
+  - source_match:
+      alertname: 'APIGatewayDown'
+    target_match:
+      service: 'api-gateway'
+    equal: ['instance']
+    
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['service', 'instance']

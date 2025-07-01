@@ -1,0 +1,182 @@
+# Scorpius Enterprise Platform - Production Requirements
+# Optimized for production deployment with minimal dependencies
+# Compatible with Python 3.11+
+
+# =====================================
+# Core Web Framework
+# =====================================
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.7.0
+pydantic-settings==2.2.1
+
+# =====================================
+# Database & Caching
+# =====================================
+asyncpg==0.29.0
+redis==5.0.1
+sqlalchemy[asyncio]==2.0.23
+alembic==1.13.1
+
+# =====================================
+# HTTP Clients & Networking
+# =====================================
+httpx==0.25.2
+aiohttp==3.9.1
+websockets==12.0
+
+# =====================================
+# Authentication & Security
+# =====================================
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+cryptography==41.0.8
+PyJWT==2.8.0
+
+# =====================================
+# Async & Networking
+# =====================================
+asyncio-mqtt==0.13.0
+aiofiles==23.2.1
+structlog==23.2.0
+
+# =====================================
+# Service & Gateway
+# =====================================
+gunicorn==21.2.0
+prometheus-client==0.19.0
+prometheus-fastapi-instrumentator==6.1.0
+websockets==12.0
+
+# =====================================
+# Configuration & Environment
+# =====================================
+python-dotenv==1.0.0
+click==8.1.7
+typer==0.9.0
+
+# =====================================
+# Monitoring & Logging
+# =====================================
+prometheus-client==0.19.0
+structlog==23.2.0
+python-json-logger==2.0.7
+sentry-sdk[fastapi]==1.38.0
+
+# =====================================
+# Task Queue & Background Jobs
+# =====================================
+celery==5.3.4
+flower==2.0.1
+
+# =====================================
+# Email & Notifications
+# =====================================
+emails==0.6.0
+python-telegram-bot==20.7
+
+# =====================================
+# Blockchain & Web3 Integration
+# =====================================
+web3==6.15.1
+eth-account==0.10.0
+py-solc-x==1.12.0
+
+# =====================================
+# Testing (Production Testing Only)
+# =====================================
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# =====================================
+# Development Tools (Minimal for Production Debug)
+# =====================================
+ipython==8.17.2
+
+# =====================================
+# Performance & Optimization
+# =====================================
+orjson==3.9.10
+python-rapidjson==1.10
+
+# =====================================
+# File System & Storage
+# =====================================
+aiofiles==23.2.1
+boto3==1.34.0  # For S3 storage if needed
+
+# =====================================
+# Date & Time Utilities
+# =====================================
+python-dateutil==2.8.2
+pytz==2023.3
+
+# =====================================
+# Input Validation & Parsing
+# =====================================
+validators==0.22.0
+python-slugify==8.0.1
+
+# =====================================
+# Image Processing (If needed)
+# =====================================
+Pillow==10.1.0
+
+# =====================================
+# XML/HTML Processing
+# =====================================
+lxml==4.9.3
+beautifulsoup4==4.12.2
+
+# =====================================
+# Math & Scientific Computing
+# =====================================
+scipy==1.11.4
+
+# =====================================
+# Process Management
+# =====================================
+psutil==5.9.6
+
+# =====================================
+# Rate Limiting
+# =====================================
+slowapi==0.1.9
+
+# =====================================
+# CORS & Middleware
+# =====================================
+python-cors==1.7.0
+
+# =====================================
+# Template Engine (If needed)
+# =====================================
+jinja2==3.1.2
+
+# =====================================
+# UUID & Identifier Generation
+# =====================================
+shortuuid==1.0.11
+
+# =====================================
+# Retry & Resilience
+# =====================================
+tenacity==8.2.3
+
+# =====================================
+# Time Series & Analytics
+# =====================================
+influxdb-client==1.39.0
+
+# =====================================
+# GraphQL (If needed)
+# =====================================
+strawberry-graphql[fastapi]==0.214.1
+
+# =====================================
+# Additional Utilities
+# =====================================
+rich==13.7.0
+tqdm==4.66.1

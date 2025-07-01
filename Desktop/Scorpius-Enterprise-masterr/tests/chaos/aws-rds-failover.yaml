@@ -1,0 +1,67 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: aws-rds-failover
+  namespace: scorpius
+spec:
+  appinfo:
+    appns: scorpius
+    applabel: "app=backend"
+    appkind: deployment
+  engineState: "active"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: aws-rds-failover
+      spec:
+        components:
+          env:
+            - name: AWS_REGION
+              value: "us-west-2"
+            - name: RDS_INSTANCE_IDENTIFIER
+              value: "scorpius-rds"
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+            - name: RDS_INSTANCE_CLASS
+              value: "db.r5.large"
+            - name: RDS_ENGINE
+              value: "postgres"
+            - name: RDS_ENGINE_VERSION
+              value: "15.4"
+            - name: RDS_LICENSE_MODEL
+              value: "postgresql-license"
+            - name: RDS_DB_NAME
+              value: "scorpius"
+            - name: RDS_MASTER_USERNAME
+              value: "scorpius"
+            - name: RDS_MASTER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: scorpius-secrets
+                  key: rds_password
+        definition:
+          spec:
+            components:
+              env:
+                - name: AWS_REGION
+                  value: "us-west-2"
+                - name: RDS_INSTANCE_IDENTIFIER
+                  value: "scorpius-rds"
+                - name: TOTAL_CHAOS_DURATION
+                  value: "300"
+                - name: RDS_INSTANCE_CLASS
+                  value: "db.r5.large"
+                - name: RDS_ENGINE
+                  value: "postgres"
+                - name: RDS_ENGINE_VERSION
+                  value: "15.4"
+                - name: RDS_LICENSE_MODEL
+                  value: "postgresql-license"
+                - name: RDS_DB_NAME
+                  value: "scorpius"
+                - name: RDS_MASTER_USERNAME
+                  value: "scorpius"
+                - name: RDS_MASTER_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: scorpius-secrets
+                      key: rds_password

@@ -1,0 +1,187 @@
+# Additional SLA and Security Monitoring Rules
+groups:
+  - name: scorpius.audit.rules
+    interval: 30s
+    rules:
+      # Audit Trail Tamper Detection
+      - alert: AuditTrailTamperDetection
+        expr: increase(audit_trail_hash_mismatches_total[5m]) > 0
+        for: 0s  # Immediate alert for tampering
+        labels:
+          severity: critical
+          service: audit-trail
+          security_event: tampering
+        annotations:
+          summary: "Audit trail tampering detected"
+          description: "{{ $value }} audit trail hash mismatches detected in the last 5 minutes"
+          runbook_url: "https://docs.scorpius.enterprise/runbooks/audit-trail-tampering"
+
+      - alert: AuditTrailMissingEntries
+        expr: increase(audit_trail_missing_entries_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: audit-trail
+          security_event: data_loss
+        annotations:
+          summary: "Missing entries detected in audit trail"
+          description: "{{ $value }} missing audit trail entries detected"
+
+      - alert: AuditTrailHighLatency
+        expr: histogram_quantile(0.95, rate(audit_trail_write_duration_seconds_bucket[5m])) > 5.0
+        for: 5m
+        labels:
+          severity: warning
+          service: audit-trail
+          sla: latency
+        annotations:
+          summary: "Audit trail write latency exceeds 5 seconds"
+          description: "Audit trail write latency p95 is {{ $value }}s"
+
+  - name: scorpius.compliance.rules
+    interval: 60s
+    rules:
+      # Compliance and Data Retention
+      - alert: DataRetentionViolation
+        expr: time() - audit_trail_oldest_record_timestamp > 2592000  # 30 days
+        for: 15m
+        labels:
+          severity: warning
+          service: audit-trail
+          compliance: data_retention
+        annotations:
+          summary: "Data retention policy violation"
+          description: "Audit records older than 30 days detected"
+
+      - alert: BackupFailure
+        expr: time() - last_successful_backup_timestamp > 86400  # 24 hours
+        for: 30m
+        labels:
+          severity: critical
+          service: backup
+          compliance: disaster_recovery
+        annotations:
+          summary: "Backup failure detected"
+          description: "No successful backup in the last 24 hours"
+
+      - alert: UnauthorizedAccess
+        expr: increase(auth_failed_attempts_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: auth-proxy
+          security_event: brute_force
+        annotations:
+          summary: "Multiple authentication failures detected"
+          description: "{{ $value }} failed authentication attempts in 5 minutes"
+
+  - name: scorpius.business.rules
+    interval: 60s
+    rules:
+      # Business SLA Rules
+      - alert: LowActiveUsers
+        expr: scorpius:business:active_organizations:1h < 10
+        for: 30m
+        labels:
+          severity: warning
+          category: business
+          metric: engagement
+        annotations:
+          summary: "Low user engagement detected"
+          description: "Only {{ $value }} active organizations in the last hour"
+
+      - alert: HighBillingFailures
+        expr: rate(billing_failures_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: usage-metering
+          category: business
+        annotations:
+          summary: "High billing failure rate"
+          description: "Billing failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: RevenueDecline
+        expr: (scorpius:business:revenue:24h - scorpius:business:revenue:24h offset 7d) / scorpius:business:revenue:24h offset 7d < -0.2
+        for: 60m
+        labels:
+          severity: warning
+          category: business
+          metric: revenue
+        annotations:
+          summary: "Significant revenue decline detected"
+          description: "Revenue down {{ $value | humanizePercentage }} compared to last week"
+
+  - name: scorpius.security.rules
+    interval: 30s
+    rules:
+      # Security Event Rules
+      - alert: SuspiciousWalletActivity
+        expr: increase(wallet_guard_high_risk_detected_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: wallet-guard
+          security_event: suspicious_activity
+        annotations:
+          summary: "Multiple high-risk wallets detected"
+          description: "{{ $value }} high-risk wallets detected in 5 minutes"
+
+      - alert: RateLimitExceeded
+        expr: increase(rate_limit_exceeded_total[5m]) > 50
+        for: 2m
+        labels:
+          severity: warning
+          service: api-gateway
+          security_event: rate_limiting
+        annotations:
+          summary: "Rate limit exceeded frequently"
+          description: "Rate limit exceeded {{ $value }} times in 5 minutes"
+
+      - alert: AbnormalScanPattern
+        expr: rate(scanner_requests_total[5m]) > rate(scanner_requests_total[5m] offset 1h) * 3
+        for: 10m
+        labels:
+          severity: warning
+          service: scanner
+          security_event: abnormal_usage
+        annotations:
+          summary: "Abnormal scanning pattern detected"
+          description: "Scan rate is 3x higher than usual"
+
+  - name: scorpius.performance.rules
+    interval: 15s
+    rules:
+      # Performance and Capacity Rules
+      - alert: HighThroughputDegradation
+        expr: rate(http_requests_total[5m]) > 1000 and histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m] offset 1h)) * 2
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          sla: throughput
+        annotations:
+          summary: "Performance degradation under high load"
+          description: "Latency increased 2x under high throughput ({{ rate(http_requests_total[5m]) }} req/s)"
+
+      - alert: CapacityWarning
+        expr: predict_linear(http_requests_total[1h], 3600) > 1000000  # Predict > 1M requests/hour
+        for: 15m
+        labels:
+          severity: warning
+          category: capacity
+          sla: scaling
+        annotations:
+          summary: "Capacity scaling warning"
+          description: "Predicted to exceed 1M requests/hour based on current trend"
+
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+          sla: performance
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Database query latency p95 is {{ $value }}s"

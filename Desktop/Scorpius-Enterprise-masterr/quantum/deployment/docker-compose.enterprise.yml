@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  scorpius-api:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.enterprise
+    ports:
+      - "8000:8000"
+    environment:
+      - SCORPIUS_LOG_LEVEL=INFO
+      - SCORPIUS_ENABLE_CLUSTERING=true
+      - SCORPIUS_DATA_DIR=/data
+    volumes:
+      - scorpius_data:/data
+      - ./config/enterprise.yml:/app/config/config.yml
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: scorpius
+      POSTGRES_USER: scorpius
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scorpius_secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  elasticsearch:
+    image: elasticsearch:8.8.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  scorpius_data:
+  postgres_data:
+  redis_data:
+  elasticsearch_data:
+  grafana_data:

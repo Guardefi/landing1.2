@@ -1,0 +1,314 @@
+# Kyverno Security Policies for Scorpius Enterprise Platform
+# Enforces security best practices and prevents insecure configurations
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-root-user
+  annotations:
+    policies.kyverno.io/title: Disallow Root User
+    policies.kyverno.io/category: Pod Security Standards (Restricted)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Running containers as the root user poses security risks and is considered
+      a best practice violation. This policy ensures containers run as non-root users.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: check-runasnonroot
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: >-
+        Running as root user is not allowed. The fields spec.securityContext.runAsNonRoot,
+        spec.containers[*].securityContext.runAsNonRoot, and 
+        spec.initContainers[*].securityContext.runAsNonRoot must be set to `true`.
+      pattern:
+        spec:
+          =(securityContext):
+            =(runAsNonRoot): "true"
+          containers:
+          - =(securityContext):
+              =(runAsNonRoot): "true"
+          =(initContainers):
+          - =(securityContext):
+              =(runAsNonRoot): "true"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-privileged-containers
+  annotations:
+    policies.kyverno.io/title: Disallow Privileged Containers
+    policies.kyverno.io/category: Pod Security Standards (Baseline)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Privileged containers have access to all Linux kernel capabilities and devices.
+      This policy ensures that containers are not running with privileged access.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: check-privileged
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: >-
+        Privileged containers are not allowed. The field spec.containers[*].securityContext.privileged
+        and spec.initContainers[*].securityContext.privileged must be unset or set to `false`.
+      pattern:
+        spec:
+          containers:
+          - =(securityContext):
+              =(privileged): "false"
+          =(initContainers):
+          - =(securityContext):
+              =(privileged): "false"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-pod-security-standards
+  annotations:
+    policies.kyverno.io/title: Require Pod Security Standards
+    policies.kyverno.io/category: Pod Security Standards (Restricted)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      This policy enforces the complete set of Pod Security Standards (restricted profile)
+      including security contexts, capabilities, and volume restrictions.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: restricted-security-context
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: >-
+        Pod must meet restricted security standards. Required fields:
+        runAsNonRoot=true, allowPrivilegeEscalation=false, drop ALL capabilities,
+        readOnlyRootFilesystem=true.
+      pattern:
+        spec:
+          =(securityContext):
+            runAsNonRoot: true
+            =(fsGroup): ">0"
+            =(runAsUser): ">0"
+            =(runAsGroup): ">0"
+          containers:
+          - securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+              =(runAsUser): ">0"
+              =(runAsGroup): ">0"
+          =(initContainers):
+          - securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-host-namespaces
+  annotations:
+    policies.kyverno.io/title: Disallow Host Namespaces
+    policies.kyverno.io/category: Pod Security Standards (Baseline)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Sharing the host namespace allows a container to see and interact with other containers
+      and processes outside of its namespace. This policy disallows sharing of host namespaces.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: check-host-namespaces
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: >-
+        Sharing the host namespace is not allowed. The fields spec.hostNetwork,
+        spec.hostIPC, and spec.hostPID must be unset or set to `false`.
+      pattern:
+        spec:
+          =(hostNetwork): "false"
+          =(hostIPC): "false"
+          =(hostPID): "false"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-labels
+  annotations:
+    policies.kyverno.io/title: Require Standard Labels
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod, Service, Deployment
+    policies.kyverno.io/description: >-
+      This policy requires standard Kubernetes labels for better resource management
+      and monitoring. All resources must have app.kubernetes.io/name and version labels.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: require-labels
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          - Service
+          - Deployment
+          namespaces:
+          - scorpius-production
+          - scorpius-staging
+    validate:
+      message: >-
+        Required labels are missing. All resources must have 'app.kubernetes.io/name',
+        'app.kubernetes.io/version', and 'app.kubernetes.io/component' labels.
+      pattern:
+        metadata:
+          labels:
+            app.kubernetes.io/name: "?*"
+            app.kubernetes.io/version: "?*"
+            app.kubernetes.io/component: "?*"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-insecure-images
+  annotations:
+    policies.kyverno.io/title: Disallow Insecure Container Images
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      This policy requires that container images are pulled from trusted registries
+      and use digest references instead of mutable tags for security.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: check-image-registry
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: >-
+        Container images must be from trusted registries (ghcr.io/scorpius, 
+        or have specific digest references. Latest and mutable tags are not allowed.
+      pattern:
+        spec:
+          containers:
+          - image: "ghcr.io/scorpius/*@sha256:* | ghcr.io/scorpius/*:v* | postgres:*@sha256:* | redis:*@sha256:*"
+          =(initContainers):
+          - image: "ghcr.io/scorpius/*@sha256:* | ghcr.io/scorpius/*:v* | postgres:*@sha256:* | redis:*@sha256:*"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resource-limits
+  annotations:
+    policies.kyverno.io/title: Require Resource Limits
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      This policy requires that all containers have resource limits set to prevent
+      resource exhaustion and ensure fair resource allocation.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: require-container-limits
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: >-
+        Container resource limits are required. All containers must specify
+        resources.limits.memory and resources.limits.cpu.
+      pattern:
+        spec:
+          containers:
+          - resources:
+              limits:
+                memory: "?*"
+                cpu: "?*"
+              requests:
+                memory: "?*"
+                cpu: "?*"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: generate-network-policy
+  annotations:
+    policies.kyverno.io/title: Generate Default Network Policy
+    policies.kyverno.io/category: Multi-Tenancy
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Namespace
+    policies.kyverno.io/description: >-
+      This policy automatically generates a default deny-all NetworkPolicy
+      for new namespaces to ensure zero-trust networking by default.
+spec:
+  rules:
+  - name: default-deny-all
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+          names:
+          - "scorpius-*"
+    generate:
+      synchronize: true
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      name: default-deny-all
+      namespace: "{{request.object.metadata.name}}"
+      data:
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: kyverno
+            security.scorpius.io/policy-type: deny-all
+        spec:
+          podSelector: {}
+          policyTypes:
+          - Ingress
+          - Egress

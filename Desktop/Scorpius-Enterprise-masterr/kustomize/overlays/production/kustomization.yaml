@@ -1,0 +1,242 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: scorpius-production
+  annotations:
+    config.kubernetes.io/local-config: "true"
+
+# Reference the base configuration
+resources:
+  - ../../base
+
+# Production-specific namespace (override if needed)
+namespace: scorpius-enterprise
+
+# Production labels and annotations
+commonLabels:
+  environment: production
+  tier: enterprise
+
+commonAnnotations:
+  scorpius.io/environment: "production"
+  scorpius.io/deployment-target: "aws-eks"
+  scorpius.io/compliance-level: "enterprise"
+  scorpius.io/backup-required: "true"
+
+# Production image tags and registry
+images:
+  - name: scorpius/wallet-guard
+    newName: REGISTRY_URL/scorpius/wallet-guard
+    newTag: "1.0.0"
+  - name: scorpius/usage-metering
+    newName: REGISTRY_URL/scorpius/usage-metering
+    newTag: "1.0.0"
+  - name: scorpius/auth-proxy
+    newName: REGISTRY_URL/scorpius/auth-proxy
+    newTag: "1.0.0"
+  - name: scorpius/audit-trail
+    newName: REGISTRY_URL/scorpius/audit-trail
+    newTag: "1.0.0"
+  - name: scorpius/reporting
+    newName: REGISTRY_URL/scorpius/reporting
+    newTag: "1.0.0"
+  - name: redis
+    newName: REGISTRY_URL/scorpius/redis
+    newTag: "7.2-alpine"
+  - name: postgres
+    newName: REGISTRY_URL/scorpius/postgres
+    newTag: "15-alpine"
+  - name: nginx
+    newName: REGISTRY_URL/scorpius/nginx
+    newTag: "1.25-alpine"
+
+# Production replica counts
+replicas:
+  - name: wallet-guard
+    count: 3
+  - name: usage-metering
+    count: 3
+  - name: auth-proxy
+    count: 3
+  - name: audit-trail
+    count: 2
+  - name: reporting
+    count: 2
+  - name: redis
+    count: 3
+  - name: postgresql
+    count: 3
+
+# Production-specific ConfigMaps
+configMapGenerator:
+  - name: production-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - DEBUG_MODE=false
+      - METRICS_ENABLED=true
+      - TRACING_ENABLED=true
+      - AUDIT_ENABLED=true
+      - RATE_LIMITING_ENABLED=true
+      - SECURITY_HEADERS_ENABLED=true
+      - DB_POOL_SIZE=20
+      - DB_MAX_CONNECTIONS=100
+      - REDIS_MAX_CONNECTIONS=50
+      - API_RATE_LIMIT=2000
+      - API_BURST_LIMIT=200
+      - BILLING_CYCLE_DAYS=30
+      - USAGE_AGGREGATION_MINUTES=1
+      - CHAIN_TIMEOUT_SECONDS=15
+      - JWT_EXPIRY_HOURS=8
+      - SESSION_TIMEOUT_MINUTES=15
+
+# Production resource patches
+patches:
+  # High-availability resource limits
+  - target:
+      kind: Deployment
+      name: wallet-guard
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+
+  - target:
+      kind: Deployment
+      name: usage-metering
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+
+  - target:
+      kind: Deployment
+      name: auth-proxy
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+
+  # Add production-specific environment variables
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: ENVIRONMENT
+          value: "production"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: PERFORMANCE_MODE
+          value: "high"
+
+  # Add pod disruption budgets
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/affinity/podAntiAffinity
+        value:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - wallet-guard
+                - usage-metering
+                - auth-proxy
+            topologyKey: kubernetes.io/hostname
+
+  # Add node affinity for production nodes
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/affinity/nodeAffinity
+        value:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: node.kubernetes.io/instance-type
+                operator: In
+                values:
+                - m5.large
+                - m5.xlarge
+                - m5.2xlarge
+          - weight: 50
+            preference:
+              matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+
+  # Add production-specific tolerations
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/tolerations
+        value:
+        - key: "production-workload"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+
+# Additional production-specific resources
+patchesStrategicMerge:
+  - pod-disruption-budget.yaml
+  - horizontal-pod-autoscaler.yaml
+  - network-policy-strict.yaml
+  - backup-config.yaml
+  - monitoring-alerts.yaml
+
+# Validation for production
+validators:
+  - |-
+    apiVersion: builtin
+    kind: KubernetesValidatorPlugin
+    metadata:
+      name: validate-production
+    strict: true
+    # Ensure all deployments have resource limits
+    - |-
+      apiVersion: v1
+      kind: Deployment
+      metadata:
+        name: "*"
+      spec:
+        template:
+          spec:
+            containers:
+            - resources:
+                limits:
+                  cpu: "*"
+                  memory: "*"
+                requests:
+                  cpu: "*"
+                  memory: "*"

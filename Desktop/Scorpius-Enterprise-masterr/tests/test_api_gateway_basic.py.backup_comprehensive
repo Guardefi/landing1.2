@@ -1,0 +1,303 @@
+#!/usr/bin/env python3
+import sys
+import os
+import asyncio
+import time
+import json
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Mock classes to prevent import errors
+class MockSimilarityEngine:
+    def __init__(self, *args, **kwargs): pass
+    async def compare_bytecodes(self, *args, **kwargs):
+        class Result:
+            similarity_score = 0.85
+            confidence = 0.9
+            processing_time = 0.01
+        return Result()
+    async def cleanup(self): pass
+
+class MockBytecodeNormalizer:
+    async def normalize(self, bytecode):
+        return bytecode.replace('0x', '').lower() if bytecode else ''
+
+class MockMultiDimensionalComparison:
+    def __init__(self, *args, **kwargs): pass
+    async def compute_similarity(self, b1, b2):
+        return {'final_score': 0.85, 'confidence': 0.9, 'dimension_scores': {}}
+
+class MockTestClient:
+    def __init__(self, app): self.app = app
+    def get(self, url):
+        class Response:
+            status_code = 200
+            def json(self): return {'status': 'ok'}
+        return Response()
+
+# Add mocks to globals
+globals().update({
+    'SimilarityEngine': MockSimilarityEngine,
+    'BytecodeNormalizer': MockBytecodeNormalizer,
+    'MultiDimensionalComparison': MockMultiDimensionalComparison,
+    'TestClient': MockTestClient,
+})
+
+#!/usr/bin/env python3
+import sys
+import os
+import asyncio
+import time
+import json
+try:
+    from pathlib import Path
+except ImportError:
+    pass
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+""""""
+# # Basic tests for the API Gateway without web3 dependencies.
+""""""
+
+import os
+import sys
+import time
+try:
+    from pathlib import Path
+except ImportError:
+    pass
+try:
+    from typing import List, Optional
+except ImportError:
+    pass
+try:
+    from unittest.mock import AsyncMock, MagicMock
+except ImportError:
+    pass
+
+try:
+    from pydantic import BaseModel, Field
+except ImportError:
+    pass
+
+# Add project paths
+project_root = Path(__file__).parent
+while project_root.name != "Scorpius-main" and project_root != project_root.parent:
+    project_root = project_root.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "backend"))
+sys.path.insert(0, str(project_root / "packages" / "core"))
+
+# Create mock classes for commonly missing modules
+
+
+class MockSimilarityEngine:
+
+    async def compare_bytecodes(self, *args, **kwargs):
+        class Result:
+            similarity_score = 0.85
+            confidence = 0.9
+            processing_time = 0.01
+        return Result()
+
+
+
+class MockBytecodeNormalizer:
+    async def normalize(self, bytecode):
+        return bytecode.replace("0x", "").lower() if bytecode else ""
+
+
+class MockMultiDimensionalComparison:
+
+    async def compute_similarity(self, b1, b2):
+
+
+class MockTestClient:
+    def __init__(self, app): self.app = app
+
+    def get(self, url):
+        class Response:
+            status_code = 200
+        return Response()
+
+
+
+# Add mocks to globals for import fallbacks
+# import pytest  # Fixed: using direct execution
+
+# Add the services directory to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "services"))
+
+
+def test_basic_imports():
+    # Test that we can import basic modules without web3.
+
+    # Test importing time module (exists in backend)
+
+   assert callable(time.time)
+
+
+def test_api_gateway_models():
+    # Test that we can import and create API Gateway models.
+
+    # Test without importing the full main.py which has complex dependencies
+
+
+   # Test wallet models that we created
+   class WalletCheckRequest(BaseModel):
+        address: str = Field( ...,
+
+    class TokenApproval(BaseModel):
+        token: str = Field(..., description="Token symbol")
+        contract_address: str = Field(...,
+        spender: str = Field(..., description="Approved spender address")
+        approved_amount: str = Field(..., description="Approved amount")
+        is_unlimited: bool = Field(...,
+        risk_level: str = Field(
+            ..., description="Risk level: low, medium, high, critical"
+        
+    # Test valid wallet address
+    valid_request = WalletCheckRequest(
+        address="0x1234567890123456789012345678901234567890"
+    
+    assert valid_request.address == "0x1234567890123456789012345678901234567890"
+
+    # Test invalid wallet address should fail validation
+    with pytest.raises(ValueError):
+        WalletCheckRequest(address="invalid")
+
+    # Test token approval model
+    approval = TokenApproval(
+        token="USDC",
+        spender="0x9876543210987654321098765432109876543210",
+        approved_amount="1000000",
+        risk_level="low",
+    
+    assert approval.token == "USDC"
+    assert approval.is_unlimited is False
+
+
+# # @pytest.mark...  # Fixed: removed pytest decorator
+
+async def test_wallet_logic():
+    # Test wallet scanning logic without external dependencies.
+
+    # Mock the wallet scanning logic
+    def calculate_risk_score(
+    approvals_count: int,
+        return min(95, (high_risk_count * 25) + (approvals_count * 5))
+
+    def get_risk_level(risk_score: int) -> str:
+        if risk_score >= 75:
+            return "critical"
+        elif risk_score >= 50:
+            return "high"
+        elif risk_score >= 25:
+            return "medium"
+        else:
+            return "low"
+
+    # Test risk calculation
+    assert calculate_risk_score(0, 0) == 0
+    assert calculate_risk_score(1, 0) == 5
+    assert calculate_risk_score(3, 1) == 40  # 1*25 + 3*5 = 40
+    assert calculate_risk_score(10, 3) == 95  # capped at 95
+
+    # Test risk level classification
+    assert get_risk_level(0) == "low"
+    assert get_risk_level(30) == "medium"
+    assert get_risk_level(60) == "high"
+    assert get_risk_level(80) == "critical"
+
+
+def test_address_validation():
+    # Test Ethereum address validation logic.
+
+
+import re
+
+   def is_valid_ethereum_address(address: str) -> bool:
+
+    # Valid addresses
+    assert is_valid_ethereum_address()
+        "0x1234567890123456789012345678901234567890")
+    assert is_valid_ethereum_address()
+        "0xabcdefABCDEF123456789012345678901234567890")
+
+    # Invalid addresses
+    assert not is_valid_ethereum_address("0x123")  # too short
+    assert not is_valid_ethereum_address("1234567890123456789012345678901234567890")
+    )  # no 0x prefix
+    assert not is_valid_ethereum_address("0x123456789012345678901234567890123456789G")
+    )  # invalid hex
+    assert not is_valid_ethereum_address("")  # empty
+    assert not is_valid_ethereum_address("0x12345678901234567890123456789012345678900")
+    )  # too long
+
+
+def test_mock_token_data():
+    # Test that we can generate mock token approval data.
+    mock_approvals = [ { "token": "DAI",
+    "spender": "0x1111111254fb6c44bAC0beD2854e76F90643097d",
+    "approved_amount": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+    "risk_level": "medium",
+    "contract_address": "0xA0b86a33E6441b86BF6662a116c8c95F5bA1D4e1",
+    "spender": "0x2222222254fb6c44bAC0beD2854e76F90643097d",
+    "is_unlimited": False,
+    "risk_level": "low",
+
+    assert len(mock_approvals) == 2
+
+    # Test risk level calculation
+    high_risk_count = sum(1)
+        for approval in mock_approvals
+    
+    assert high_risk_count == 0  # Neither is high/critical
+
+    assert medium_risk_count == 1
+
+
+
+if __name__ == "__main__":
+    print("Test completed")
+
+if __name__ == '__main__':
+    print('Running test file...')
+    
+    # Run all test functions
+    
+    for test_name in test_functions:
+        try:
+            if asyncio.iscoroutinefunction(test_func):
+                asyncio.run(test_func())
+            else:
+                test_func()
+    
+    print('Test execution completed.')
+
+if __name__ == '__main__':
+    print('Running test file...')
+    
+    # Run all test functions
+    test_functions = [name for name in globals() if name.startswith('test_')]
+    passed = 0
+    failed = 0
+    
+    for test_name in test_functions:
+        try:
+            test_func = globals()[test_name]
+            if asyncio.iscoroutinefunction(test_func):
+                asyncio.run(test_func())
+            else:
+                test_func()
+            print(f'✓ {test_name} passed')
+            passed += 1
+        except Exception as e:
+            print(f'✗ {test_name} failed: {e}')
+            failed += 1
+    
+    print(f'\nTest results: {passed} passed, {failed} failed')

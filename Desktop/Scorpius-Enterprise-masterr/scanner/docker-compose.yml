@@ -1,0 +1,286 @@
+# Docker Compose configuration for Scorpius Vulnerability Scanner
+# Enterprise-grade setup with all scanner plugins and simulation environment
+
+version: '3.8'
+
+services:
+  # Main Scorpius Enterprise application
+  scorpius-enterprise:
+    build:
+      context: .
+      dockerfile: docker/scorpius/Dockerfile
+    container_name: scorpius-enterprise
+    ports:
+      - "8090:8080"
+    volumes:
+      - ./contracts:/workspace/contracts
+      - ./reports:/workspace/reports
+      - ./config:/workspace/config
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SCORPIUS_ENV=production
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - scorpius-network
+
+  # PostgreSQL database for storing scan results
+  postgres:
+    image: postgres:14-alpine
+    container_name: scorpius-db
+    environment:
+      - POSTGRES_DB=scorpius
+      - POSTGRES_USER=scorpius
+      - POSTGRES_PASSWORD=scorpius_secure_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - scorpius-network
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: scorpius-redis
+    command: redis-server --appendonly yes --requirepass scorpius_redis_pass
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - scorpius-network
+
+  # Slither static analysis plugin
+  slither:
+    build:
+      context: docker/slither
+      dockerfile: Dockerfile
+    container_name: scorpius-slither
+    ports:
+      - "8091:8081"
+    volumes:
+      - ./contracts:/workspace/contracts
+      - ./reports:/workspace/reports
+    networks:
+      - scorpius-network
+
+  # Mythril security analysis plugin
+  mythril:
+    build:
+      context: docker/mythril
+      dockerfile: Dockerfile
+    container_name: scorpius-mythril
+    ports:
+      - "8092:8082"
+    volumes:
+      - ./contracts:/workspace/contracts
+      - ./reports:/workspace/reports
+    networks:
+      - scorpius-network
+
+  # Manticore symbolic execution plugin
+  manticore:
+    build:
+      context: docker/manticore
+      dockerfile: Dockerfile
+    container_name: scorpius-manticore
+    ports:
+      - "8093:8083"
+    volumes:
+      - ./contracts:/workspace/contracts
+      - ./reports:/workspace/reports
+    networks:
+      - scorpius-network
+
+  # MythX professional analysis plugin
+  mythx:
+    build:
+      context: docker/mythx
+      dockerfile: Dockerfile
+    container_name: scorpius-mythx
+    ports:
+      - "8094:8084"
+    environment:
+      - MYTHX_API_KEY=${MYTHX_API_KEY}
+    volumes:
+      - ./contracts:/workspace/contracts
+      - ./reports:/workspace/reports
+    networks:
+      - scorpius-network
+    profiles:
+      - plugins
+
+  # Ethereum simulation environment
+  ethereum-sim:
+    build:
+      context: docker/ethereum-sim
+      dockerfile: Dockerfile
+    container_name: scorpius-ethereum-sim
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+    volumes:
+      - ./contracts:/workspace/contracts
+      - ./exploits:/workspace/exploits
+      - ./reports:/workspace/reports
+    networks:
+      - scorpius-network
+    profiles:
+      - simulation
+
+  # DeFi simulation environment
+  defi-sim:
+    build:
+      context: docker/defi-sim
+      dockerfile: Dockerfile
+    container_name: scorpius-defi-sim
+    ports:
+      - "8547:8545"
+    volumes:
+      - ./contracts:/workspace/contracts
+      - ./exploits:/workspace/exploits
+      - ./reports:/workspace/reports
+    environment:
+      - FORK_URL=${MAINNET_FORK_URL}
+    networks:
+      - scorpius-network
+    profiles:
+      - simulation
+
+  # Monitoring and logging with ELK Stack
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: scorpius-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - scorpius-network
+    profiles:
+      - monitoring
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.8.0
+    container_name: scorpius-logstash
+    volumes:
+      - ./config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    depends_on:
+      - elasticsearch
+    networks:
+      - scorpius-network
+    profiles:
+      - monitoring
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: scorpius-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - scorpius-network
+    profiles:
+      - monitoring
+
+  # Grafana for metrics visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: scorpius-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana:/etc/grafana/provisioning
+    networks:
+      - scorpius-network
+    profiles:
+      - monitoring
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: scorpius-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - scorpius-network
+    profiles:
+      - monitoring
+
+  # IPFS for decentralized storage
+  ipfs:
+    image: ipfs/go-ipfs:latest
+    container_name: scorpius-ipfs
+    ports:
+      - "4001:4001"
+      - "5001:5001"
+      - "8081:8080"
+    volumes:
+      - ipfs_data:/data/ipfs
+    networks:
+      - scorpius-network
+    profiles:
+      - storage
+
+  # MinIO for S3-compatible object storage
+  minio:
+    image: minio/minio:latest
+    container_name: scorpius-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=scorpius
+      - MINIO_ROOT_PASSWORD=scorpius_minio_pass
+    command: server /data --console-address ":9001"
+    networks:
+      - scorpius-network
+    profiles:
+      - storage
+
+networks:
+  scorpius-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+  grafana_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  ipfs_data:
+    driver: local
+  minio_data:
+    driver: local

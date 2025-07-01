@@ -1,0 +1,69 @@
+# API Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.7.0
+pydantic-settings==2.1.0
+sqlalchemy[asyncio]==2.0.23
+asyncpg==0.29.0
+redis==5.0.1
+httpx==0.25.2
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+websockets==12.0
+aiofiles==23.2.1
+
+# Database
+motor>=3.2.0
+pymongo>=4.5.0
+
+# Blockchain - Using compatible versions
+web3==6.11.3
+eth-utils==2.2.0
+eth-typing==3.4.0
+hexbytes==0.3.1
+rlp==3.0.0
+
+# Analysis tools - moved to requirements-analysis.txt
+z3-solver>=4.12.2
+# mythril==0.23.19
+# slither-analyzer>=0.9.5
+# crytic-compile>=0.3.5
+
+# Machine Learning
+scikit-learn>=1.3.0
+xgboost>=1.7.6
+tensorflow>=2.13.0
+joblib>=1.3.2
+numpy>=1.24.4
+pandas>=2.1.0
+
+# Async and task queue
+aiohttp>=3.8.5
+celery>=5.3.1
+kombu>=5.3.1
+
+# Utilities
+python-dotenv>=1.0.0
+pytz>=2023.3
+tenacity>=8.2.3
+ratelimit>=2.2.1
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.1
+pytest-mock>=3.11.1
+
+# Code Quality
+black>=23.7.0
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.5.1
+
+# Monitoring and logging
+prometheus-client>=0.17.1
+python-json-logger>=0.1.0
+psutil>=5.9.0
+
+# Email validator
+email-validator>=2.0.0

@@ -1,0 +1,246 @@
+/* Scorpius Enterprise Platform - Additional Dark Theme Styles */
+
+:root {
+  --scorpius-black: #0a0a0a;
+  --scorpius-dark-gray: #1a1a1a;
+  --scorpius-medium-gray: #2a2a2a;
+  --scorpius-light-gray: #4a4a4a;
+  --scorpius-white: #ffffff;
+  --scorpius-accent: #00ff9f;
+  --scorpius-warning: #ff6b35;
+  --scorpius-error: #ff3333;
+  --scorpius-success: #00ff9f;
+}
+
+/* Sidebar improvements */
+.md-sidebar {
+  background-color: var(--scorpius-dark-gray) !important;
+}
+
+.md-sidebar--secondary {
+  background-color: var(--scorpius-black) !important;
+}
+
+/* Improve table of contents */
+.md-nav--secondary .md-nav__link {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 0.9rem;
+}
+
+.md-nav--secondary .md-nav__link:hover {
+  color: var(--scorpius-accent) !important;
+}
+
+/* Status indicators */
+.status-indicator {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 0.5rem;
+}
+
+.status-indicator.complete {
+  background-color: var(--scorpius-success);
+  color: var(--scorpius-black);
+}
+
+.status-indicator.in-progress {
+  background-color: var(--scorpius-warning);
+  color: var(--scorpius-white);
+}
+
+.status-indicator.pending {
+  background-color: var(--scorpius-light-gray);
+  color: var(--scorpius-white);
+}
+
+/* Feature boxes */
+.feature-box {
+  background: linear-gradient(135deg, var(--scorpius-dark-gray) 0%, var(--scorpius-medium-gray) 100%);
+  border: 1px solid var(--scorpius-medium-gray);
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 1.5rem 0;
+  transition: all 0.3s ease;
+}
+
+.feature-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 255, 159, 0.15);
+  border-color: var(--scorpius-accent);
+}
+
+.feature-box h3 {
+  color: var(--scorpius-accent) !important;
+  margin-top: 0;
+}
+
+/* Metrics cards */
+.metrics-card {
+  background-color: var(--scorpius-dark-gray);
+  border: 1px solid var(--scorpius-medium-gray);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.metrics-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--scorpius-accent);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.metrics-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Quote styling */
+blockquote {
+  border-left: 4px solid var(--scorpius-accent);
+  background-color: rgba(0, 255, 159, 0.05);
+  padding: 1.5rem 2rem;
+  margin: 2rem 0;
+  border-radius: 0 8px 8px 0;
+}
+
+blockquote p {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+blockquote cite {
+  color: var(--scorpius-accent);
+  font-weight: 600;
+  font-style: normal;
+}
+
+/* Progress bars */
+.progress-bar {
+  background-color: var(--scorpius-medium-gray);
+  border-radius: 10px;
+  overflow: hidden;
+  height: 8px;
+  margin: 0.5rem 0;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, var(--scorpius-accent) 0%, rgba(0, 255, 159, 0.7) 100%);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* Enterprise rating stars */
+.rating {
+  color: var(--scorpius-accent);
+  font-size: 1.2rem;
+  margin: 0.5rem 0;
+}
+
+.rating-text {
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: 0.5rem;
+  font-weight: 500;
+}
+
+/* Highlight boxes */
+.highlight-box {
+  background: linear-gradient(135deg, rgba(0, 255, 159, 0.1) 0%, rgba(0, 255, 159, 0.05) 100%);
+  border: 1px solid rgba(0, 255, 159, 0.3);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.highlight-box.warning {
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 107, 53, 0.05) 100%);
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+.highlight-box.error {
+  background: linear-gradient(135deg, rgba(255, 51, 51, 0.1) 0%, rgba(255, 51, 51, 0.05) 100%);
+  border-color: rgba(255, 51, 51, 0.3);
+}
+
+/* Selection styling */
+::selection {
+  background-color: rgba(0, 255, 159, 0.3);
+  color: var(--scorpius-white);
+}
+
+.md-header {
+  background: linear-gradient(135deg, var(--scorpius-primary) 0%, var(--scorpius-secondary) 100%);
+}
+
+.md-nav__link--active {
+  color: var(--scorpius-accent);
+}
+
+.md-tabs__link--active {
+  color: var(--scorpius-accent);
+}
+
+.md-typeset h1 {
+  color: var(--scorpius-primary);
+}
+
+.md-typeset .admonition.success {
+  border-color: var(--scorpius-accent);
+}
+
+.md-typeset .admonition.warning {
+  border-color: var(--scorpius-warning);
+}
+
+.md-typeset .admonition.danger {
+  border-color: var(--scorpius-danger);
+}
+
+/* Enterprise styling for tables */
+.md-typeset table:not([class]) {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--scorpius-primary);
+  color: white;
+  font-weight: 600;
+}
+
+/* Custom enterprise badges */
+.enterprise-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.enterprise-badge--security {
+  background: var(--scorpius-accent);
+  color: white;
+}
+
+.enterprise-badge--compliance {
+  background: var(--scorpius-secondary);
+  color: white;
+}
+
+.enterprise-badge--performance {
+  background: var(--scorpius-warning);
+  color: white;
+}

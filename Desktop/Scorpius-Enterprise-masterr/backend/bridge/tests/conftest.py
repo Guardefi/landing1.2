@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+import pytest
+from unittest.mock import Mock
+from typing import AsyncGenerator
+import sys
+import os
+import asyncio
+import time
+import json
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+"""Testing configuration and fixtures."""
+
+
+# Mock implementations for testing
+class MockRedisCache:
+    """Mock Redis cache for testing."""
+
+    def __init__(self):
+        self.data = {}
+
+    async def get(self, key: str):
+        return self.data.get(key)
+
+    async def set(self, key: str, value, ttl=None):
+        self.data[key] = value
+        return True
+
+    async def delete(self, key: str):
+        return self.data.pop(key, None) is not None
+
+    async def exists(self, key: str):
+        return key in self.data
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for the test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture
+async def mock_cache() -> AsyncGenerator[MockRedisCache, None]:
+    """Provide mock cache for testing."""
+    cache = MockRedisCache()
+    yield cache
+
+
+@pytest.fixture
+def mock_blockchain_client():
+    """Provide mock blockchain client for testing."""
+    client = Mock()
+    client.get_balance.return_value = 1000.0
+    client.estimate_gas_fee.return_value = 0.001
+    client.execute_transfer.return_value = "0x123...abc"
+    client.get_confirmations.return_value = 12
+    return client
+
+
+@pytest.fixture
+def mock_event_publisher():
+    """Provide mock event publisher for testing."""
+    publisher = Mock()
+    publisher.publish = Mock()
+    return publisher
+
+
+if __name__ == "__main__":
+    print("Running test file...")
+
+    # Run all test functions
+    test_functions = [name for name in globals() if name.startswith("test_")]
+    passed = 0
+    failed = 0
+
+    for test_name in test_functions:
+        try:
+            test_func = globals()[test_name]
+            if asyncio.iscoroutinefunction(test_func):
+                asyncio.run(test_func())
+            else:
+                test_func()
+            print(f"✓ {test_name} passed")
+            passed += 1
+        except Exception as e:
+            print(f"✗ {test_name} failed: {e}")
+            failed += 1
+
+    print(f"\nTest results: {passed} passed, {failed} failed")

@@ -1,0 +1,414 @@
+name: SBOM Generation and Vulnerability Scanning
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  generate-sbom:
+    name: Generate SBOM and Scan Vulnerabilities
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+      
+    outputs:
+      critical-vulns: ${{ steps.scan.outputs.critical-count }}
+      high-vulns: ${{ steps.scan.outputs.high-count }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build Docker image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.prod
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Install Syft for SBOM generation
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Install Grype for vulnerability scanning
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Generate SBOM
+        run: |
+          mkdir -p artifacts
+          
+          # Generate SBOM for the Docker image
+          IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -1)
+          syft $IMAGE_TAG -o spdx-json=artifacts/sbom.json
+          syft $IMAGE_TAG -o cyclonedx-json=artifacts/sbom-cyclonedx.json
+          syft $IMAGE_TAG -o table=artifacts/sbom.txt
+          
+          # Generate SBOM for source code
+          syft dir:. -o spdx-json=artifacts/sbom-source.json
+          
+          echo "SBOM files generated:"
+          ls -la artifacts/sbom*
+
+      - name: Scan for vulnerabilities with Grype
+        id: scan
+        run: |
+          mkdir -p artifacts
+          
+          IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -1)
+          
+          # Scan Docker image
+          grype $IMAGE_TAG -o json --file artifacts/vulnerabilities.json
+          grype $IMAGE_TAG -o table --file artifacts/vulnerabilities.txt
+          grype $IMAGE_TAG -o sarif --file artifacts/vulnerabilities.sarif
+          
+          # Scan source code
+          grype dir:. -o json --file artifacts/vulnerabilities-source.json
+          
+          # Extract vulnerability counts
+          CRITICAL_COUNT=$(jq '[.matches[] | select(.vulnerability.severity == "Critical")] | length' artifacts/vulnerabilities.json)
+          HIGH_COUNT=$(jq '[.matches[] | select(.vulnerability.severity == "High")] | length' artifacts/vulnerabilities.json)
+          MEDIUM_COUNT=$(jq '[.matches[] | select(.vulnerability.severity == "Medium")] | length' artifacts/vulnerabilities.json)
+          LOW_COUNT=$(jq '[.matches[] | select(.vulnerability.severity == "Low")] | length' artifacts/vulnerabilities.json)
+          
+          echo "critical-count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
+          echo "high-count=$HIGH_COUNT" >> $GITHUB_OUTPUT
+          echo "medium-count=$MEDIUM_COUNT" >> $GITHUB_OUTPUT
+          echo "low-count=$LOW_COUNT" >> $GITHUB_OUTPUT
+          
+          echo "Vulnerability Summary:"
+          echo "Critical: $CRITICAL_COUNT"
+          echo "High: $HIGH_COUNT"
+          echo "Medium: $MEDIUM_COUNT"
+          echo "Low: $LOW_COUNT"
+          
+          # Create summary report
+          cat > artifacts/vulnerability-summary.json << EOF
+          {
+            "scan_timestamp": "$(date -Iseconds)",
+            "image": "$IMAGE_TAG",
+            "vulnerability_counts": {
+              "critical": $CRITICAL_COUNT,
+              "high": $HIGH_COUNT,
+              "medium": $MEDIUM_COUNT,
+              "low": $LOW_COUNT,
+              "total": $((CRITICAL_COUNT + HIGH_COUNT + MEDIUM_COUNT + LOW_COUNT))
+            },
+            "compliance_status": {
+              "critical_threshold": 0,
+              "high_threshold": 5,
+              "critical_compliant": $([ $CRITICAL_COUNT -eq 0 ] && echo "true" || echo "false"),
+              "high_compliant": $([ $HIGH_COUNT -le 5 ] && echo "true" || echo "false")
+            }
+          }
+          EOF
+
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: artifacts/vulnerabilities.sarif
+          category: "grype-container-scan"
+
+      - name: Upload SBOM and vulnerability reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sbom-and-vulnerabilities-${{ github.sha }}
+          path: artifacts/
+          retention-days: 90
+
+      - name: Check vulnerability thresholds
+        run: |
+          CRITICAL_COUNT=${{ steps.scan.outputs.critical-count }}
+          HIGH_COUNT=${{ steps.scan.outputs.high-count }}
+          
+          echo "Checking vulnerability thresholds..."
+          echo "Critical vulnerabilities: $CRITICAL_COUNT (threshold: 0)"
+          echo "High vulnerabilities: $HIGH_COUNT (threshold: 5)"
+          
+          if [ "$CRITICAL_COUNT" -gt 0 ]; then
+            echo "❌ FAIL: Critical vulnerabilities found ($CRITICAL_COUNT)"
+            echo "::error::Critical vulnerabilities detected. Build will fail."
+            exit 1
+          fi
+          
+          if [ "$HIGH_COUNT" -gt 5 ]; then
+            echo "❌ FAIL: Too many high vulnerabilities found ($HIGH_COUNT > 5)"
+            echo "::error::High vulnerability threshold exceeded. Build will fail."
+            exit 1
+          fi
+          
+          echo "✅ PASS: Vulnerability thresholds met"
+
+      - name: Generate compliance report
+        if: always()
+        run: |
+          mkdir -p artifacts
+          
+          CRITICAL_COUNT=${{ steps.scan.outputs.critical-count }}
+          HIGH_COUNT=${{ steps.scan.outputs.high-count }}
+          MEDIUM_COUNT=${{ steps.scan.outputs.medium-count }}
+          LOW_COUNT=${{ steps.scan.outputs.low-count }}
+          
+          # Generate markdown report
+          cat > artifacts/vulnerability-report.md << EOF
+          # Vulnerability Scan Report
+          
+          **Scan Date:** $(date '+%Y-%m-%d %H:%M:%S UTC')
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          **Image:** $(echo "${{ steps.meta.outputs.tags }}" | head -1)
+          
+          ## Summary
+          
+          | Severity | Count | Threshold | Status |
+          |----------|-------|-----------|--------|
+          | Critical | $CRITICAL_COUNT | 0 | $([ $CRITICAL_COUNT -eq 0 ] && echo "✅ Pass" || echo "❌ Fail") |
+          | High | $HIGH_COUNT | 5 | $([ $HIGH_COUNT -le 5 ] && echo "✅ Pass" || echo "❌ Fail") |
+          | Medium | $MEDIUM_COUNT | - | ℹ️ Info |
+          | Low | $LOW_COUNT | - | ℹ️ Info |
+          
+          **Total Vulnerabilities:** $((CRITICAL_COUNT + HIGH_COUNT + MEDIUM_COUNT + LOW_COUNT))
+          
+          ## Compliance Status
+          
+          - **SOC 2 CC6.1**: $([ $CRITICAL_COUNT -eq 0 ] && echo "✅ Compliant" || echo "❌ Non-compliant")
+          - **ISO 27001**: $([ $CRITICAL_COUNT -eq 0 ] && [ $HIGH_COUNT -le 5 ] && echo "✅ Compliant" || echo "❌ Non-compliant")
+          - **NIST Framework**: $([ $CRITICAL_COUNT -eq 0 ] && echo "✅ Compliant" || echo "❌ Non-compliant")
+          
+          ## Files Generated
+          
+          - \`sbom.json\` - Software Bill of Materials (SPDX format)
+          - \`sbom-cyclonedx.json\` - SBOM in CycloneDX format
+          - \`vulnerabilities.json\` - Detailed vulnerability report
+          - \`vulnerabilities.sarif\` - SARIF format for GitHub Security
+          - \`vulnerability-summary.json\` - Summary statistics
+          
+          ## Next Steps
+          
+          $(if [ $CRITICAL_COUNT -gt 0 ] || [ $HIGH_COUNT -gt 5 ]; then
+            echo "1. ❌ **URGENT**: Address critical and high-severity vulnerabilities"
+            echo "2. Update dependencies to patched versions"
+            echo "3. Review security advisories for affected packages"
+            echo "4. Re-run scan after fixes"
+          else
+            echo "1. ✅ No immediate action required"
+            echo "2. Continue monitoring for new vulnerabilities"
+            echo "3. Regular dependency updates recommended"
+          fi)
+          
+          ---
+          *Generated by Scorpius SBOM & Vulnerability Scanner*
+          EOF
+
+      - name: Comment on PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            const criticalCount = ${{ steps.scan.outputs.critical-count }};
+            const highCount = ${{ steps.scan.outputs.high-count }};
+            const mediumCount = ${{ steps.scan.outputs.medium-count }};
+            const lowCount = ${{ steps.scan.outputs.low-count }};
+            
+            const status = criticalCount === 0 && highCount <= 5 ? '✅ PASS' : '❌ FAIL';
+            const emoji = criticalCount === 0 && highCount <= 5 ? '🛡️' : '🚨';
+            
+            const comment = `${emoji} **Vulnerability Scan Results**
+            
+            | Severity | Count | Status |
+            |----------|-------|--------|
+            | Critical | ${criticalCount} | ${criticalCount === 0 ? '✅' : '❌'} |
+            | High | ${highCount} | ${highCount <= 5 ? '✅' : '❌'} |
+            | Medium | ${mediumCount} | ℹ️ |
+            | Low | ${lowCount} | ℹ️ |
+            
+            **Overall Status:** ${status}
+            
+            ${criticalCount > 0 || highCount > 5 ? 
+              '⚠️ **Action Required**: Critical or high-severity vulnerabilities detected. Please address before merging.' :
+              '✅ **All Clear**: No critical vulnerabilities found.'
+            }
+            
+            View detailed results in the [workflow artifacts](${context.payload.repository.html_url}/actions/runs/${context.runId}).`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Send Slack notification
+        if: always()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            CRITICAL_COUNT=${{ steps.scan.outputs.critical-count }}
+            HIGH_COUNT=${{ steps.scan.outputs.high-count }}
+            TOTAL_COUNT=$((CRITICAL_COUNT + HIGH_COUNT + ${{ steps.scan.outputs.medium-count }} + ${{ steps.scan.outputs.low-count }}))
+            
+            if [ "$CRITICAL_COUNT" -gt 0 ] || [ "$HIGH_COUNT" -gt 5 ]; then
+              COLOR="danger"
+              STATUS="❌ Failed"
+              URGENCY="🚨 URGENT ACTION REQUIRED"
+            else
+              COLOR="good"
+              STATUS="✅ Passed"
+              URGENCY="✅ All clear"
+            fi
+            
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{
+                \"text\": \"🛡️ Vulnerability Scan Completed\",
+                \"attachments\": [
+                  {
+                    \"color\": \"$COLOR\",
+                    \"fields\": [
+                      {
+                        \"title\": \"Status\",
+                        \"value\": \"$STATUS\",
+                        \"short\": true
+                      },
+                      {
+                        \"title\": \"Critical\",
+                        \"value\": \"$CRITICAL_COUNT\",
+                        \"short\": true
+                      },
+                      {
+                        \"title\": \"High\",
+                        \"value\": \"$HIGH_COUNT\",
+                        \"short\": true
+                      },
+                      {
+                        \"title\": \"Total\",
+                        \"value\": \"$TOTAL_COUNT\",
+                        \"short\": true
+                      },
+                      {
+                        \"title\": \"Branch\",
+                        \"value\": \"${{ github.ref_name }}\",
+                        \"short\": false
+                      },
+                      {
+                        \"title\": \"Action\",
+                        \"value\": \"$URGENCY\",
+                        \"short\": false
+                      }
+                    ]
+                  }
+                ]
+              }" "$SLACK_WEBHOOK"
+          fi
+
+  # Job to update the published SBOM
+  publish-sbom:
+    name: Publish SBOM
+    runs-on: ubuntu-latest
+    needs: generate-sbom
+    if: github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download SBOM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-and-vulnerabilities-${{ github.sha }}
+          path: artifacts/
+
+      - name: Publish SBOM to repository
+        run: |
+          # Create artifacts directory in repo
+          mkdir -p artifacts
+          
+          # Copy SBOM files to the repository
+          cp artifacts/sbom.json artifacts/sbom.json
+          cp artifacts/sbom-cyclonedx.json artifacts/sbom-cyclonedx.json
+          cp artifacts/vulnerability-summary.json artifacts/vulnerability-summary.json
+          cp artifacts/vulnerability-report.md artifacts/vulnerability-report.md
+          
+          # Update timestamp
+          echo "$(date -Iseconds)" > artifacts/last-scan.txt
+          
+          # Create index file
+          cat > artifacts/README.md << EOF
+          # Scorpius Security Artifacts
+          
+          This directory contains the latest security scanning artifacts for the Scorpius platform.
+          
+          ## Files
+          
+          - \`sbom.json\` - Software Bill of Materials (SPDX format)
+          - \`sbom-cyclonedx.json\` - SBOM in CycloneDX format  
+          - \`vulnerability-summary.json\` - Vulnerability scan summary
+          - \`vulnerability-report.md\` - Human-readable vulnerability report
+          - \`last-scan.txt\` - Timestamp of last scan
+          
+          ## Last Updated
+          
+          $(date '+%Y-%m-%d %H:%M:%S UTC')
+          
+          ## Compliance
+          
+          These artifacts support compliance with:
+          - SOC 2 Type II (CC6.1)
+          - ISO 27001
+          - NIST Cybersecurity Framework
+          - Executive Order 14028 (Software Supply Chain Security)
+          EOF
+
+      - name: Commit and push SBOM
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add artifacts/
+          git commit -m "chore: update SBOM and vulnerability scan results [skip ci]" || exit 0
+          git push 
