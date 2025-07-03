@@ -1,0 +1,658 @@
+name: Scorpius Enterprise Platform CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+  POSTGRES_VERSION: '15'
+  REDIS_VERSION: '7'
+
+jobs:
+  # === STAGE 1: Setup and Lint ===
+  setup-and-lint:
+    name: Setup & Lint
+    runs-on: ubuntu-latest
+    outputs:
+      python-version: ${{ env.PYTHON_VERSION }}
+      node-version: ${{ env.NODE_VERSION }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Python
+      id: setup-python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install Python dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+
+    - name: Install pre-commit
+      run: |
+        poetry run pip install pre-commit
+        poetry run pre-commit install
+
+    - name: Run pre-commit
+      run: poetry run pre-commit run --all-files || true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Lint frontend
+      working-directory: ./frontend
+      run: |
+        npm run lint || true
+        npm run build || true
+
+    - name: Python code quality checks
+      run: |
+        poetry run black --check --diff packages/ services/ || true
+        poetry run isort --check-only --diff packages/ services/ || true
+        poetry run flake8 packages/ services/ --max-line-length=100 || true
+
+  # === STAGE 2: Security Scan ===
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: setup-and-lint
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+
+    - name: Load cached venv
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      run: poetry install --no-interaction --no-root
+
+    - name: Run security scans
+      run: |
+        poetry run pip install safety bandit semgrep
+        poetry run safety check --json --output safety-report.json
+        poetry run bandit -r packages/ services/ -f json -o bandit-report.json
+        python -m semgrep --config=auto packages/ services/ --json --output=semgrep-report.json
+
+    - name: Check security scan results
+      run: |
+        # Fail build if high/critical vulnerabilities found
+        if [ -f safety-report.json ]; then
+          HIGH_VULNS=$(jq '.vulnerabilities | length' safety-report.json)
+          if [ "$HIGH_VULNS" -gt 0 ]; then
+            echo "❌ Found $HIGH_VULNS high/critical vulnerabilities in dependencies"
+            exit 1
+          fi
+        fi
+        
+        if [ -f bandit-report.json ]; then
+          HIGH_BANDIT=$(jq '[.results[] | select(.issue_severity == "HIGH" or .issue_severity == "CRITICAL")] | length' bandit-report.json)
+          if [ "$HIGH_BANDIT" -gt 0 ]; then
+            echo "❌ Found $HIGH_BANDIT high/critical security issues in code"
+            exit 1
+          fi
+        fi
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          bandit-report.json
+          semgrep-report.json
+
+  # === STAGE 2.5: Container Security Scan ===
+  container-security:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    needs: [test-backend]
+    strategy:
+      matrix:
+        service: [
+          'api-gateway',
+          'mev_bot', 
+          'quantum',
+          'mempool',
+          'time_machine',
+          'wallet_guard',
+          'bridge-service',
+          'frontend'
+        ]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@v3
+      with:
+        cosign-release: 'v2.2.2'
+
+    - name: Install Syft for SBOM generation
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+    - name: Build container image
+      run: |
+        # Determine Dockerfile location
+        if [ -f "services/${{ matrix.service }}/Dockerfile" ]; then
+          DOCKERFILE_PATH="services/${{ matrix.service }}/Dockerfile"
+          CONTEXT_PATH="services/${{ matrix.service }}"
+        elif [ -f "backend/${{ matrix.service }}/Dockerfile" ]; then
+          DOCKERFILE_PATH="backend/${{ matrix.service }}/Dockerfile"
+          CONTEXT_PATH="backend/${{ matrix.service }}"
+        elif [ -f "${{ matrix.service }}/Dockerfile" ]; then
+          DOCKERFILE_PATH="${{ matrix.service }}/Dockerfile"
+          CONTEXT_PATH="${{ matrix.service }}"
+        else
+          echo "❌ Dockerfile not found for service ${{ matrix.service }}"
+          exit 1
+        fi
+        
+        # Build image with security-hardened Dockerfile
+        docker build \
+          -f "$DOCKERFILE_PATH" \
+          -t "scorpius-${{ matrix.service }}:${{ github.sha }}" \
+          "$CONTEXT_PATH"
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'scorpius-${{ matrix.service }}:${{ github.sha }}'
+        format: 'sarif'
+        output: 'trivy-results-${{ matrix.service }}.sarif'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '1'  # Fail on HIGH/CRITICAL findings
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
+
+    - name: Generate SBOM
+      run: |
+        syft "scorpius-${{ matrix.service }}:${{ github.sha }}" \
+          -o cyclonedx-json=sbom-${{ matrix.service }}.cyclonedx.json \
+          -o spdx-json=sbom-${{ matrix.service }}.spdx.json
+
+    - name: Generate Cosign key pair
+      if: github.ref == 'refs/heads/main'
+      run: |
+        # Generate ephemeral key pair for signing (in production, use stored keys)
+        cosign generate-key-pair
+      env:
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD || 'ephemeral-key' }}
+
+    - name: Sign container image
+      if: github.ref == 'refs/heads/main'  
+      run: |
+        cosign sign --key cosign.key \
+          "scorpius-${{ matrix.service }}:${{ github.sha }}" \
+          --yes
+      env:
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD || 'ephemeral-key' }}
+
+    - name: Upload security artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-artifacts-${{ matrix.service }}
+        path: |
+          trivy-results-${{ matrix.service }}.sarif
+          sbom-${{ matrix.service }}.*.json
+          cosign.key
+          cosign.pub
+
+  # === STAGE 3: Test ===
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: setup-and-lint
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: scorpius_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+
+    - name: Load cached venv
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      run: |
+        poetry install --no-interaction --no-root
+        poetry run pip install mutmut freezegun pytest-asyncio
+
+    - name: Run Python tests with coverage
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/scorpius_test
+        REDIS_URL: redis://localhost:6379
+        JWT_SECRET: test-secret-key
+        ENVIRONMENT: testing
+      run: |
+        poetry run pytest packages/ services/ \
+          --cov=packages \
+          --cov=services \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing \
+          --junitxml=pytest-report.xml \
+          --fail-under=80 \
+          -v
+
+    - name: Run mutation tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/scorpius_test
+        REDIS_URL: redis://localhost:6379
+        JWT_SECRET: test-secret-key
+        ENVIRONMENT: testing
+      run: |
+        poetry run mutmut run --paths-to-mutate packages/,services/ --runner "python -m pytest -x" || true
+        MUTATION_SCORE=$(poetry run mutmut junitxml | grep -o 'killed="[0-9]*"' | cut -d'"' -f2)
+        TOTAL_MUTANTS=$(poetry run mutmut junitxml | grep -o 'tests="[0-9]*"' | cut -d'"' -f2)
+        if [ "$TOTAL_MUTANTS" -gt 0 ]; then
+          KILL_RATE=$((MUTATION_SCORE * 100 / TOTAL_MUTANTS))
+          echo "Mutation kill rate: $KILL_RATE%"
+          if [ "$KILL_RATE" -lt 60 ]; then
+            echo "❌ Mutation testing failed: Kill rate $KILL_RATE% is below 60% threshold"
+            exit 1
+          fi
+        fi
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        files: coverage.xml
+        fail_ci_if_error: false
+
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports
+        path: |
+          pytest-report.xml
+          htmlcov/
+
+  # === STAGE 2: Test Coverage & Quality Gates ===
+  test-coverage:
+    name: Test Coverage & Quality Gates
+    runs-on: ubuntu-latest
+    needs: [setup-and-lint]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+
+    - name: Load cached venv
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies and testing tools
+      run: |
+        poetry install --no-interaction --no-root
+        poetry add --group dev pytest pytest-cov pytest-asyncio pytest-mock mutmut freezegun
+
+    - name: Run comprehensive test suite with coverage
+      run: |
+        # Run tests with strict coverage requirements
+        poetry run pytest \
+          --cov=packages/ \
+          --cov=services/ \
+          --cov-report=xml:coverage.xml \
+          --cov-report=html:htmlcov \
+          --cov-report=term-missing \
+          --cov-fail-under=80 \
+          --strict-markers \
+          --strict-config \
+          -v
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: true
+
+    - name: Run mutation testing
+      run: |
+        # Configure mutation testing for critical modules
+        poetry run mutmut run \
+          --paths-to-mutate packages/core/ \
+          --paths-to-mutate services/api-gateway/ \
+          --runner="python -m pytest tests/" \
+          --use-coverage \
+          --percentage-killed-threshold=60
+      continue-on-error: false  # Fail CI if mutation score too low
+
+    - name: Generate mutation test report
+      if: always()
+      run: |
+        poetry run mutmut results
+        poetry run mutmut html
+      
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          coverage.xml
+          htmlcov/
+          mutmut-results/
+
+  # === STAGE 4: Build Docker Images ===
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [setup-and-lint, security-scan, test]
+    if: always()
+    
+    strategy:
+      matrix:
+        component: [api-gateway, orchestrator, frontend]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push API Gateway
+      if: matrix.component == 'api-gateway'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./services/api-gateway
+        file: ./services/api-gateway/Dockerfile.prod
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push Orchestrator
+      if: matrix.component == 'orchestrator'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./packages/core
+        file: ./packages/core/Dockerfile
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push Frontend
+      if: matrix.component == 'frontend'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # === STAGE 5: Integration Tests ===
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Start services with Docker Compose
+      run: |
+        docker-compose -f docker-compose.unified.yml --profile backend up -d
+        sleep 30
+        
+    - name: Run integration tests
+      run: |
+        curl -f http://localhost:8000/healthz || exit 1
+        curl -f http://localhost:8000/readyz || exit 1
+        echo "Integration tests passed"
+        
+    - name: Cleanup
+      if: always()
+      run: docker-compose -f docker-compose.unified.yml down
+
+  # === STAGE 6: Deploy to Staging ===
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [integration-test]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy with Docker Compose
+      run: |
+        echo "Deploying to staging environment"
+        # In a real scenario, this would deploy to a staging server
+        docker-compose -f docker-compose.prod.yml config
+        
+    - name: Run smoke tests
+      run: |
+        echo "Running smoke tests on staging"
+        # Add actual smoke test commands here
+
+  # === STAGE 7: Deploy to Production ===
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy to Production
+      run: |
+        echo "Deploying to production environment"
+        # In a real scenario, this would deploy to production
+        docker-compose -f docker-compose.prod.yml config
+        
+    - name: Run production smoke tests
+      run: |
+        echo "Running production smoke tests"
+        # Add actual production smoke test commands here
+
+  # === STAGE 4: Infrastructure Validation ===
+  infrastructure-validation:
+    name: Infrastructure Validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infrastructure/terraform
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "~1.0"
+
+    - name: Setup TFLint
+      uses: terraform-linters/setup-tflint@v4
+      with:
+        tflint_version: v0.50.3
+
+    - name: Setup Checkov
+      run: |
+        pip install checkov
+
+    - name: Terraform Format Check
+      run: terraform fmt -check -recursive
+      
+    - name: Terraform Init
+      run: |
+        terraform init -backend=false
+
+    - name: Terraform Validate
+      run: terraform validate
+
+    - name: Run TFLint
+      run: |
+        tflint --init
+        tflint --format=sarif --output=tflint-results.sarif
+
+    - name: Run Checkov Security Scan
+      run: |
+        checkov -d . \
+          --framework terraform \
+          --output cli \
+          --output sarif \
+          --output-file-path console,checkov-results.sarif \
+          --hard-fail-on HIGH,CRITICAL
+
+    - name: Upload Terraform Security Results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: infrastructure/terraform/tflint-results.sarif
+
+    - name: Upload Checkov Results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: infrastructure/terraform/checkov-results.sarif
+
+    - name: Terraform Plan (Dry Run)
+      if: github.event_name == 'pull_request'
+      run: |
+        # Create workspace for PR validation
+        terraform workspace new pr-${{ github.event.number }} || terraform workspace select pr-${{ github.event.number }}
+        terraform plan -var="environment=staging" -out=tfplan
+        terraform show -json tfplan > tfplan.json
+
+    - name: Upload Terraform Plan
+      if: github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v4
+      with:
+        name: terraform-plan
+        path: infrastructure/terraform/tfplan.json

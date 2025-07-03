@@ -1,0 +1,206 @@
+# Scorpius Enterprise SLA Monitoring Rules
+groups:
+  - name: scorpius.sla.rules
+    interval: 30s
+    rules:
+      # API Gateway SLA Rules
+      - alert: APIGatewayHighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="api-gateway"}[5m])) > 2.5
+        for: 5m
+        labels:
+          severity: critical
+          service: api-gateway
+          sla: latency
+        annotations:
+          summary: "API Gateway 95th percentile latency is above SLA threshold"
+          description: "API Gateway latency p95 is {{ $value }}s, exceeding 2.5s SLA threshold for 5 minutes"
+          runbook_url: "https://docs.scorpius.enterprise/runbooks/api-gateway-latency"
+
+      - alert: APIGatewayHighErrorRate
+        expr: rate(http_requests_total{job="api-gateway",status=~"5.."}[5m]) / rate(http_requests_total{job="api-gateway"}[5m]) > 0.02
+        for: 2m
+        labels:
+          severity: critical
+          service: api-gateway
+          sla: error_rate
+        annotations:
+          summary: "API Gateway error rate exceeds 2% SLA threshold"
+          description: "API Gateway error rate is {{ $value | humanizePercentage }}, exceeding 2% SLA threshold"
+
+      - alert: APIGatewayDown
+        expr: up{job="api-gateway"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: api-gateway
+          sla: availability
+        annotations:
+          summary: "API Gateway is down"
+          description: "API Gateway has been down for more than 1 minute"
+
+      # Wallet Guard SLA Rules
+      - alert: WalletGuardHighLatency
+        expr: histogram_quantile(0.95, rate(wallet_check_duration_seconds_bucket[5m])) > 1.8
+        for: 5m
+        labels:
+          severity: critical
+          service: wallet-guard
+          sla: latency
+        annotations:
+          summary: "Wallet Guard 95th percentile latency exceeds 1.8s SLA"
+          description: "Wallet Guard latency p95 is {{ $value }}s, exceeding 1.8s SLA for ≤25 addresses"
+
+      - alert: WalletGuardHighErrorRate
+        expr: rate(wallet_checks_total{status="error"}[5m]) / rate(wallet_checks_total[5m]) > 0.02
+        for: 2m
+        labels:
+          severity: critical
+          service: wallet-guard
+          sla: error_rate
+        annotations:
+          summary: "Wallet Guard error rate exceeds 2% SLA threshold"
+          description: "Wallet Guard error rate is {{ $value | humanizePercentage }}"
+
+      # Scanner Services SLA Rules
+      - alert: ScannerHighLatency
+        expr: histogram_quantile(0.95, rate(scan_duration_seconds_bucket[5m])) > 300
+        for: 5m
+        labels:
+          severity: warning
+          service: scanner
+          sla: latency
+        annotations:
+          summary: "Scanner 95th percentile scan time exceeds 5 minutes"
+          description: "Scanner latency p95 is {{ $value }}s for {{ $labels.scanner_type }}"
+
+      - alert: ScannerDown
+        expr: up{job=~"scanner-.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: "{{ $labels.job }}"
+          sla: availability
+        annotations:
+          summary: "Scanner service {{ $labels.job }} is down"
+          description: "Scanner {{ $labels.job }} has been down for more than 2 minutes"
+
+      # Usage Metering SLA Rules
+      - alert: UsageMeteringHighLatency
+        expr: histogram_quantile(0.95, rate(scorpius_usage_api_duration_seconds_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          service: usage-metering
+          sla: latency
+        annotations:
+          summary: "Usage Metering API latency exceeds 1 second SLA"
+          description: "Usage Metering latency p95 is {{ $value }}s"
+
+      # Infrastructure SLA Rules
+      - alert: HighCPUUsage
+        expr: (100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+          sla: performance
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+          sla: performance
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          component: infrastructure
+          sla: capacity
+        annotations:
+          summary: "Disk space critically low"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }}:{{ $labels.mountpoint }}"
+
+      # Database SLA Rules
+      - alert: PostgreSQLDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: postgresql
+          sla: availability
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database has been down for more than 1 minute"
+
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+          sla: availability
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache has been down for more than 1 minute"
+
+      - alert: DatabaseHighConnections
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+          sla: performance
+        annotations:
+          summary: "PostgreSQL high connection count"
+          description: "PostgreSQL has {{ $value }} active connections"
+
+  # Recording rules for SLA metrics
+  - name: scorpius.sla.recording
+    interval: 30s
+    rules:
+      # API Gateway SLA metrics
+      - record: scorpius:api_gateway:availability:5m
+        expr: avg_over_time(up{job="api-gateway"}[5m])
+
+      - record: scorpius:api_gateway:latency_p95:5m
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="api-gateway"}[5m]))
+
+      - record: scorpius:api_gateway:error_rate:5m
+        expr: rate(http_requests_total{job="api-gateway",status=~"5.."}[5m]) / rate(http_requests_total{job="api-gateway"}[5m])
+
+      # Wallet Guard SLA metrics
+      - record: scorpius:wallet_guard:availability:5m
+        expr: avg_over_time(up{job="wallet-guard"}[5m])
+
+      - record: scorpius:wallet_guard:latency_p95:5m
+        expr: histogram_quantile(0.95, rate(wallet_check_duration_seconds_bucket[5m]))
+
+      - record: scorpius:wallet_guard:error_rate:5m
+        expr: rate(wallet_checks_total{status="error"}[5m]) / rate(wallet_checks_total[5m])
+
+      # Overall platform SLA
+      - record: scorpius:platform:availability:5m
+        expr: avg(up{job=~"api-gateway|wallet-guard|usage-metering|auth-proxy"})
+
+      - record: scorpius:platform:latency_p95:5m
+        expr: avg(histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=~"api-gateway|wallet-guard|usage-metering"}[5m])))
+
+      # Business metrics
+      - record: scorpius:business:active_organizations:1h
+        expr: count(increase(scorpius_usage_total[1h]) > 0) by (org_id)
+
+      - record: scorpius:business:scans_per_hour:1h
+        expr: sum(increase(scorpius_usage_total{feature="scans"}[1h]))
+
+      - record: scorpius:business:wallet_checks_per_hour:1h
+        expr: sum(increase(scorpius_usage_total{feature="wallet_checks"}[1h]))

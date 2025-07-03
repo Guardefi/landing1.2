@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scorpius-enterprise
+  labels:
+    name: scorpius-enterprise
+    app.kubernetes.io/name: scorpius
+    app.kubernetes.io/part-of: scorpius-enterprise
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    scorpius.io/description: "Scorpius Enterprise Platform namespace"
+    scorpius.io/team: "platform-engineering"
+    scorpius.io/compliance: "soc2,iso27001"
+    scheduler.alpha.kubernetes.io/node-selector: "kubernetes.io/arch=amd64"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: scorpius-limits
+  namespace: scorpius-enterprise
+spec:
+  limits:
+  - default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 128Mi
+    type: Container
+  - max:
+      cpu: 2
+      memory: 4Gi
+    min:
+      cpu: 50m
+      memory: 64Mi
+    type: Container
+  - max:
+      storage: 10Gi
+    type: PersistentVolumeClaim
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: scorpius-quota
+  namespace: scorpius-enterprise
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20" 
+    limits.memory: 40Gi
+    requests.storage: 100Gi
+    persistentvolumeclaims: "10"
+    pods: "50"
+    replicationcontrollers: "20"
+    resourcequotas: "1"
+    secrets: "100"
+    services: "20"
+    services.loadbalancers: "2"
+    services.nodeports: "0"

@@ -1,0 +1,94 @@
+{
+  "dashboard_stats": {
+    "total_analyses": 1250,
+    "honeypots_detected": 89,
+    "false_positives": 1161,
+    "detection_rate": 7.12,
+    "recent_analyses": [
+      {
+        "address": "0xa0b86a33e6c3ca4fdd100269d7e5e50b637cab5d",
+        "is_honeypot": true,
+        "confidence": 0.92,
+        "risk_level": "high",
+        "timestamp": "2025-06-24T10:30:00Z",
+        "techniques": [
+          "Hidden State Update",
+          "Straw Man Contract"
+        ]
+      }
+    ],
+    "risk_distribution": {
+      "low": 800,
+      "medium": 361,
+      "high": 78,
+      "critical": 11
+    },
+    "technique_distribution": {
+      "Hidden State Update": 45,
+      "Balance Disorder": 23,
+      "Straw Man Contract": 21,
+      "Access Restriction": 15
+    }
+  },
+  "analysis_response": {
+    "address": "0xa0b86a33e6c3ca4fdd100269d7e5e50b637cab5d",
+    "is_honeypot": true,
+    "confidence": 0.92,
+    "risk_level": "high",
+    "detected_techniques": [
+      "Hidden State Update",
+      "Straw Man Contract"
+    ],
+    "analysis_timestamp": "2025-06-24T10:30:00Z",
+    "engine_results": {
+      "static_engine": {
+        "confidence": 0.85,
+        "techniques": [
+          "Hidden State Update"
+        ]
+      },
+      "ml_engine": {
+        "confidence": 0.98,
+        "prediction": true
+      }
+    }
+  },
+  "trends_data": {
+    "dates": [
+      "2025-06-17",
+      "2025-06-18",
+      "2025-06-19",
+      "2025-06-20",
+      "2025-06-21",
+      "2025-06-22",
+      "2025-06-23"
+    ],
+    "honeypot_counts": [
+      12,
+      8,
+      15,
+      22,
+      18,
+      9,
+      14
+    ],
+    "analysis_counts": [
+      145,
+      132,
+      189,
+      234,
+      198,
+      156,
+      178
+    ],
+    "detection_rates": [
+      8.3,
+      6.1,
+      7.9,
+      9.4,
+      9.1,
+      5.8,
+      7.9
+    ]
+  }
+}

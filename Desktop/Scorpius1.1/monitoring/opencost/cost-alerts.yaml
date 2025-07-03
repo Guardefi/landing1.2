@@ -1,0 +1,201 @@
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: opencost-cost-alerts
+  namespace: monitoring
+  labels:
+    app: opencost
+    component: cost-monitoring
+    prometheus: kube-prometheus
+spec:
+  groups:
+  - name: cost.alerts
+    interval: 30s
+    rules:
+    # Cost anomaly detection
+    - alert: CostAnomalyDetected
+      expr: |
+        (
+          sum by (namespace) (rate(opencost_cost_total[1d])) / 
+          sum by (namespace) (rate(opencost_cost_total[7d])) > 1.2
+        )
+      for: 1h
+      labels:
+        severity: critical
+        component: cost-monitoring
+        team: platform
+        runbook_url: "https://docs.scorpius-enterprise.com/runbooks/cost-anomaly"
+      annotations:
+        summary: "Cost anomaly detected in namespace {{ $labels.namespace }}"
+        description: "Cost in namespace {{ $labels.namespace }} has increased by more than 20% compared to last week. Current daily rate: ${{ $value | humanize }}."
+        dashboard_url: "https://grafana.scorpius-enterprise.com/d/cost-overview"
+
+    # High cost namespace
+    - alert: HighCostNamespace
+      expr: |
+        sum by (namespace) (rate(opencost_cost_total[1d])) > 1000
+      for: 1h
+      labels:
+        severity: warning
+        component: cost-monitoring
+        team: platform
+        runbook_url: "https://docs.scorpius-enterprise.com/runbooks/high-cost"
+      annotations:
+        summary: "High cost namespace detected"
+        description: "Namespace {{ $labels.namespace }} is consuming ${{ $value | humanize }}/day, exceeding the $1000/day threshold."
+
+    # CPU over-provisioning
+    - alert: CPUOverProvisioning
+      expr: |
+        (
+          avg by (namespace, pod) (rate(container_cpu_usage_seconds_total[5m])) / 
+          avg by (namespace, pod) (container_spec_cpu_quota / container_spec_cpu_period) < 0.1
+        ) and (
+          avg by (namespace, pod) (container_spec_cpu_quota / container_spec_cpu_period) > 0.1
+        )
+      for: 2h
+      labels:
+        severity: warning
+        component: cost-optimization
+        team: platform
+      annotations:
+        summary: "CPU over-provisioning detected"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using only {{ $value | humanizePercentage }} of allocated CPU for 2+ hours."
+        recommendation: "Consider reducing CPU requests or implementing HPA."
+
+    # Memory over-provisioning
+    - alert: MemoryOverProvisioning
+      expr: |
+        (
+          avg by (namespace, pod) (container_memory_working_set_bytes) / 
+          avg by (namespace, pod) (container_spec_memory_limit_bytes) < 0.2
+        ) and (
+          avg by (namespace, pod) (container_spec_memory_limit_bytes) > 0
+        )
+      for: 2h
+      labels:
+        severity: warning
+        component: cost-optimization
+        team: platform
+      annotations:
+        summary: "Memory over-provisioning detected"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using only {{ $value | humanizePercentage }} of allocated memory for 2+ hours."
+        recommendation: "Consider reducing memory limits or implementing VPA."
+
+    # Unused persistent volumes
+    - alert: UnusedPersistentVolumes
+      expr: |
+        kube_persistentvolume_status_phase{phase="Available"} == 1
+      for: 24h
+      labels:
+        severity: info
+        component: cost-optimization
+        team: platform
+      annotations:
+        summary: "Unused persistent volume detected"
+        description: "PersistentVolume {{ $labels.persistentvolume }} has been available (unused) for more than 24 hours."
+        recommendation: "Review and delete unused PVs to reduce storage costs."
+
+    # Expensive node instances
+    - alert: ExpensiveNodeInstances
+      expr: |
+        avg by (instance_type) (node_total_hourly_cost) > 5.0
+      for: 1h
+      labels:
+        severity: info
+        component: cost-optimization
+        team: platform
+      annotations:
+        summary: "Expensive node instances detected"
+        description: "Node instance type {{ $labels.instance_type }} costs ${{ $value | humanize }}/hour, exceeding $5/hour threshold."
+        recommendation: "Consider using smaller instance types or spot instances."
+
+    # Cost budget exceeded
+    - alert: CostBudgetExceeded
+      expr: |
+        sum(rate(opencost_cost_total[1d])) * 30 > 50000
+      for: 1h
+      labels:
+        severity: critical
+        component: cost-monitoring
+        team: platform
+      annotations:
+        summary: "Monthly cost budget exceeded"
+        description: "Current monthly cost projection is ${{ $value | humanize }}, exceeding the $50,000 budget."
+        recommendation: "Immediate cost optimization required."
+
+    # Idle resources
+    - alert: IdleResources
+      expr: |
+        (
+          avg by (namespace, pod) (
+            rate(container_cpu_usage_seconds_total[24h])
+          ) < 0.01
+        ) and (
+          avg by (namespace, pod) (
+            container_memory_working_set_bytes
+          ) < 100 * 1024 * 1024  # 100MB
+        )
+      for: 24h
+      labels:
+        severity: warning
+        component: cost-optimization
+        team: platform
+      annotations:
+        summary: "Idle resources detected"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been idle for 24+ hours."
+        recommendation: "Consider scaling down or removing idle resources."
+
+  - name: cost.recording
+    interval: 30s
+    rules:
+    # Daily cost per namespace
+    - record: namespace:opencost_cost_daily
+      expr: |
+        sum by (namespace) (rate(opencost_cost_total[1d]))
+
+    # Weekly cost per namespace
+    - record: namespace:opencost_cost_weekly
+      expr: |
+        sum by (namespace) (rate(opencost_cost_total[7d]))
+
+    # Monthly cost per namespace
+    - record: namespace:opencost_cost_monthly
+      expr: |
+        sum by (namespace) (rate(opencost_cost_total[30d]))
+
+    # CPU efficiency per pod
+    - record: pod:cpu_efficiency
+      expr: |
+        avg by (namespace, pod) (
+          rate(container_cpu_usage_seconds_total[5m])
+        ) / avg by (namespace, pod) (
+          container_spec_cpu_quota / container_spec_cpu_period
+        )
+
+    # Memory efficiency per pod
+    - record: pod:memory_efficiency
+      expr: |
+        avg by (namespace, pod) (
+          container_memory_working_set_bytes
+        ) / avg by (namespace, pod) (
+          container_spec_memory_limit_bytes
+        )
+
+    # Total cluster daily cost
+    - record: cluster:opencost_cost_daily
+      expr: |
+        sum(rate(opencost_cost_total[1d]))
+
+    # Cost per CPU hour
+    - record: cluster:cost_per_cpu_hour
+      expr: |
+        sum(rate(opencost_cost_total[1h])) / 
+        sum(kube_node_status_allocatable{resource="cpu"})
+
+    # Cost per GB memory hour
+    - record: cluster:cost_per_memory_gb_hour
+      expr: |
+        sum(rate(opencost_cost_total[1h])) / 
+        (sum(kube_node_status_allocatable{resource="memory"}) / (1024^3))

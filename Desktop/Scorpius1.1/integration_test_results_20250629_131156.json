@@ -1,0 +1,263 @@
+{
+  "timestamp": "2025-06-29T13:11:39.554006",
+  "tests": {
+    "Docker Services": {
+      "category": "Docker Services",
+      "healthy": [
+        "scorpius-bridge-enterprise",
+        "scorpius-bytecode-enterprise",
+        "scorpius-gateway-enterprise",
+        "scorpius-honeypot-enterprise",
+        "scorpius-postgres-enterprise",
+        "scorpius-redis-commander-enterprise",
+        "scorpius-redis-enterprise"
+      ],
+      "unhealthy": [],
+      "restarting": [
+        "scorpius-frontend-enterprise",
+        "scorpius-mempool-enterprise",
+        "scorpius-quantum-enterprise",
+        "scorpius-time-machine-enterprise"
+      ],
+      "total_services": 19,
+      "success": false
+    },
+    "API Gateway": {
+      "category": "API Gateway",
+      "tests": [
+        {
+          "name": "health",
+          "url": "http://localhost:8010/health",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', ConnectionAbortedError(10053, 'An established connection was aborted by the software in your host machine', None, 10053, None))"
+        },
+        {
+          "name": "docs",
+          "url": "http://localhost:8010/docs",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+        },
+        {
+          "name": "openapi",
+          "url": "http://localhost:8010/openapi.json",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+        },
+        {
+          "name": "api_health",
+          "url": "http://localhost:8010/api/health",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+        },
+        {
+          "name": "api_version",
+          "url": "http://localhost:8010/api/version",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+        },
+        {
+          "name": "scanner_slither",
+          "url": "http://localhost:8010/api/v1/scanner/slither/health",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+        },
+        {
+          "name": "scanner_mythril",
+          "url": "http://localhost:8010/api/v1/scanner/mythril/health",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+        },
+        {
+          "name": "scanner_mythx",
+          "url": "http://localhost:8010/api/v1/scanner/mythx/health",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', ConnectionAbortedError(10053, 'An established connection was aborted by the software in your host machine', None, 10053, None))"
+        },
+        {
+          "name": "scanner_manticore",
+          "url": "http://localhost:8010/api/v1/scanner/manticore/health",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+        }
+      ],
+      "passed": 0,
+      "total": 9
+    },
+    "Frontend": {
+      "category": "Frontend",
+      "tests": [
+        {
+          "name": "frontend_home",
+          "url": "http://localhost:3010/",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "HTTPConnectionPool(host='localhost', port=3010): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002C4B6C0F680>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        {
+          "name": "frontend_scanner",
+          "url": "http://localhost:3010/scanner",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "HTTPConnectionPool(host='localhost', port=3010): Max retries exceeded with url: /scanner (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002C4B6C0F9B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        {
+          "name": "frontend_dashboard",
+          "url": "http://localhost:3010/dashboard",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "HTTPConnectionPool(host='localhost', port=3010): Max retries exceeded with url: /dashboard (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002C4B6C0FCE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        {
+          "name": "frontend_api",
+          "url": "http://localhost:3010/api",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "HTTPConnectionPool(host='localhost', port=3010): Max retries exceeded with url: /api (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002C4B6C0F570>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        }
+      ],
+      "passed": 0,
+      "total": 4
+    },
+    "Scanner Services": {
+      "category": "Scanner Services",
+      "tests": [
+        {
+          "name": "scanner_slither",
+          "url": "http://localhost:8002/health",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', ConnectionAbortedError(10053, 'An established connection was aborted by the software in your host machine', None, 10053, None))"
+        },
+        {
+          "name": "scanner_mythril",
+          "url": "http://localhost:8003/health",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', ConnectionAbortedError(10053, 'An established connection was aborted by the software in your host machine', None, 10053, None))"
+        },
+        {
+          "name": "scanner_mythx",
+          "url": "http://localhost:8004/health",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', ConnectionAbortedError(10053, 'An established connection was aborted by the software in your host machine', None, 10053, None))"
+        },
+        {
+          "name": "scanner_manticore",
+          "url": "http://localhost:8005/health",
+          "status_code": null,
+          "expected_status": 200,
+          "success": false,
+          "response_time": null,
+          "error": "('Connection aborted.', ConnectionAbortedError(10053, 'An established connection was aborted by the software in your host machine', None, 10053, None))"
+        }
+      ],
+      "passed": 0,
+      "total": 4
+    },
+    "Monitoring Services": {
+      "category": "Monitoring Services",
+      "tests": [
+        {
+          "name": "grafana",
+          "url": "http://localhost:3001",
+          "status_code": 200,
+          "expected_status": 200,
+          "success": true,
+          "response_time": 0.013848,
+          "error": null
+        },
+        {
+          "name": "prometheus",
+          "url": "http://localhost:9091",
+          "status_code": 200,
+          "expected_status": 200,
+          "success": true,
+          "response_time": 0.002213,
+          "error": null
+        },
+        {
+          "name": "pgadmin",
+          "url": "http://localhost:5051",
+          "status_code": 200,
+          "expected_status": 200,
+          "success": true,
+          "response_time": 0.057361,
+          "error": null
+        },
+        {
+          "name": "redis_commander",
+          "url": "http://localhost:8082",
+          "status_code": 200,
+          "expected_status": 200,
+          "success": true,
+          "response_time": 0.019568,
+          "error": null
+        }
+      ],
+      "passed": 4,
+      "total": 4
+    },
+    "Real-time Features": {
+      "category": "Real-time Features",
+      "tests": [
+        {
+          "name": "websocket_endpoint",
+          "url": "http://localhost:8010/ws",
+          "status_code": null,
+          "success": false,
+          "error": "('Connection aborted.', ConnectionAbortedError(10053, 'An established connection was aborted by the software in your host machine', None, 10053, None))"
+        }
+      ],
+      "passed": 0,
+      "total": 1
+    }
+  },
+  "summary": {
+    "total": 23,
+    "passed": 4,
+    "failed": 19,
+    "success_rate": 17.391304347826086
+  }
+}
