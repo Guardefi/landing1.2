@@ -1,0 +1,2 @@
+cd 'C:\Users\ADMIN\Desktop\full_project\backend'
+cd 'c:\Users\ADMIN\Desktop\advanced_exploit_suite'

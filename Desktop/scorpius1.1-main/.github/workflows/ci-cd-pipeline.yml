@@ -1,0 +1,871 @@
+name: Scorpius Enterprise Platform CI/CD
+
+on:
+  push:
+    branches: [ main, develop, 'feature/*', 'release/*' ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ created ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  # Static Analysis and Code Quality
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Install Trivy
+      run: sudo apt-get update && sudo apt-get install -y trivy
+
+    - name: Scan Docker images
+      run: |
+        trivy image --severity HIGH,CRITICAL --exit-code 1 ${{ env.IMAGE_NAME }}
+
+    - name: Generate SBOM
+      run: |
+        syft ${{ env.IMAGE_NAME }} -o cyclonedx-json > sbom.json
+      id: sbom
+
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v3
+      with:
+        name: sbom
+        path: sbom.json
+
+    - name: Sign Docker image
+      run: |
+        cosign sign --key cosign.key ${{ env.IMAGE_NAME }}
+      env:
+        COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+
+    - name: Verify signature
+      run: |
+        cosign verify --key cosign.key ${{ env.IMAGE_NAME }}
+      env:
+        COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Run Black formatter check
+      run: black --check --diff .
+
+    - name: Run isort check
+      run: isort --check-only --diff .
+
+    - name: Run flake8 linting
+      run: flake8 .
+
+    - name: Run mypy type checking
+      run: mypy .
+
+    - name: Run bandit security check
+      run: bandit -r . -f json -o bandit-report.json
+      continue-on-error: true
+
+    - name: Upload bandit report
+      uses: actions/upload-artifact@v3
+      with:
+        name: bandit-security-report
+        path: bandit-report.json
+
+    - name: Run safety dependency check
+      run: safety check --json --output safety-report.json
+      continue-on-error: true
+
+    - name: Upload safety report
+      uses: actions/upload-artifact@v3
+      with:
+        name: safety-dependency-report
+        path: safety-report.json
+
+    - name: Run mutation testing
+      run: |
+        mutmut run --paths-to-mutate backend/ --test-time-base 60
+        mutmut check --paths-to-mutate backend/ --expected-mutants-killed 60
+
+    - name: Run test coverage
+      run: |
+        pytest --cov --cov-report=xml --fail-under=80
+        coverage-badge -o coverage.svg -f
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Install Trivy
+      run: sudo apt-get update && sudo apt-get install -y trivy
+
+    - name: Scan Docker images
+      run: |
+        trivy image --severity HIGH,CRITICAL --exit-code 1 ${{ env.IMAGE_NAME }}
+
+    - name: Generate SBOM
+      run: |
+        syft ${{ env.IMAGE_NAME }} -o cyclonedx-json > sbom.json
+      id: sbom
+
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v3
+      with:
+        name: sbom
+        path: sbom.json
+
+    - name: Sign Docker image
+      run: |
+        cosign sign --key cosign.key ${{ env.IMAGE_NAME }}
+      env:
+        COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+
+    - name: Verify signature
+      run: |
+        cosign verify --key cosign.key ${{ env.IMAGE_NAME }}
+      env:
+        COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Run Black formatter check
+      run: black --check --diff .
+
+    - name: Run isort check
+      run: isort --check-only --diff .
+
+    - name: Run flake8 linting
+      run: flake8 .
+
+    - name: Run mypy type checking
+      run: mypy .
+
+    - name: Run bandit security check
+      run: bandit -r . -f json -o bandit-report.json
+      continue-on-error: true
+
+    - name: Upload bandit report
+      uses: actions/upload-artifact@v3
+      with:
+        name: bandit-security-report
+        path: bandit-report.json
+
+    - name: Run safety dependency check
+      run: safety check --json --output safety-report.json
+      continue-on-error: true
+
+    - name: Upload safety report
+      uses: actions/upload-artifact@v3
+      with:
+        name: safety-dependency-report
+        path: safety-report.json
+
+    - name: Run mutation testing
+      run: |
+        mutmut run --paths-to-mutate backend/ --test-time-base 60
+        mutmut check --paths-to-mutate backend/ --expected-mutants-killed 60
+
+    - name: Run test coverage
+      run: |
+        pytest --cov --cov-report=xml --fail-under=80
+        coverage-badge -o coverage.svg -f
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Trivy
+      run: sudo apt-get update && sudo apt-get install -y trivy
+
+    - name: Scan Docker images
+      run: |
+        trivy image --severity HIGH,CRITICAL --exit-code 1 ${{ env.IMAGE_NAME }}
+
+    - name: Generate SBOM
+      run: |
+        syft ${{ env.IMAGE_NAME }} -o cyclonedx-json > sbom.json
+      id: sbom
+
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v3
+      with:
+        name: sbom
+        path: sbom.json
+
+    - name: Sign Docker image
+      run: |
+        cosign sign --key cosign.key ${{ env.IMAGE_NAME }}
+      env:
+        COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+
+    - name: Verify signature
+      run: |
+        cosign verify --key cosign.key ${{ env.IMAGE_NAME }}
+      env:
+        COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Trivy
+      run: sudo apt-get update && sudo apt-get install -y trivy
+
+    - name: Scan Docker images
+      run: |
+        trivy image --severity HIGH,CRITICAL --exit-code 1 ${{ env.IMAGE_NAME }}
+
+    - name: Generate SBOM
+      run: |
+        syft ${{ env.IMAGE_NAME }} -o cyclonedx-json > sbom.json
+      id: sbom
+
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v3
+      with:
+        name: sbom
+        path: sbom.json
+
+    - name: Sign Docker image
+      run: |
+        cosign sign --key cosign.key ${{ env.IMAGE_NAME }}
+      env:
+        COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+
+    - name: Verify signature
+      run: |
+        cosign verify --key cosign.key ${{ env.IMAGE_NAME }}
+      env:
+        COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run Black formatter check
+      run: black --check --diff .
+
+    - name: Run isort check
+      run: isort --check-only --diff .
+
+    - name: Run flake8 linting
+      run: flake8 .
+
+    - name: Run mypy type checking
+      run: mypy .
+
+    - name: Run bandit security check
+      run: bandit -r . -f json -o bandit-report.json
+      continue-on-error: true
+
+    - name: Upload bandit report
+      uses: actions/upload-artifact@v3
+      with:
+        name: bandit-security-report
+        path: bandit-report.json
+
+    - name: Run safety dependency check
+      run: safety check --json --output safety-report.json
+      continue-on-error: true
+
+    - name: Upload safety report
+      uses: actions/upload-artifact@v3
+      with:
+        name: safety-dependency-report
+        path: safety-report.json
+
+  # Unit and Integration Tests
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    strategy:
+      matrix:
+        test-type: [unit, integration, security]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: scorpius_test
+          POSTGRES_USER: scorpius
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Set up test environment
+      run: |
+        cp config/test.env.example .env
+        echo "DATABASE_URL=postgresql://scorpius:password@localhost:5432/scorpius_test" >> .env
+        echo "REDIS_URL=redis://localhost:6379" >> .env
+        echo "JWT_SECRET=test-jwt-secret-key-for-ci" >> .env
+
+    - name: Run database migrations
+      run: |
+        python scripts/migrate.py --environment test
+
+    - name: Run unit tests
+      if: matrix.test-type == 'unit'
+      run: |
+        pytest tests/unit/ -v --cov=. --cov-report=xml --cov-report=html
+        
+    - name: Run integration tests
+      if: matrix.test-type == 'integration'
+      run: |
+        pytest tests/integration/ -v --tb=short
+
+    - name: Run security tests
+      if: matrix.test-type == 'security'
+      run: |
+        python -m pytest tests/security/ -v --tb=short
+
+    - name: Upload coverage reports
+      if: matrix.test-type == 'unit'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.test-type }}
+        path: |
+          htmlcov/
+          pytest-report.xml
+          test-results.json
+
+  # Performance Testing
+  performance:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: scorpius_perf
+          POSTGRES_USER: scorpius
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install locust
+
+    - name: Set up performance test environment
+      run: |
+        cp config/perf.env.example .env
+        echo "DATABASE_URL=postgresql://scorpius:password@localhost:5432/scorpius_perf" >> .env
+        echo "REDIS_URL=redis://localhost:6379" >> .env
+
+    - name: Start services for performance testing
+      run: |
+        docker-compose -f docker-compose.perf.yml up -d
+        sleep 30  # Allow services to start
+
+    - name: Run performance tests
+      run: |
+        cd tests/performance
+        locust -f locustfile.py --headless \
+          --users 50 --spawn-rate 5 --run-time 5m \
+          --host http://localhost:8000 \
+          --html performance-report.html \
+          --csv performance-results
+
+    - name: Upload performance reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-reports
+        path: |
+          tests/performance/performance-report.html
+          tests/performance/performance-results*.csv
+
+    - name: Performance regression check
+      run: |
+        python scripts/check_performance_regression.py \
+          --current tests/performance/performance-results_stats.csv \
+          --baseline performance-baseline.csv
+
+  # Build and Push Images
+  build:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [test, code-quality]
+    outputs:
+      image-tag: ${{ steps.image.outputs.tag }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix=sha-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push API Gateway image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./services/api-gateway
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push microservice images
+      run: |
+        services=("scanner-service" "bridge-service" "mempool-service" "honeypot-service" "mev-service")
+        for service in "${services[@]}"; do
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${service}:${{ github.sha }} \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${service}:latest \
+            --push \
+            ./backend/${service}
+        done
+
+    - name: Set image tag output
+      id: image
+      run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  # Infrastructure Validation
+  infrastructure:
+    name: Infrastructure Validation
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+
+    - name: Terraform Format Check
+      run: terraform fmt -check -recursive infrastructure/terraform/
+
+    - name: Terraform Validate
+      run: |
+        cd infrastructure/terraform
+        terraform init -backend=false
+        terraform validate
+
+    - name: Run Checkov security scan
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: infrastructure/terraform
+        framework: terraform
+        output_format: json
+        output_file_path: checkov-report.json
+        quiet: true
+      continue-on-error: true
+
+    - name: Upload Checkov report
+      uses: actions/upload-artifact@v3
+      with:
+        name: infrastructure-security-report
+        path: checkov-report.json
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, infrastructure, performance]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region us-west-2 --name scorpius-staging
+
+    - name: Deploy to staging
+      run: |
+        # Update image tags in Kubernetes manifests
+        sed -i "s/IMAGE_TAG/${{ needs.build.outputs.image-tag }}/g" k8s/staging/*.yaml
+        
+        # Apply Kubernetes manifests
+        kubectl apply -f k8s/staging/
+
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/api-gateway -n scorpius-staging --timeout=600s
+        kubectl rollout status deployment/scanner-service -n scorpius-staging --timeout=600s
+
+    - name: Run smoke tests
+      run: |
+        python scripts/smoke_tests.py --environment staging --timeout 300
+
+    - name: Notify deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, infrastructure]
+    if: github.event_name == 'release'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region us-west-2 --name scorpius-production
+
+    - name: Blue-Green Deployment Strategy
+      run: |
+        # Update image tags
+        sed -i "s/IMAGE_TAG/${{ needs.build.outputs.image-tag }}/g" k8s/production/*.yaml
+        
+        # Deploy to green environment
+        kubectl apply -f k8s/production/ --dry-run=client -o yaml | \
+        sed 's/scorpius-blue/scorpius-green/g' | \
+        kubectl apply -f -
+
+    - name: Health check green environment
+      run: |
+        python scripts/health_check.py --environment production-green --timeout 600
+
+    - name: Switch traffic to green
+      run: |
+        kubectl patch service api-gateway-service -p '{"spec":{"selector":{"version":"green"}}}'
+
+    - name: Final health check
+      run: |
+        python scripts/health_check.py --environment production --timeout 300
+
+    - name: Clean up blue environment
+      run: |
+        kubectl delete deployment -l version=blue -n scorpius-production
+
+    - name: Create GitHub release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          Production deployment completed successfully.
+          
+          **Changes in this release:**
+          - See commit history for detailed changes
+          
+          **Deployment Information:**
+          - Image tag: ${{ needs.build.outputs.image-tag }}
+          - Environment: Production
+          - Deployment time: ${{ github.event.created_at }}
+
+    - name: Notify production deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#production'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+        text: |
+          🚀 Production deployment completed successfully!
+          Release: ${{ github.ref }}
+          Image: ${{ needs.build.outputs.image-tag }}
+
+  # Security Scanning
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run Snyk container scan
+      uses: snyk/actions/docker@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        image: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}'
+      continue-on-error: true
+
+  # Monitoring and Alerting Setup
+  monitoring-setup:
+    name: Setup Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+
+    - name: Deploy monitoring stack
+      run: |
+        # Apply Prometheus and Grafana configurations
+        kubectl apply -f monitoring/k8s/
+        
+        # Update Prometheus configuration
+        kubectl create configmap prometheus-config \
+          --from-file=monitoring/prometheus.yml \
+          --dry-run=client -o yaml | kubectl apply -f -
+        
+        # Update alerting rules
+        kubectl create configmap alerting-rules \
+          --from-file=monitoring/rules/ \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Verify monitoring deployment
+      run: |
+        kubectl rollout status deployment/prometheus -n monitoring --timeout=300s
+        kubectl rollout status deployment/grafana -n monitoring --timeout=300s
+
+  # Cleanup
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+    - name: Clean up old images
+      run: |
+        # This would clean up old container images
+        echo "Cleaning up old images..."
+        
+    - name: Archive logs
+      run: |
+        # This would archive deployment logs
+        echo "Archiving logs..."

@@ -1,0 +1,120 @@
+/* Enterprise Report Styles */
+
+:root {
+    --color-primary: #3b82f6;
+    --color-critical: #dc2626;
+    --color-high: #ea580c;
+    --color-medium: #d97706;
+    --color-low: #65a30d;
+    --color-background: #ffffff;
+    --color-surface: #f8fafc;
+    --color-text-primary: #1e293b;
+    --color-text-secondary: #475569;
+    --border-radius-base: 8px;
+    --padding-base: 16px;
+    --margin-base: 16px;
+    --font-family-primary: 'Inter', system-ui, sans-serif;
+    --font-family-code: 'JetBrains Mono', monospace;
+    --font-weight-bold: 600;
+    --component-card-border: #e2e8f0;
+}
+
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family-primary);
+    color: var(--color-text-primary);
+    background-color: var(--color-background);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--padding-base);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--margin-base);
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.5rem; }
+
+/* Severity Styling */
+.severity-critical { color: var(--color-critical); font-weight: 600; }
+.severity-high { color: var(--color-high); font-weight: 600; }
+.severity-medium { color: var(--color-medium); font-weight: 500; }
+.severity-low { color: var(--color-low); font-weight: 500; }
+
+/* Cards */
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--component-card-border);
+    border-radius: var(--border-radius-base);
+    padding: var(--padding-base);
+    margin-bottom: var(--margin-base);
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--margin-base) 0;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--component-card-border);
+}
+
+th {
+    background: var(--color-surface);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Code blocks */
+code, pre {
+    font-family: var(--font-family-code);
+    background: var(--color-surface);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+pre {
+    padding: var(--padding-base);
+    overflow-x: auto;
+    border: 1px solid var(--component-card-border);
+}
+
+/* Print styles */
+@media print {
+    body { 
+        font-size: 12pt; 
+        line-height: 1.4; 
+    }
+    
+    .container { 
+        max-width: none; 
+        margin: 0; 
+        padding: 0; 
+    }
+    
+    .card { 
+        box-shadow: none; 
+        page-break-inside: avoid; 
+    }
+    
+    h1, h2, h3 { 
+        page-break-after: avoid; 
+    }
+}

@@ -1,0 +1,324 @@
+# Elite Mempool System - GitHub Actions CI/CD Pipeline
+
+name: Elite Mempool System CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  POSTGRES_VERSION: '15'
+
+jobs:
+  # Linting and Code Quality
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install black isort flake8 mypy
+          
+      - name: Run Black (formatting)
+        run: black --check --diff .
+        
+      - name: Run isort (import sorting)
+        run: isort --check-only --diff .
+        
+      - name: Run Flake8 (linting)
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        
+      - name: Run MyPy (type checking)
+        run: mypy . --ignore-missing-imports
+
+  # Security Scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Bandit Security Linter
+        run: |
+          pip install bandit
+          bandit -r . -f json -o bandit-report.json
+          
+      - name: Upload Bandit Report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  # Unit Tests
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11']
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ -v --cov=./ --cov-report=xml
+          
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  # Integration Tests
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: elite_mempool_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+          
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Set up test database
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d elite_mempool_test -f database/schema.sql
+        env:
+          POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/elite_mempool_test
+          
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ -v --cov=./ --cov-report=xml
+        env:
+          POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/elite_mempool_test
+          REDIS_URL: redis://localhost:6379
+          
+  # Build and Test Services
+  test-services:
+    name: Test Microservices
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Test Go Ingestion Service
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          
+      - name: Test Go Service
+        run: |
+          cd services/ingestion
+          go mod tidy
+          go test -v ./...
+          go build -o ingestion ./...
+          
+      # Test Rust Rule Engine
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          
+      - name: Test Rust Service
+        run: |
+          cd services/rule_engine
+          cargo test
+          cargo build --release
+
+  # Docker Build Tests
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build Main API Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: elite-mempool:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          
+      - name: Test Docker Compose
+        run: |
+          docker-compose -f docker-compose.yml config
+          
+  # Performance Tests
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install locust
+          
+      - name: Run performance tests
+        run: |
+          # Start the application in background
+          python -m uvicorn services.api.main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+          
+          # Run load tests
+          locust -f tests/performance/locustfile.py --headless -u 10 -r 2 -t 30s --host http://localhost:8000
+
+  # Security Container Scan
+  container-security:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build image
+        run: docker build -t elite-mempool:scan .
+        
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'elite-mempool:scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Deploy to Development
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: [lint, test-unit, test-integration, docker-build]
+    if: github.ref == 'refs/heads/develop'
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Development Environment
+        run: |
+          echo "Deploying to development environment..."
+          # Add deployment commands here
+          
+  # Deploy to Production
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [lint, test-unit, test-integration, docker-build, performance]
+    if: github.event_name == 'release'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Build and push production image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/elite-mempool:latest
+            ghcr.io/${{ github.repository }}/elite-mempool:${{ github.ref_name }}
+            
+      - name: Deploy to Production
+        run: |
+          echo "Deploying to production environment..."
+          # Add production deployment commands here
+
+  # Notification
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [deploy-prod]
+    if: always()
+    steps:
+      - name: Notify Deployment Status
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()

@@ -1,0 +1,35 @@
+<svg width="300" height="80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00ff9f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Shield icon -->
+  <path d="M25 15 L35 10 L45 15 L45 35 C45 45 35 50 35 50 C35 50 25 45 25 35 Z" 
+        fill="url(#gradient)" stroke="#00ff9f" stroke-width="2"/>
+  
+  <!-- Inner shield details -->
+  <path d="M30 18 L35 16 L40 18 L40 32 C40 38 35 41 35 41 C35 41 30 38 30 32 Z" 
+        fill="#0a0a0a" opacity="0.8"/>
+  
+  <!-- Checkmark -->
+  <path d="M32 28 L34 30 L38 25" 
+        stroke="#00ff9f" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Company name -->
+  <text x="60" y="25" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="url(#gradient)">
+    SCORPIUS
+  </text>
+  
+  <!-- Tagline -->
+  <text x="60" y="42" font-family="Inter, sans-serif" font-size="10" font-weight="400" fill="#ffffff" opacity="0.8">
+    ENTERPRISE PLATFORM
+  </text>
+  
+  <!-- Security text -->
+  <text x="60" y="55" font-family="Inter, sans-serif" font-size="8" font-weight="600" fill="#00ff9f">
+    UNDENIABLE SECURITY
+  </text>
+</svg>

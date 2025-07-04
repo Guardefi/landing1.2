@@ -1,0 +1,59 @@
+# Multi-stage production Dockerfile for Unified API Gateway
+
+# === STAGE 1: Base Python image ===
+# Pinned digest for python:3.11-slim (security hardening)
+FROM python@sha256:7e61c0ad2f7ba28cd4b78df90f9e6ec83b3fa5ad5265b0e7b5a8e5e6e6c9b3e2 as base
+
+LABEL maintainer="Scorpius Enterprise Platform"
+LABEL description="Unified API Gateway - Production"
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PIP_NO_CACHE_DIR=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# === STAGE 2: Dependencies ===
+FROM base as dependencies
+
+WORKDIR /tmp
+
+# Copy requirements and install dependencies
+COPY requirements-unified.txt .
+RUN pip install --no-cache-dir -r requirements-unified.txt
+
+# === STAGE 3: Production ===
+FROM base as production
+
+# Create app directory and non-root user
+WORKDIR /app
+RUN groupadd -r scorpius && useradd -r -g scorpius scorpius
+
+# Copy installed packages from dependencies stage
+COPY --from=dependencies /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=dependencies /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY unified_gateway.py .
+COPY requirements-unified.txt .
+
+# Set ownership
+RUN chown -R scorpius:scorpius /app
+
+# Switch to non-root user
+USER scorpius
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/healthz || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Run the application
+CMD ["python", "-m", "uvicorn", "unified_gateway:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

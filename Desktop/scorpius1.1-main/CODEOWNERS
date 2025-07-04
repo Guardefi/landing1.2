@@ -1,0 +1,63 @@
+# Scorpius Enterprise Platform - Code Ownership
+# This file defines who should review specific parts of the codebase
+
+# Global owners - these users are requested for all changes
+* @scorpius-dev-leads @scorpius-security-team
+
+# Architecture and Core
+/ARCHITECTURE.md @scorpius-architects
+/packages/core/ @scorpius-core-team @scorpius-security-team
+/backend/ @scorpius-backend-team
+/services/ @scorpius-backend-team
+
+# Frontend
+/frontend/ @scorpius-frontend-team
+/frontend-new/ @scorpius-frontend-team
+
+# Security-sensitive areas
+/SECURITY.md @scorpius-security-team
+/THREAT_MODEL.md @scorpius-security-team
+/packages/core/src/security/ @scorpius-security-team
+/backend/*/security/ @scorpius-security-team
+
+# Infrastructure and Deployment
+/deploy/ @scorpius-devops-team @scorpius-security-team
+/infrastructure/ @scorpius-devops-team
+/configs/ @scorpius-devops-team
+Dockerfile @scorpius-devops-team
+docker-compose*.yml @scorpius-devops-team
+*.yaml @scorpius-devops-team
+*.yml @scorpius-devops-team
+
+# Documentation
+/docs/ @scorpius-docs-team
+/docs-site/ @scorpius-docs-team
+README.md @scorpius-docs-team
+CONTRIBUTING.md @scorpius-dev-leads
+API.md @scorpius-api-team @scorpius-docs-team
+RUNBOOK.md @scorpius-devops-team @scorpias-docs-team
+
+# Testing
+/tests/ @scorpius-qa-team
+**/test*.py @scorpius-qa-team
+**/test*.ts @scorpius-qa-team
+**/test*.js @scorpius-qa-team
+
+# CI/CD and GitHub Actions
+/.github/ @scorpius-devops-team @scorpius-security-team
+Makefile @scorpius-devops-team
+
+# Scripts and Tools
+/scripts/ @scorpius-devops-team
+/tools/ @scorpius-devops-team
+
+# Configuration Files
+.env.example @scorpius-security-team @scorpius-devops-team
+.gitignore @scorpius-dev-leads
+pyproject.toml @scorpius-backend-team
+package.json @scorpius-frontend-team
+Cargo.toml @scorpius-core-team
+
+# Legal and Compliance
+LICENSE @scorpius-legal-team
+/DEPLOY_PRIVATE.md @scorpius-security-team @scorpius-legal-team

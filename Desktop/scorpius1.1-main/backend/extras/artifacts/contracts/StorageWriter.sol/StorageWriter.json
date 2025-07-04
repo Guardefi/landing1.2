@@ -1,0 +1,29 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "StorageWriter",
+  "sourceName": "contracts/StorageWriter.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "slot",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "writeSlot",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080604052348015600f57600080fd5b5060958061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c80631ac28df714602d575b600080fd5b603c6038366004603e565b9055565b005b60008060408385031215605057600080fd5b5050803592602090910135915056fea2646970667358221220bd7b967c4b64d1ba1aaddc28bc10bf528115d7ed308de5dc83d16c9b7fde97cb64736f6c63430008120033",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c80631ac28df714602d575b600080fd5b603c6038366004603e565b9055565b005b60008060408385031215605057600080fd5b5050803592602090910135915056fea2646970667358221220bd7b967c4b64d1ba1aaddc28bc10bf528115d7ed308de5dc83d16c9b7fde97cb64736f6c63430008120033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

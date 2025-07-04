@@ -1,0 +1,711 @@
+version: '3.8'
+
+networks:
+  scorpius-enterprise-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+services:
+  # ============================================================================
+  # CORE INFRASTRUCTURE
+  # ============================================================================
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: scorpius-postgres-enterprise
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-scorpius_enterprise}
+      POSTGRES_USER: ${POSTGRES_USER:-scorpius_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-enterprise_secure_password_2024}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - scorpius-enterprise-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scorpius_admin}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: scorpius-redis-enterprise
+    command: redis-server --requirepass ${REDIS_PASSWORD:-enterprise_redis_password_2024}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - scorpius-enterprise-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongodb:
+    image: mongo:7-jammy
+    container_name: scorpius-mongodb-enterprise
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: scorpius_admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-enterprise_mongo_password_2024}
+      MONGO_INITDB_DATABASE: scorpius_enterprise
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - scorpius-enterprise-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: scorpius-pgadmin-enterprise
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@scorpius.enterprise
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-enterprise_pgadmin_password_2024}
+    ports:
+      - "5050:80"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: scorpius-redis-commander-enterprise
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD:-enterprise_redis_password_2024}
+    ports:
+      - "8081:8081"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - redis
+
+  # ============================================================================
+  # CORE SERVICES
+  # ============================================================================
+
+  api-gateway:
+    build:
+      context: ../backend
+      dockerfile: ../services/api-gateway/Dockerfile
+    container_name: scorpius-gateway-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+      - JWT_SECRET=${JWT_SECRET:-enterprise_jwt_secret_2024_very_long_and_secure}
+      - API_KEY=${API_KEY:-enterprise_api_key_2024}
+    ports:
+      - "8000-8001:8000-8001"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: scorpius-frontend-enterprise
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000
+    ports:
+      - "3000:3000"
+    networks:
+      - scorpius-enterprise-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  bridge:
+    build:
+      context: ../backend/bridge
+      dockerfile: Dockerfile
+    container_name: scorpius-bridge-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  honeypot:
+    build:
+      context: ../backend/honeypot
+      dockerfile: Dockerfile
+    container_name: scorpius-honeypot-enterprise
+    environment:
+      - MONGODB_URL=mongodb://scorpius_admin:${MONGODB_PASSWORD:-enterprise_mongo_password_2024}@mongodb:27017/scorpius_enterprise
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - mongodb
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mempool:
+    build:
+      context: ../backend/mempool
+      dockerfile: Dockerfile
+    container_name: scorpius-mempool-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  quantum:
+    build:
+      context: ../backend/quantum
+      dockerfile: Dockerfile
+    container_name: scorpius-quantum-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  time-machine:
+    build:
+      context: ../backend/time_machine
+      dockerfile: Dockerfile
+    container_name: scorpius-time-machine-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  bytecode:
+    build:
+      context: ../backend/Bytecode
+      dockerfile: Dockerfile
+    container_name: scorpius-bytecode-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  settings:
+    build:
+      context: ../backend/settings
+      dockerfile: Dockerfile
+    container_name: scorpius-settings-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    volumes:
+      - ../.env:/app/.env:ro
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  reporting:
+    build:
+      context: ../reporting
+      dockerfile: Dockerfile
+    container_name: scorpius-reporting-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # ADVANCED SECURITY SERVICES
+  # ============================================================================
+
+  threat-monitoring:
+    build:
+      context: ../backend/threat_monitoring
+      dockerfile: Dockerfile
+    container_name: scorpius-threat-monitoring-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+      - MONGODB_URL=mongodb://scorpius_admin:${MONGODB_PASSWORD:-enterprise_mongo_password_2024}@mongodb:27017/scorpius_enterprise
+    ports:
+      - "8007:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+      - mongodb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  elite-security:
+    build:
+      context: ../backend/integration_hub
+      dockerfile: Dockerfile
+    container_name: scorpius-elite-security-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+      - MONGODB_URL=mongodb://scorpius_admin:${MONGODB_PASSWORD:-enterprise_mongo_password_2024}@mongodb:27017/scorpius_enterprise
+    ports:
+      - "8008:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+      - mongodb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ai-forensics:
+    build:
+      context: ../backend/extras
+      dockerfile: Dockerfile
+    container_name: scorpius-ai-forensics-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+      - MONGODB_URL=mongodb://scorpius_admin:${MONGODB_PASSWORD:-enterprise_mongo_password_2024}@mongodb:27017/scorpius_enterprise
+    ports:
+      - "8009:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+      - mongodb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  quantum-crypto:
+    build:
+      context: ../backend/extras
+      dockerfile: Dockerfile
+    container_name: scorpius-quantum-crypto-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    ports:
+      - "8010:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mev-protection:
+    build:
+      context: ../backend/extras/mev_components
+      dockerfile: Dockerfile
+    container_name: scorpius-mev-protection-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    ports:
+      - "8011:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  exploit-testing:
+    build:
+      context: ../backend/extras/exploit suit
+      dockerfile: Dockerfile
+    container_name: scorpius-exploit-testing-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    ports:
+      - "8012:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  blackhat-tracer:
+    build:
+      context: ../backend/extras/blackhattracer
+      dockerfile: Dockerfile
+    container_name: scorpius-blackhat-tracer-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+      - MONGODB_URL=mongodb://scorpius_admin:${MONGODB_PASSWORD:-enterprise_mongo_password_2024}@mongodb:27017/scorpius_enterprise
+    ports:
+      - "8013:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+      - mongodb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  integration-hub:
+    build:
+      context: ../backend/integration_hub
+      dockerfile: Dockerfile
+    container_name: scorpius-integration-hub-enterprise
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+      - MONGODB_URL=mongodb://scorpius_admin:${MONGODB_PASSWORD:-enterprise_mongo_password_2024}@mongodb:27017/scorpius_enterprise
+    ports:
+      - "8014:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+      - mongodb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # SCANNER SERVICES
+  # ============================================================================
+
+  scanner-slither:
+    build:
+      context: ../backend/scanner
+      dockerfile: docker/scanner-slither/Dockerfile
+    container_name: scorpius-scanner-slither
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+    ports:
+      - "8002:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scanner-mythril:
+    build:
+      context: ../backend/scanner
+      dockerfile: docker/scanner-mythril/Dockerfile
+    container_name: scorpius-scanner-mythril
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+    ports:
+      - "8003:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scanner-mythx:
+    build:
+      context: ../backend/scanner
+      dockerfile: docker/scanner-mythx/Dockerfile
+    container_name: scorpius-scanner-mythx
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+    ports:
+      - "8004:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scanner-manticore:
+    build:
+      context: ../backend/scanner
+      dockerfile: docker/scanner-manticore/Dockerfile
+    container_name: scorpius-scanner-manticore
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+    ports:
+      - "8005:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scanner-ai-orchestrator:
+    build:
+      context: ../backend/scanner
+      dockerfile: docker/ai-orchestrator/Dockerfile
+    container_name: scorpius-scanner-ai-orchestrator
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    ports:
+      - "8006:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # MONITORING & ANALYTICS
+  # ============================================================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: scorpius-prometheus-enterprise
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - scorpius-enterprise-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: scorpius-grafana-enterprise
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-enterprise_grafana_password_2024}
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  enterprise-analytics:
+    build:
+      context: ../backend/extras
+      dockerfile: Dockerfile
+    container_name: scorpius-enterprise-analytics
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+      - MONGODB_URL=mongodb://scorpius_admin:${MONGODB_PASSWORD:-enterprise_mongo_password_2024}@mongodb:27017/scorpius_enterprise
+    ports:
+      - "8015:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+      - mongodb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  distributed-computing:
+    build:
+      context: ../backend/extras
+      dockerfile: Dockerfile
+    container_name: scorpius-distributed-computing
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    ports:
+      - "8016:8000"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # DEVELOPMENT TOOLS
+  # ============================================================================
+
+  dev-tools:
+    image: python:3.11-slim
+    container_name: scorpius-dev-tools-enterprise
+    command: tail -f /dev/null
+    volumes:
+      - ../:/workspace
+    networks:
+      - scorpius-enterprise-network
+
+  simulation-service:
+    build:
+      context: ../backend/simulation-service
+      dockerfile: Dockerfile
+    container_name: scorpius-simulation-service
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scorpius_admin}:${POSTGRES_PASSWORD:-enterprise_secure_password_2024}@postgres:5432/${POSTGRES_DB:-scorpius_enterprise}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-enterprise_redis_password_2024}@redis:6379
+    ports:
+      - "8017:8006"
+    networks:
+      - scorpius-enterprise-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  redis_data:
+  mongodb_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  scorpius-enterprise-network:
+    driver: bridge 

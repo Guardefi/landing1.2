@@ -1,0 +1,393 @@
+<!-- Finding Block Template -->
+<div class="finding-card {{ finding.severity.lower() }}-severity" id="finding-{{ finding.id }}">
+    <div class="finding-header">
+        <div class="finding-title">
+            <h3>{{ finding.title }}</h3>
+            <div class="finding-meta">
+                <span class="severity-badge {{ finding.severity.lower() }}">{{ finding.severity }}</span>
+                <span class="type-badge">{{ finding.type }}</span>
+                {% if finding.cvss_score %}
+                <span class="cvss-score">CVSS: {{ "%.1f"|format(finding.cvss_score) }}</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="finding-actions">
+            <button class="collapse-btn" onclick="toggleFinding('{{ finding.id }}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 10l5 5 5-5z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    
+    <div class="finding-content" id="content-{{ finding.id }}">
+        <div class="finding-description">
+            <h4>Description</h4>
+            <div class="description-text">
+                {{ finding.description | markdown if finding.description else 'No description available.' }}
+            </div>
+        </div>
+        
+        {% if finding.location %}
+        <div class="finding-location">
+            <h4>Location</h4>
+            <div class="location-info">
+                {% if finding.location.file %}
+                <div class="location-item">
+                    <strong>File:</strong> {{ finding.location.file }}
+                </div>
+                {% endif %}
+                
+                {% if finding.location.line %}
+                <div class="location-item">
+                    <strong>Line:</strong> {{ finding.location.line }}
+                </div>
+                {% endif %}
+                
+                {% if finding.location.function %}
+                <div class="location-item">
+                    <strong>Function:</strong> {{ finding.location.function }}
+                </div>
+                {% endif %}
+                
+                {% if finding.location.contract %}
+                <div class="location-item">
+                    <strong>Contract:</strong> {{ finding.location.contract }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if finding.code_snippet %}
+        <div class="finding-code">
+            <h4>Code Snippet</h4>
+            <pre class="code-block"><code>{{ finding.code_snippet }}</code></pre>
+        </div>
+        {% endif %}
+        
+        {% if finding.impact %}
+        <div class="finding-impact">
+            <h4>Impact</h4>
+            <div class="impact-text">
+                {{ finding.impact | markdown }}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if finding.recommendation %}
+        <div class="finding-recommendation">
+            <h4>Recommendation</h4>
+            <div class="recommendation-text">
+                {{ finding.recommendation | markdown }}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if finding.references %}
+        <div class="finding-references">
+            <h4>References</h4>
+            <ul class="references-list">
+                {% for ref in finding.references %}
+                <li>
+                    {% if ref.startswith('http') %}
+                    <a href="{{ ref }}" target="_blank" rel="noopener noreferrer">{{ ref }}</a>
+                    {% else %}
+                    {{ ref }}
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <div class="finding-metadata">
+            <div class="metadata-grid">
+                {% if finding.cwe_id %}
+                <div class="metadata-item">
+                    <strong>CWE:</strong> 
+                    <a href="https://cwe.mitre.org/data/definitions/{{ finding.cwe_id }}.html" target="_blank" rel="noopener noreferrer">
+                        CWE-{{ finding.cwe_id }}
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if finding.confidence %}
+                <div class="metadata-item">
+                    <strong>Confidence:</strong> {{ finding.confidence }}
+                </div>
+                {% endif %}
+                
+                {% if finding.gas_estimate %}
+                <div class="metadata-item">
+                    <strong>Gas Estimate:</strong> {{ finding.gas_estimate }}
+                </div>
+                {% endif %}
+                
+                <div class="metadata-item">
+                    <strong>Finding ID:</strong> {{ finding.id }}
+                </div>
+                
+                {% if finding.created_at %}
+                <div class="metadata-item">
+                    <strong>Detected:</strong> {{ finding.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.finding-card {
+    background: var(--color-surface, #f8fafc);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-lg, 12px);
+    margin-bottom: var(--spacing-lg, 24px);
+    box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+    transition: all 0.2s ease-in-out;
+}
+
+.finding-card:hover {
+    box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
+}
+
+.finding-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: var(--spacing-lg, 24px);
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.finding-title h3 {
+    margin: 0 0 var(--spacing-sm, 8px) 0;
+    color: var(--color-text-primary, #111827);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.finding-meta {
+    display: flex;
+    gap: var(--spacing-sm, 8px);
+    flex-wrap: wrap;
+}
+
+.severity-badge {
+    padding: 4px 12px;
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.severity-badge.critical {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.severity-badge.high {
+    background-color: #fef3f2;
+    color: #c53030;
+    border: 1px solid #fed7d7;
+}
+
+.severity-badge.medium {
+    background-color: #fffbeb;
+    color: #d69e2e;
+    border: 1px solid #fdeaa3;
+}
+
+.severity-badge.low {
+    background-color: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.severity-badge.info {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.type-badge {
+    background-color: var(--color-surface, #f8fafc);
+    color: var(--color-text-secondary, #6b7280);
+    padding: 4px 12px;
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--color-border, #e5e7eb);
+}
+
+.cvss-score {
+    background-color: #f3f4f6;
+    color: #374151;
+    padding: 4px 12px;
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-monospace, monospace);
+}
+
+.collapse-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-sm, 4px);
+    color: var(--color-text-secondary, #6b7280);
+    transition: all 0.2s ease-in-out;
+}
+
+.collapse-btn:hover {
+    background-color: var(--color-light, #f9fafb);
+    color: var(--color-text-primary, #111827);
+}
+
+.finding-content {
+    padding: var(--spacing-lg, 24px);
+}
+
+.finding-content h4 {
+    margin: 0 0 var(--spacing-md, 16px) 0;
+    color: var(--color-text-primary, #111827);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.finding-content > div {
+    margin-bottom: var(--spacing-lg, 24px);
+}
+
+.finding-content > div:last-child {
+    margin-bottom: 0;
+}
+
+.description-text,
+.impact-text,
+.recommendation-text {
+    color: var(--color-text-secondary, #6b7280);
+    line-height: 1.6;
+}
+
+.location-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-sm, 8px);
+}
+
+.location-item {
+    background-color: var(--color-light, #f9fafb);
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    border-radius: var(--radius-md, 8px);
+    font-family: var(--font-monospace, monospace);
+    font-size: 0.875rem;
+}
+
+.code-block {
+    background-color: #1f2937;
+    color: #f9fafb;
+    padding: var(--spacing-lg, 24px);
+    border-radius: var(--radius-md, 8px);
+    overflow-x: auto;
+    font-family: var(--font-monospace, monospace);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.references-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.references-list li {
+    padding: var(--spacing-sm, 8px) 0;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.references-list li:last-child {
+    border-bottom: none;
+}
+
+.references-list a {
+    color: var(--color-accent, #3b82f6);
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.references-list a:hover {
+    text-decoration: underline;
+}
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-sm, 8px);
+}
+
+.metadata-item {
+    background-color: var(--color-light, #f9fafb);
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    border-radius: var(--radius-sm, 4px);
+    font-size: 0.875rem;
+}
+
+.metadata-item strong {
+    color: var(--color-text-primary, #111827);
+}
+
+.metadata-item a {
+    color: var(--color-accent, #3b82f6);
+    text-decoration: none;
+}
+
+.metadata-item a:hover {
+    text-decoration: underline;
+}
+
+/* Print styles */
+@media print {
+    .finding-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    .collapse-btn {
+        display: none;
+    }
+    
+    .finding-content {
+        display: block !important;
+    }
+}
+</style>
+
+<script>
+function toggleFinding(findingId) {
+    const content = document.getElementById('content-' + findingId);
+    const button = content.previousElementSibling.querySelector('.collapse-btn svg');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        button.style.transform = 'rotate(0deg)';
+    } else {
+        content.style.display = 'none';
+        button.style.transform = 'rotate(-90deg)';
+    }
+}
+
+// Initialize all findings as expanded
+document.addEventListener('DOMContentLoaded', function() {
+    const allFindings = document.querySelectorAll('.finding-content');
+    allFindings.forEach(function(content) {
+        content.style.display = 'block';
+    });
+});
+</script>
+

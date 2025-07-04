@@ -1,0 +1,24 @@
+"""
+Auth Proxy Service Requirements
+"""
+
+# Web framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# HTTP client
+httpx==0.25.2
+
+# Authentication
+PyJWT==2.8.0
+python-keycloak==3.8.0
+
+# Data validation
+pydantic==2.5.0
+
+# Database
+asyncpg==0.29.0
+redis==5.0.1
+
+# Utils
+python-multipart==0.0.6

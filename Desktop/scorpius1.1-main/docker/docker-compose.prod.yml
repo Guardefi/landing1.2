@@ -1,0 +1,169 @@
+name: scorpius-production
+
+services:
+  # API Gateway - Central orchestrator
+  api-gateway:
+    build: 
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: scorpius-gateway-prod
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://scorpius:${DB_PASSWORD}@postgres:5432/scorpius
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - API_RATE_LIMIT=1000
+      - CORS_ORIGINS=${CORS_ORIGINS}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # Frontend Dashboard (Production build)
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: scorpius-frontend-prod
+    environment:
+      - VITE_API_BASE_URL=${API_BASE_URL}
+      - VITE_WS_BASE_URL=${WS_BASE_URL}
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # Bridge Service
+  bridge-service:
+    build: ./services/bridge-service
+    environment:
+      - SERVICE_NAME=bridge
+      - DATABASE_URL=postgresql://scorpius:${DB_PASSWORD}@postgres:5432/scorpius
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=INFO
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # All other services follow similar pattern...
+  # (Abbreviated for brevity - they would all have production configs)
+
+  # PostgreSQL Database with enhanced security
+  postgres:
+    image: postgres:15-alpine
+    container_name: scorpius-postgres-prod
+    environment:
+      - POSTGRES_DB=scorpius
+      - POSTGRES_USER=scorpius
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./infrastructure/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  # Redis with persistence and security
+  redis:
+    image: redis:7-alpine
+    container_name: scorpius-redis-prod
+    volumes:
+      - redis_data:/data
+      - ./infrastructure/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # NGINX Load Balancer with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: scorpius-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./infrastructure/nginx/ssl:/etc/nginx/ssl
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - api-gateway
+      - frontend
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # Enhanced monitoring stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: scorpius-prometheus-prod
+    volumes:
+      - ./infrastructure/monitoring/prometheus.prod.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: scorpius-grafana-prod
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_DOMAIN=${GRAFANA_DOMAIN}
+      - GF_SERVER_ROOT_URL=https://${GRAFANA_DOMAIN}
+      - GF_SECURITY_COOKIE_SECURE=true
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  scorpius-enterprise:
+    driver: bridge
+    name: scorpius-enterprise-prod

@@ -1,0 +1,85 @@
+api:
+  dashboard: true
+  insecure: false
+
+# Entry points for HTTP and HTTPS
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entrypoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+
+# Certificate management
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: admin@yourdomain.com
+      storage: /certificates/acme.json
+      httpChallenge:
+        entryPoint: web
+
+# Providers
+providers:
+  docker:
+    exposedByDefault: false
+    network: scorpius-enterprise
+
+# Middlewares
+http:
+  middlewares:
+    # CORS headers for API
+    cors-headers:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - "*"
+        accessControlAllowOriginList:
+          - "https://yourdomain.com"
+          - "https://www.yourdomain.com"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 100
+        addVaryHeader: true
+
+    # Security headers for dashboard
+    dashboard-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        frameDeny: true
+        referrerPolicy: "same-origin"
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+
+    # Rate limiting
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 200
+        period: 1m
+
+# Logging
+log:
+  level: INFO
+
+accessLog:
+  fields:
+    headers:
+      defaultMode: drop
+      names:
+        User-Agent: keep
+        Authorization: drop
+        Cookie: drop

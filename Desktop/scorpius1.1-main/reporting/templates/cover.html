@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ scan_result.target_info.name or 'Smart Contract' }} - Security Audit Report</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .cover-header {
+            text-align: center;
+            padding: 60px 40px 40px;
+        }
+        
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .report-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin: 40px 0 20px;
+            line-height: 1.2;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .report-subtitle {
+            font-size: 20px;
+            font-weight: 300;
+            opacity: 0.9;
+            margin-bottom: 60px;
+        }
+        
+        .contract-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 40px;
+            margin: 0 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .contract-name {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .contract-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .detail-item {
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .detail-value {
+            font-size: 18px;
+            font-weight: 600;
+            word-break: break-all;
+        }
+        
+        .severity-overview {
+            display: flex;
+            justify-content: space-around;
+            margin: 40px 0 20px;
+        }
+        
+        .severity-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            flex: 1;
+            margin: 0 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .severity-count {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .severity-label {
+            font-size: 14px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .critical { color: #ff4757; }
+        .high { color: #ff6b6b; }
+        .medium { color: #ffa726; }
+        .low { color: #66bb6a; }
+        .info { color: #42a5f5; }
+        
+        .cover-footer {
+            padding: 40px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .scan-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .confidential-notice {
+            font-size: 14px;
+            opacity: 0.8;
+            font-style: italic;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+        
+        @media print {
+            body {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cover-header">
+        <div class="logo">🛡️</div>
+        <div class="company-name">SCORPIUS SECURITY</div>
+        <h1 class="report-title">Security Audit Report</h1>
+        <p class="report-subtitle">Smart Contract Vulnerability Assessment</p>
+    </div>
+    
+    <div class="contract-info">
+        <h2 class="contract-name">{{ scan_result.target_info.name or 'Smart Contract Analysis' }}</h2>
+        
+        <div class="contract-details">
+            <div class="detail-item">
+                <div class="detail-label">Contract Address</div>
+                <div class="detail-value">{{ scan_result.target_info.address or 'N/A' }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Network</div>
+                <div class="detail-value">{{ scan_result.target_info.network or 'Ethereum' }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Scan Date</div>
+                <div class="detail-value">{{ scan_result.timestamp.strftime('%B %d, %Y') }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Total Findings</div>
+                <div class="detail-value">{{ scan_result.findings|length }}</div>
+            </div>
+        </div>
+        
+        {% if scan_result.summary %}
+        <div class="severity-overview">
+            <div class="severity-item">
+                <div class="severity-count critical">{{ scan_result.summary.get('critical_count', 0) }}</div>
+                <div class="severity-label">Critical</div>
+            </div>
+            <div class="severity-item">
+                <div class="severity-count high">{{ scan_result.summary.get('high_count', 0) }}</div>
+                <div class="severity-label">High</div>
+            </div>
+            <div class="severity-item">
+                <div class="severity-count medium">{{ scan_result.summary.get('medium_count', 0) }}</div>
+                <div class="severity-label">Medium</div>
+            </div>
+            <div class="severity-item">
+                <div class="severity-count low">{{ scan_result.summary.get('low_count', 0) }}</div>
+                <div class="severity-label">Low</div>
+            </div>
+            <div class="severity-item">
+                <div class="severity-count info">{{ scan_result.summary.get('info_count', 0) }}</div>
+                <div class="severity-label">Info</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="cover-footer">
+        <div class="scan-info">
+            <span>Scan ID: {{ scan_result.scan_id }}</span>
+            <span>Version: {{ scan_result.version }}</span>
+            <span>Duration: {{ "%.2f"|format(scan_result.execution_time) }}s</span>
+        </div>
+        
+        <div class="confidential-notice">
+            This report contains confidential and proprietary information. Distribution is restricted to authorized personnel only.
+        </div>
+    </div>
+</body>
+</html>
+

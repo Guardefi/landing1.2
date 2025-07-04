@@ -1,0 +1,881 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\AttackCoordinator.sol": {
+      "lastModificationDate": 1749114259536,
+      "contentHash": "1a7997e7b6a56b26c871e52652d31e7f",
+      "sourceName": "contracts/AttackCoordinator.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [],
+      "artifacts": []
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\DelegatecallPayload.sol": {
+      "lastModificationDate": 1749116387432,
+      "contentHash": "e68a533c3ab7eec3efe958e2eb755e1b",
+      "sourceName": "contracts/DelegatecallPayload.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "DelegatecallPayload"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\ForceSend.sol": {
+      "lastModificationDate": 1749115171973,
+      "contentHash": "d23127b4de756c034f1ad075639fcbf4",
+      "sourceName": "contracts/ForceSend.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.18"
+      ],
+      "artifacts": [
+        "ForceSend"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\IVulnerableVault.sol": {
+      "lastModificationDate": 1749115147241,
+      "contentHash": "6fcf3b45c2fdfaeeeb0693a0223a594a",
+      "sourceName": "contracts/IVulnerableVault.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.18"
+      ],
+      "artifacts": [
+        "IVulnerableVault"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\ReentrancyExploit.sol": {
+      "lastModificationDate": 1749115164530,
+      "contentHash": "59b270d3204f9f9d4eca685f69e08030",
+      "sourceName": "contracts/ReentrancyExploit.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.18"
+      ],
+      "artifacts": [
+        "ITarget",
+        "ReentrancyExploit"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\MaliciousImplementation.sol": {
+      "lastModificationDate": 1749116767498,
+      "contentHash": "ea05ac5ce852f832e0477d2f31954fec",
+      "sourceName": "contracts/MaliciousImplementation.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "MaliciousImplementation"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\StorageCollision.sol": {
+      "lastModificationDate": 1749116817229,
+      "contentHash": "2aecb81ce013656b7fcaebb6f06909bf",
+      "sourceName": "contracts/StorageCollision.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "StorageCollision"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\EnhancedMaliciousPayload.sol": {
+      "lastModificationDate": 1749117048111,
+      "contentHash": "beaa28d2f23a6ac2355ac093c2e6699c",
+      "sourceName": "contracts/EnhancedMaliciousPayload.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "EnhancedMaliciousPayload"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\ForceSender.sol": {
+      "lastModificationDate": 1749117006213,
+      "contentHash": "53698758c88496039404f2fba9ad79e0",
+      "sourceName": "contracts/ForceSender.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ForceSender"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\StorageManipulator.sol": {
+      "lastModificationDate": 1749119238842,
+      "contentHash": "5f30f24ce997828aeb462d1924c4cae7",
+      "sourceName": "contracts/StorageManipulator.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "StorageManipulator"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\IERC20.sol": {
+      "lastModificationDate": 1749117193804,
+      "contentHash": "b5c89d562a1a1e324237257d53ee2ad8",
+      "sourceName": "contracts/IERC20.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\USDCExtractor.sol": {
+      "lastModificationDate": 1749117183078,
+      "contentHash": "721f1d3ee423a163be7a5a26640a6991",
+      "sourceName": "contracts/USDCExtractor.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC20",
+        "USDCExtractor"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\AggressiveUSDCDrain.sol": {
+      "lastModificationDate": 1749117629844,
+      "contentHash": "6c485e5db36b461b7bfda722b4551f85",
+      "sourceName": "contracts/AggressiveUSDCDrain.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "AggressiveUSDCDrain",
+        "IERC20"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\DelegateTracer.sol": {
+      "lastModificationDate": 1749118390669,
+      "contentHash": "356a70c9ad6deb841ea3e16396a9a25e",
+      "sourceName": "contracts/DelegateTracer.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "DelegateTracer"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\ReentrancyAttack.sol": {
+      "lastModificationDate": 1749118945451,
+      "contentHash": "a78689c58727445d59f950961f3e8d81",
+      "sourceName": "contracts/ReentrancyAttack.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ReentrancyAttack"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\SelfdestructReceiver.sol": {
+      "lastModificationDate": 1749118958568,
+      "contentHash": "5ee10694014c3b84af07642d9d51e367",
+      "sourceName": "contracts/SelfdestructReceiver.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "SelfdestructReceiver"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\CallbackReceiver.sol": {
+      "lastModificationDate": 1749121397438,
+      "contentHash": "7c368ff6a24a700679c5f24f08d6d86f",
+      "sourceName": "contracts/CallbackReceiver.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "CallbackReceiver"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\Create2Deployer.sol": {
+      "lastModificationDate": 1749121539026,
+      "contentHash": "603155bf285b819efb85fadbc6afdadf",
+      "sourceName": "contracts/Create2Deployer.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Create2Deployer",
+        "DummyContract"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\ReentrancyAttacker.sol": {
+      "lastModificationDate": 1749121554644,
+      "contentHash": "7eda7d0aa75448f59c679f29ca4f40ca",
+      "sourceName": "contracts/ReentrancyAttacker.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ReentrancyAttacker"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\SelfdestructAttack.sol": {
+      "lastModificationDate": 1749121527588,
+      "contentHash": "4d860c669cef26019441cae5ba1cb664",
+      "sourceName": "contracts/SelfdestructAttack.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "SelfdestructAttack"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\DepositWrapper.sol": {
+      "lastModificationDate": 1749150231880,
+      "contentHash": "bf1b7275369d873f19e1da51247d04c7",
+      "sourceName": "contracts/DepositWrapper.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "DepositWrapper"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\StorageWriter.sol": {
+      "lastModificationDate": 1749150210950,
+      "contentHash": "e8ea8dae760d602a5047f23aa84ef600",
+      "sourceName": "contracts/StorageWriter.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "StorageWriter"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\FakeVault.sol": {
+      "lastModificationDate": 1749150513461,
+      "contentHash": "ebf9a61f9b3029fc3053b46144487b5c",
+      "sourceName": "contracts/FakeVault.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "FakeVault"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\Announcement.sol": {
+      "lastModificationDate": 1749150603264,
+      "contentHash": "bd8b73ffbaa48afc9225717ab0051def",
+      "sourceName": "contracts/Announcement.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Announcement"
+      ]
+    },
+    "C:\\Users\\ADMIN\\Desktop\\advanced_exploit_suite\\contracts\\StrategicExploitFramework.sol": {
+      "lastModificationDate": 1749156478323,
+      "contentHash": "239ac9d0ce76e88457eea5ce173790a2",
+      "sourceName": "contracts/StrategicExploitFramework.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC20",
+        "StrategicExploitFramework"
+      ]
+    }
+  }
+}

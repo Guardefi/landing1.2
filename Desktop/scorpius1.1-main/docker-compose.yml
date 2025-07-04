@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  frontend:
+    extends:
+      file: ./docker/docker-compose.yml
+      service: frontend
+  honeypot-api:
+    extends:
+      file: ./docker/docker-compose.yml
+      service: honeypot-api
+  honeypot-worker:
+    extends:
+      file: ./docker/docker-compose.yml
+      service: honeypot-worker
+  scanner-api:
+    extends:
+      file: ./docker/docker-compose.yml
+      service: scanner-api
+  mempool-api:
+    extends:
+      file: ./docker/docker-compose.yml
+      service: mempool-api
+  mongo:
+    extends:
+      file: ./docker/docker-compose.yml
+      service: mongo
+  redis:
+    extends:
+      file: ./docker/docker-compose.yml
+      service: redis
+  prometheus:
+    extends:
+      file: ./docker/docker-compose.yml
+      service: prometheus
+  grafana:
+    extends:
+      file: ./docker/docker-compose.yml
+      service: grafana
+
+volumes:
+  mongo_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  default:
+    name: scorpius-network
+    driver: bridge
