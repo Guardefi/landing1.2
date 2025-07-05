@@ -1,0 +1,42 @@
+api:
+  dashboard: true
+  insecure: true
+
+# Entry points for development
+entryPoints:
+  web:
+    address: ":80"
+
+# Providers
+providers:
+  docker:
+    exposedByDefault: false
+    network: scorpius-dev-network
+
+# Middlewares
+http:
+  middlewares:
+    # CORS headers for development
+    cors-headers:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - "*"
+        accessControlAllowOriginList:
+          - "http://localhost:3000"
+          - "http://127.0.0.1:3000"
+          - "http://localhost:8080"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 100
+        addVaryHeader: true
+
+# Logging
+log:
+  level: DEBUG
+
+accessLog: {}

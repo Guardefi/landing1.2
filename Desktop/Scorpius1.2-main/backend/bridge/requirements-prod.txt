@@ -1,0 +1,84 @@
+# Production requirements for Scorpius Bridge
+# Pin versions for reproducible builds
+
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database & ORM
+sqlmodel==0.0.14
+sqlalchemy[asyncio]==2.0.23
+asyncpg==0.29.0
+alembic==1.13.1
+
+# Caching & Message Queue
+redis==4.5.4
+aioredis==2.0.1
+
+# Blockchain Integration
+web3==6.12.0
+solana==0.32.0
+eth-account==0.9.0
+
+# gRPC Support
+grpcio==1.59.3
+grpcio-tools==1.59.3
+protobuf==4.25.1
+
+# WebSocket Support
+websockets==11.0.3
+
+# Monitoring & Observability
+prometheus-client==0.19.0
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-sqlalchemy==0.42b0
+structlog==23.2.0
+python-json-logger==2.0.7
+
+# Security & Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+cryptography==41.0.7
+
+# HTTP Client
+httpx==0.23.3
+
+# Configuration & Environment
+python-dotenv==1.0.0
+pyyaml==6.0.1
+
+# Validation & Serialization
+marshmallow==3.20.1
+marshmallow-dataclass==8.6.0
+
+# Background Tasks
+celery==5.3.4
+celery[redis]==5.3.4
+
+# Rate Limiting
+slowapi==0.1.9
+
+# Testing (dev dependencies)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Development Tools
+black==23.11.0
+mypy==1.7.1
+ruff==0.1.6
+pre-commit==3.5.0
+
+# Documentation
+mkdocs==1.5.3
+mkdocs-material==9.4.8
+
+# Deployment
+gunicorn==21.2.0
+docker==6.1.3

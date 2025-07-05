@@ -1,0 +1,147 @@
+site_name: Scorpius Enterprise Platform Documentation
+site_description: Enterprise-grade blockchain security platform with wallet protection, audit trails, and compliance
+site_author: Scorpius Security Team
+site_url: https://docs.scorpius.com
+
+# Repository
+repo_name: scorpius/enterprise-platform
+repo_url: https://github.com/scorpius/enterprise-platform
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright © 2024 Scorpius Security. All rights reserved.
+
+# Configuration
+theme:
+  name: material
+  palette:
+    # Dark mode (default) for sophisticated look
+    - scheme: slate
+      primary: black
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    # Light mode (backup)
+    - scheme: default
+      primary: black
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - announce.dismiss
+    - content.code.annotate
+    - content.code.copy
+    - content.tabs.link
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+
+# Plugins
+plugins:
+  - search
+
+# Customization
+extra:
+  homepage: https://scorpius.com
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/scorpius
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/scorpius_sec
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/company/scorpius-security
+
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Navigation
+nav:
+  - Home: index.md
+  - Enterprise Features: enterprise-features.md
+  - Getting Started:
+    - Quick Start: getting-started/quick-start.md
+    - Installation: getting-started/installation.md
+    - Configuration: getting-started/configuration.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Components: architecture/components.md
+    - Security: architecture/security.md
+  - API Reference:
+    - Authentication: api/authentication.md
+    - Wallet Guard: api/wallet-guard.md
+    - Usage Metering: api/usage-metering.md
+    - Audit Trail: api/audit-trail.md
+    - Reporting: api/reporting.md
+  - Security:
+    - Security Model: security/model.md
+    - Threat Model: security/threat-model.md
+    - Compliance: security/compliance.md
+  - Deployment:
+    - Private Cloud: deployment/private-cloud.md
+    - AWS: deployment/aws.md
+    - Azure: deployment/azure.md
+    - Kubernetes: deployment/kubernetes.md
+  - Operations:
+    - Monitoring: operations/monitoring.md
+    - Runbook: operations/runbook.md
+    - Troubleshooting: operations/troubleshooting.md
+  - Support:
+    - FAQ: support/faq.md
+    - Contact: support/contact.md
+
+# Extra CSS and JavaScript
+extra_css:
+  - stylesheets/extra.css
+  - stylesheets/scorpius-theme.css
+
+extra_javascript:
+  - javascripts/extra.js

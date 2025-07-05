@@ -1,0 +1,7 @@
+<script>start("c:\\Users\\ADMIN\\Desktop\\Scorpius-Enterprise-masterr\\scorpius-landing\\src\\");</script>
+<script>onHasParentDirectory();</script>
+<script>addRow("components","components",1,0,"0 B",1751507904,"7/2/25, 7:58:24 PM");</script>
+<script>addRow("lib","lib",1,0,"0 B",1751507899,"7/2/25, 7:58:19 PM");</script>
+<script>addRow("styles","styles",1,0,"0 B",1751507886,"7/2/25, 7:58:06 PM");</script>
+<script>addRow("App-demo.tsx","App-demo.tsx",0,0,"0 B",1751507904,"7/2/25, 7:58:24 PM");</script>
+<script>addRow("App.tsx","App.tsx",0,0,"0 B",1751507886,"7/2/25, 7:58:06 PM");</script>

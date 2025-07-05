@@ -1,0 +1,37 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: pod-delete
+  namespace: scorpius
+spec:
+  appinfo:
+    appns: scorpius
+    applabel: "app=backend"
+    appkind: deployment
+  engineState: "active"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "300"
+            - name: CHAOS_INTERVAL
+              value: "60"
+            - name: FORCE
+              value: "true"
+            - name: CHAOS_PODS
+              value: "backend-0"
+        definition:
+          spec:
+            components:
+              env:
+                - name: TOTAL_CHAOS_DURATION
+                  value: "300"
+                - name: CHAOS_INTERVAL
+                  value: "60"
+                - name: FORCE
+                  value: "true"
+                - name: CHAOS_PODS
+                  value: "backend-0"

@@ -1,0 +1,24 @@
+# MkDocs and plugins for Scorpius Enterprise Platform Documentation
+mkdocs>=1.5.3
+mkdocs-material>=9.4.8
+mkdocs-git-revision-date-localized-plugin>=1.2.0
+mkdocs-git-committers-plugin-2>=1.2.0
+mkdocs-minify-plugin>=0.7.1
+mkdocs-pdf-export-plugin>=0.5.10
+
+# Additional plugins for enhanced functionality
+pymdown-extensions>=10.3.1
+mkdocs-mermaid2-plugin>=1.1.1
+mkdocs-table-reader-plugin>=2.0.3
+mkdocs-awesome-pages-plugin>=2.9.2
+mkdocs-macros-plugin>=1.0.5
+mkdocs-redirects>=1.2.1
+
+# Development and building
+mike>=1.1.2
+ghp-import>=2.1.0
+
+# Optional: For advanced features
+mkdocs-swagger-ui-tag>=0.6.6
+mkdocs-include-markdown-plugin>=6.0.3
+mkdocs-exclude>=1.0.2

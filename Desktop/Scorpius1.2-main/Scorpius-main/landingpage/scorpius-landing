@@ -1,0 +1,14 @@
+<script>start("c:\\Users\\ADMIN\\Desktop\\Scorpius-Enterprise-masterr\\scorpius-landing\\");</script>
+<script>onHasParentDirectory();</script>
+<script>addRow("src","src",1,0,"0 B",1751507904,"7/2/25, 7:58:24 PM");</script>
+<script>addRow(".env",".env",0,0,"0 B",1751507901,"7/2/25, 7:58:21 PM");</script>
+<script>addRow(".env.example",".env.example",0,0,"0 B",1751507887,"7/2/25, 7:58:07 PM");</script>
+<script>addRow("build_and_serve.py","build_and_serve.py",0,0,"0 B",1751507905,"7/2/25, 7:58:25 PM");</script>
+<script>addRow("Dockerfile","Dockerfile",0,0,"0 B",1751507904,"7/2/25, 7:58:24 PM");</script>
+<script>addRow("flask_serve.py","flask_serve.py",0,0,"0 B",1751507906,"7/2/25, 7:58:26 PM");</script>
+<script>addRow("package-minimal.json","package-minimal.json",0,0,"0 B",1751507902,"7/2/25, 7:58:22 PM");</script>
+<script>addRow("package.json","package.json",0,0,"0 B",1751507886,"7/2/25, 7:58:06 PM");</script>
+<script>addRow("README-ENHANCED.md","README-ENHANCED.md",0,0,"0 B",1751507903,"7/2/25, 7:58:23 PM");</script>
+<script>addRow("requirements.txt","requirements.txt",0,0,"0 B",1751507905,"7/2/25, 7:58:25 PM");</script>
+<script>addRow("serve.py","serve.py",0,0,"0 B",1751507904,"7/2/25, 7:58:24 PM");</script>
+<script>addRow("tailwind.config.js","tailwind.config.js",0,0,"0 B",1751507885,"7/2/25, 7:58:05 PM");</script>

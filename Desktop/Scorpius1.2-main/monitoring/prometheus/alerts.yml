@@ -1,0 +1,69 @@
+groups:
+  - name: mempool_alerts
+    rules:
+      - alert: HighTransactionLatency
+        expr: rate(mempool_transaction_latency_seconds_sum[5m]) / rate(mempool_transaction_latency_seconds_count[5m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High transaction processing latency"
+          description: "Transaction processing latency is above 5 seconds average over 5 minutes"
+
+      - alert: MemoryUsageHigh
+        expr: mempool_memory_usage_bytes / mempool_memory_limit_bytes * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 80% of limit"
+
+      - alert: QueueFull
+        expr: mempool_queue_length / mempool_queue_capacity * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Queue nearing capacity"
+          description: "Transaction queue is above 90% full"
+
+  - name: api_gateway_alerts
+    rules:
+      - alert: APIGatewayErrorRate
+        expr: rate(api_gateway_http_requests_total{status=~"5.."}[5m]) / rate(api_gateway_http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High API error rate"
+          description: "More than 5% of API requests are failing"
+
+      - alert: APILatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(api_gateway_request_duration_seconds_bucket[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency"
+          description: "95th percentile API response time is above 2 seconds"
+
+  - name: database_alerts
+    rules:
+      - alert: HighDatabaseLatency
+        expr: rate(postgres_query_latency_seconds_sum[5m]) / rate(postgres_query_latency_seconds_count[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database query latency"
+          description: "Average database query latency is above 1 second"
+
+      - alert: DatabaseConnectionPoolFull
+        expr: postgres_connections_total / postgres_connections_max * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool nearing capacity"
+          description: "More than 90% of database connections are in use"

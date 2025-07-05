@@ -1,0 +1,274 @@
+# Prometheus Alerting Rules for Scorpius Enterprise Platform
+
+groups:
+  # System Health Alerts
+  - name: system_health
+    rules:
+      - alert: ServiceDown
+        expr: up{job=~"api-gateway|scanner-service|bridge-service|mempool-service|honeypot-service|mev-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute"
+          runbook_url: "https://docs.scorpius.com/runbooks/service-down"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85% on {{ $labels.instance }} for more than 5 minutes"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% on {{ $labels.instance }} for more than 5 minutes"
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk usage is above 85% on {{ $labels.instance }}:{{ $labels.mountpoint }}"
+
+  # Application Performance Alerts
+  - name: application_performance
+    rules:
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High response time for {{ $labels.job }}"
+          description: "95th percentile response time is above 2 seconds for {{ $labels.job }}"
+
+      - alert: HighErrorRate
+        expr: (rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])) * 100 > 5
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "High error rate for {{ $labels.job }}"
+          description: "Error rate is above 5% for {{ $labels.job }} over the last 5 minutes"
+
+      - alert: PluginInactive
+        expr: plugin_status == 0
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Plugin {{ $labels.plugin_name }} is inactive"
+          description: "Plugin {{ $labels.plugin_name }} has been inactive for more than 2 minutes"
+
+  # Database Alerts
+  - name: database
+    rules:
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database is not responding"
+
+      - alert: PostgreSQLTooManyConnections
+        expr: sum(pg_stat_activity_count) by (instance) > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "PostgreSQL has too many connections"
+          description: "PostgreSQL has {{ $value }} active connections on {{ $labels.instance }}"
+
+      - alert: PostgreSQLSlowQueries
+        expr: pg_stat_activity_max_tx_duration{state!="idle"} > 300
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "PostgreSQL slow queries detected"
+          description: "Long running queries detected on {{ $labels.instance }}"
+
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache is not responding"
+
+      - alert: RedisHighMemoryUsage
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: cache
+        annotations:
+          summary: "Redis memory usage is high"
+          description: "Redis memory usage is above 85% on {{ $labels.instance }}"
+
+  # Security Alerts
+  - name: security
+    rules:
+      - alert: TooManyFailedLogins
+        expr: increase(failed_login_attempts_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Too many failed login attempts"
+          description: "{{ $value }} failed login attempts in the last 5 minutes from {{ $labels.source_ip }}"
+
+      - alert: RateLimitViolations
+        expr: increase(rate_limit_violations_total[5m]) > 50
+        for: 1m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High rate limit violations"
+          description: "{{ $value }} rate limit violations in the last 5 minutes"
+
+      - alert: SuspiciousActivity
+        expr: increase(suspicious_activity_total[10m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Suspicious activity detected"
+          description: "{{ $value }} suspicious activities detected in the last 10 minutes"
+
+      - alert: UnauthorizedAPIAccess
+        expr: increase(http_requests_total{status="401"}[5m]) > 20
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High number of unauthorized API access attempts"
+          description: "{{ $value }} unauthorized API access attempts in the last 5 minutes"
+
+  # Business Logic Alerts
+  - name: business_logic
+    rules:
+      - alert: HighTransactionFailureRate
+        expr: (rate(bridge_transactions_total{status="failed"}[5m]) / rate(bridge_transactions_total[5m])) * 100 > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: bridge
+        annotations:
+          summary: "High transaction failure rate"
+          description: "Bridge transaction failure rate is above 10% for the last 5 minutes"
+
+      - alert: ScanQueueBacklog
+        expr: scanner_queue_size > 1000
+        for: 10m
+        labels:
+          severity: warning
+          team: scanner
+        annotations:
+          summary: "Scanner queue backlog"
+          description: "Scanner queue has {{ $value }} pending items"
+
+      - alert: MEVOpportunityMissed
+        expr: increase(mev_opportunities_missed_total[15m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: mev
+        annotations:
+          summary: "MEV opportunities being missed"
+          description: "{{ $value }} MEV opportunities missed in the last 15 minutes"
+
+      - alert: HoneypotDetectionDown
+        expr: honeypot_detection_status == 0
+        for: 5m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Honeypot detection is down"
+          description: "Honeypot detection system is not functioning"
+
+  # Infrastructure Alerts  
+  - name: infrastructure
+    rules:
+      - alert: ContainerRestarting
+        expr: increase(kube_pod_container_status_restarts_total[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Container restarting frequently"
+          description: "Container {{ $labels.container }} in pod {{ $labels.pod }} has restarted {{ $value }} times in the last hour"
+
+      - alert: PodCrashLooping
+        expr: kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} == 1
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Pod is crash looping"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping"
+
+      - alert: PVCUsageHigh
+        expr: (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "PVC usage is high"
+          description: "PVC {{ $labels.persistentvolumeclaim }} usage is above 85%"
+
+  # Custom Business Metrics
+  - name: business_metrics
+    rules:
+      - alert: DailyActiveUsersLow
+        expr: daily_active_users < 100
+        for: 30m
+        labels:
+          severity: warning
+          team: product
+        annotations:
+          summary: "Daily active users is low"
+          description: "Daily active users count is {{ $value }}, which is below the threshold of 100"
+
+      - alert: RevenueDropSignificant
+        expr: (daily_revenue / daily_revenue offset 1d - 1) * 100 < -20
+        for: 1h
+        labels:
+          severity: critical
+          team: business
+        annotations:
+          summary: "Significant revenue drop detected"
+          description: "Daily revenue has dropped by {{ $value }}% compared to yesterday"
