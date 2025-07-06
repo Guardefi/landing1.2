@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scorpius Enterprise Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background-color: #f0f0f0; padding: 20px; border-radius: 5px; }
+        .summary { margin: 20px 0; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .pass { background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .fail { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+        .stat { text-align: center; padding: 20px; background-color: #e9ecef; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Scorpius Enterprise Test Report</h1>
+        <p>Generated: 06/29/2025 03:28:38</p>
+    </div>
+    
+    <div class="stats">
+        <div class="stat">
+            <h3>Total Tests</h3>
+            <p>24</p>
+        </div>
+        <div class="stat">
+            <h3>Passed</h3>
+            <p style="color: green;">6</p>
+        </div>
+        <div class="stat">
+            <h3>Failed</h3>
+            <p style="color: red;">17</p>
+        </div>
+        <div class="stat">
+            <h3>Success Rate</h3>
+            <p>25%</p>
+        </div>
+    </div>
+    
+    <h2>Test Results</h2>    <div class="test-result fail">
+        <strong>Database Connection</strong>: FAIL
+        <br><em>Response status code does not indicate success: 404 (Not Found).</em>
+    </div>    <div class="test-result fail">
+        <strong>Redis Connection</strong>: FAIL
+        <br><em>Response status code does not indicate success: 404 (Not Found).</em>
+    </div>    <div class="test-result fail">
+        <strong>API Authentication</strong>: FAIL
+        <br><em>Response status code does not indicate success: 404 (Not Found).</em>
+    </div>    <div class="test-result fail">
+        <strong>MythX Health Check</strong>: FAIL
+        <br><em>No connection could be made because the target machine actively refused it. (localhost:8004)</em>
+    </div>    <div class="test-result fail">
+        <strong>MythX API</strong>: FAIL
+        <br><em>No connection could be made because the target machine actively refused it. (localhost:8004)</em>
+    </div>    <div class="test-result fail">
+        <strong>Slither Health Check</strong>: FAIL
+        <br><em>No connection could be made because the target machine actively refused it. (localhost:8002)</em>
+    </div>    <div class="test-result fail">
+        <strong>Slither API</strong>: FAIL
+        <br><em>No connection could be made because the target machine actively refused it. (localhost:8002)</em>
+    </div>    <div class="test-result fail">
+        <strong>Manticore Health Check</strong>: FAIL
+        <br><em>No connection could be made because the target machine actively refused it. (localhost:8005)</em>
+    </div>    <div class="test-result fail">
+        <strong>Manticore API</strong>: FAIL
+        <br><em>No connection could be made because the target machine actively refused it. (localhost:8005)</em>
+    </div>    <div class="test-result fail">
+        <strong>Mythril Health Check</strong>: FAIL
+        <br><em>No connection could be made because the target machine actively refused it. (localhost:8003)</em>
+    </div>    <div class="test-result fail">
+        <strong>Mythril API</strong>: FAIL
+        <br><em>No connection could be made because the target machine actively refused it. (localhost:8003)</em>
+    </div>    <div class="test-result fail">
+        <strong></strong>: 
+        
+    </div>    <div class="test-result pass">
+        <strong>WebSocket Connection</strong>: PASS
+        
+    </div>    <div class="test-result pass">
+        <strong>Frontend Accessibility</strong>: PASS
+        
+    </div>    <div class="test-result pass">
+        <strong>Frontend API Integration</strong>: PASS
+        
+    </div>    <div class="test-result fail">
+        <strong>Analysis Workflow</strong>: FAIL
+        <br><em>Response status code does not indicate success: 404 (Not Found).</em>
+    </div>    <div class="test-result pass">
+        <strong>API Response Time</strong>: PASS
+        <br><em>Average: 3.5ms</em>
+    </div>    <div class="test-result pass">
+        <strong>Concurrent Requests</strong>: PASS
+        <br><em>All 5 requests succeeded</em>
+    </div>    <div class="test-result fail">
+        <strong>Authentication Required: /api/v1/projects</strong>: FAIL
+        <br><em>Response status code does not indicate success: 404 (Not Found).</em>
+    </div>    <div class="test-result fail">
+        <strong>Authentication Required: /api/v1/users</strong>: FAIL
+        <br><em>Response status code does not indicate success: 404 (Not Found).</em>
+    </div>    <div class="test-result fail">
+        <strong>Authentication Required: /api/v1/admin</strong>: FAIL
+        <br><em>Response status code does not indicate success: 404 (Not Found).</em>
+    </div>    <div class="test-result fail">
+        <strong>CORS Headers</strong>: FAIL
+        <br><em>Missing CORS headers</em>
+    </div>    <div class="test-result pass">
+        <strong>404 Error Handling</strong>: PASS
+        
+    </div>    <div class="test-result fail">
+        <strong>Malformed Request Handling</strong>: FAIL
+        <br><em>Response status code does not indicate success: 404 (Not Found).</em>
+    </div></body>
+</html>

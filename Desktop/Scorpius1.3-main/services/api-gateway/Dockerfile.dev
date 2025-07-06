@@ -1,0 +1,50 @@
+# Development Dockerfile for Unified API Gateway
+
+FROM python:3.11-slim
+
+LABEL maintainer="Scorpius Enterprise Platform"
+LABEL description="Unified API Gateway - Development"
+
+# Set environment variables for development
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PIP_NO_CACHE_DIR=1
+ENV HOT_RELOAD=true
+
+# Install system dependencies including dev tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements-unified.txt .
+RUN pip install --no-cache-dir -r requirements-unified.txt
+
+# Install development dependencies
+RUN pip install --no-cache-dir \
+    watchdog \
+    pytest \
+    pytest-asyncio \
+    black \
+    ruff
+
+# Copy application code (will be overridden by volume in dev)
+COPY . .
+
+# Create non-root user but keep as root for development convenience
+RUN groupadd -r scorpius && useradd -r -g scorpius scorpius
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose ports
+EXPOSE 8000 8001
+
+# Development command with hot reload
+CMD ["python", "-m", "uvicorn", "unified_gateway:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--log-level", "debug"]

@@ -1,0 +1,137 @@
+# OpenCost Configuration for Scorpius Enterprise Platform
+global:
+  namespace: opencost
+  imageRegistry: gcr.io/opencost-project
+  imagePullPolicy: IfNotPresent
+  
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+
+opencost:
+  enabled: true
+  
+  image:
+    repository: opencost/opencost
+    tag: v1.1.0
+    pullPolicy: IfNotPresent
+  
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2"
+  
+  env:
+    PROMETHEUS_SERVER_ENDPOINT: "http://prometheus-server.monitoring.svc.cluster.local:80"
+    CLUSTER_ID: "scorpius-enterprise"
+    CLOUD_PROVIDER_API_KEY: "file"
+    EMIT_KSM_V1_METRICS: "false"
+    LOG_LEVEL: "info"
+    MAX_QUERY_CONCURRENCY: "5"
+    
+  persistence:
+    enabled: true
+    storageClass: "gp3"
+    size: "10Gi"
+    
+  service:
+    type: ClusterIP
+    port: 9003
+    targetPort: 9003
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/metrics"
+      prometheus.io/port: "9003"
+
+prometheus:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    interval: 30s
+    scrapeTimeout: 10s
+    labels:
+      app: opencost
+      component: cost-monitoring
+
+alertmanager:
+  enabled: true
+  config:
+    global:
+      resolve_timeout: 5m
+    receivers:
+    - name: 'cost-alerts'
+      slack_configs:
+      - api_url: '${SLACK_API_URL}'
+        channel: '#cost-alerts'
+        title: 'OpenCost Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+    route:
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'cost-alerts'
+      route:
+        receiver: 'cost-alerts'
+        group_by: ['alertname']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 1h
+        routes:
+          - receiver: 'cost-alerts'
+      receivers:
+        - name: 'cost-alerts'
+          webhook_configs:
+            - url: 'http://alertmanager-webhook-receiver:8080/webhook'
+
+  alerts:
+    enabled: true
+    rules:
+      - alert: CostAnomaly
+        expr: |
+          (sum by (namespace) (rate(opencost_cost[1d])) / sum by (namespace) (rate(opencost_cost[7d])) > 1.1)
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "Cost anomaly detected in namespace {{ $labels.namespace }}"
+          description: "Cost in namespace {{ $labels.namespace }} has increased by more than 10% compared to last week"
+
+      - alert: HighCostNamespace
+        expr: |
+          sum by (namespace) (rate(opencost_cost[1d])) > 1000
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "High cost namespace detected"
+          description: "Namespace {{ $labels.namespace }} is consuming more than $1000/day"
+
+  grafana:
+    enabled: true
+    service:
+      type: ClusterIP
+    adminUser: admin
+    adminPassword: admin
+    dashboards:
+      enabled: true
+      defaultDashboards:
+        enabled: true
+        cost:
+          enabled: true
+          name: Cost
+          path: dashboards/cost.json
+        costByNamespace:
+          enabled: true
+          name: Cost by Namespace
+          path: dashboards/cost-by-namespace.json
+        costByPod:
+          enabled: true
+          name: Cost by Pod
+          path: dashboards/cost-by-pod.json

@@ -1,0 +1,228 @@
+# Falco Helm Values for Scorpius Enterprise Platform
+# Security runtime monitoring with alerts integration
+
+falco:
+  # Image configuration
+  image:
+    registry: docker.io
+    repository: falcosecurity/falco-no-driver
+    tag: "0.37.1"
+    pullPolicy: IfNotPresent
+
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+  # Security context
+  securityContext:
+    privileged: true
+    runAsUser: 0
+    runAsGroup: 0
+
+  # Falco configuration
+  falcoctl:
+    artifact:
+      install:
+        enabled: true
+        # Official Falco rules
+        refs: [falco-rules:2, falco-incubating-rules:2, falco-sandbox-rules:2]
+      follow:
+        enabled: true
+        refs: [falco-rules:2]
+
+  # Custom Falco rules for Scorpius
+  customRules:
+    scorpius-security.yaml: |-
+      # Scorpius-specific security rules
+      
+      # Detect unauthorized access to secrets
+      - rule: Unauthorized Secret Access
+        desc: Detect unauthorized access to Kubernetes secrets
+        condition: >
+          ka and
+          ka.target.resource=secrets and
+          ka.verb in (get, list) and
+          not ka.user.name in (scorpius-api-gateway, scorpius-backend, system:serviceaccount:kube-system)
+        output: >
+          Unauthorized secret access (user=%ka.user.name verb=%ka.verb 
+          resource=%ka.target.resource reason=%ka.reason.reason)
+        priority: HIGH
+        tags: [k8s, secrets, security]
+
+      # Detect privilege escalation attempts
+      - rule: Privilege Escalation Attempt
+        desc: Detect attempts to escalate privileges
+        condition: >
+          spawned_process and
+          (proc.name in (sudo, su, doas) or
+           proc.cmdline contains "chmod +s" or
+           proc.cmdline contains "setuid")
+        output: >
+          Privilege escalation attempt (user=%user.name command=%proc.cmdline 
+          pid=%proc.pid ppid=%proc.ppid)
+        priority: CRITICAL
+        tags: [privilege_escalation, security]
+
+      # Detect cryptocurrency mining
+      - rule: Cryptocurrency Mining Activity
+        desc: Detect potential cryptocurrency mining activity
+        condition: >
+          spawned_process and
+          (proc.name in (xmrig, ethminer, t-rex, nbminer, claymore, cgminer) or
+           proc.cmdline contains "stratum+tcp" or
+           proc.cmdline contains "mining.pool" or
+           proc.cmdline contains "--cuda" or
+           proc.cmdline contains "--opencl")
+        output: >
+          Potential cryptocurrency mining detected (command=%proc.cmdline 
+          pid=%proc.pid container=%container.name)
+        priority: HIGH
+        tags: [cryptocurrency, mining, security]
+
+      # Detect suspicious network activity
+      - rule: Suspicious Outbound Connection
+        desc: Detect suspicious outbound network connections
+        condition: >
+          outbound and
+          fd.net and
+          not proc.name in (curl, wget, http, https, apt, yum, npm, pip) and
+          fd.sip.name not in (github.com, docker.io, registry-1.docker.io, 
+                              pypi.org, npmjs.org, api.github.com)
+        output: >
+          Suspicious outbound connection (command=%proc.cmdline connection=%fd.name 
+          container=%container.name)
+        priority: MEDIUM
+        tags: [network, suspicious, security]
+
+      # Detect file system modifications in sensitive directories
+      - rule: Sensitive Directory Modification
+        desc: Detect modifications to sensitive directories
+        condition: >
+          modify and
+          fd.name startswith "/etc" or
+          fd.name startswith "/usr/bin" or
+          fd.name startswith "/usr/sbin" or
+          fd.name startswith "/boot"
+        output: >
+          Modification to sensitive directory (file=%fd.name command=%proc.cmdline 
+          pid=%proc.pid container=%container.name)
+        priority: HIGH
+        tags: [filesystem, sensitive, security]
+
+  # Grpc configuration
+  grpc:
+    enabled: true
+    bind_address: "0.0.0.0:5060"
+    threadiness: 8
+
+  # gRPC output service
+  grpcOutput:
+    enabled: true
+
+  # HTTP output (for metrics)
+  httpOutput:
+    enabled: true
+    url: "http://falco-exporter:2112/alerts"
+
+  # Prometheus metrics
+  metrics:
+    enabled: true
+    interval: 1h
+    output_rule: true
+    rules_counters_enabled: true
+    resource_utilization_enabled: true
+    state_counters_enabled: true
+    kernel_event_counters_enabled: true
+    libbpf_stats_enabled: true
+    plugins_metrics_enabled: true
+
+  # Syscalls configuration
+  syscalls:
+    repair: false
+    ignore: []
+
+# Falco Exporter configuration
+falcoExporter:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: falcosecurity/falco-exporter
+    tag: "0.8.4"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 9376
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9376"
+      prometheus.io/path: "/metrics"
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# Falco Sidekick for alert routing
+falcoSidekick:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: falcosecurity/falcosidekick
+    tag: "2.28.0"
+    pullPolicy: IfNotPresent
+
+  # Webhook configuration for alerts
+  config:
+    slack:
+      webhookurl: "" # Set via secret
+      channel: "#security-alerts"
+      username: "Falco"
+      iconurl: "https://falco.org/img/brand/falco-logo.png"
+      minimumpriority: "error"
+      messageformat: "long"
+
+    webhook:
+      address: "http://grafana-oncall-webhook:3000/integrations/v1/falco"
+
+    # Custom fields
+    customfields:
+      environment: "production"
+      cluster: "scorpius-prod"
+      namespace: "{{ .Hostname }}"
+
+  service:
+    type: ClusterIP
+    port: 2801
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# Node selector for DaemonSet deployment
+nodeSelector:
+  kubernetes.io/os: linux
+
+# Tolerations for system nodes
+tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
+    operator: Exists
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+    operator: Exists
+
+# Priority class
+priorityClassName: system-node-critical

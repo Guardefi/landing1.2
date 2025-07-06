@@ -1,0 +1,194 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: scorpius-base
+  annotations:
+    config.kubernetes.io/local-config: "true"
+
+# Base resources - these are the common resources across all environments
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  - wallet-guard.yaml
+  - usage-metering.yaml
+  - auth-proxy.yaml
+  - audit-trail.yaml
+  - reporting.yaml
+  - redis.yaml
+  - postgresql.yaml
+  - monitoring.yaml
+  - ingress.yaml
+  - network-policies.yaml
+  - service-monitor.yaml
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: scorpius
+  app.kubernetes.io/part-of: scorpius-enterprise
+  app.kubernetes.io/managed-by: kustomize
+
+# Common annotations
+commonAnnotations:
+  scorpius.io/version: "1.0.0"
+  scorpius.io/component: "enterprise-platform"
+
+# Images - default registry and tags
+images:
+  - name: scorpius/wallet-guard
+    newTag: "1.0.0"
+  - name: scorpius/usage-metering
+    newTag: "1.0.0"
+  - name: scorpius/auth-proxy
+    newTag: "1.0.0"
+  - name: scorpius/audit-trail
+    newTag: "1.0.0"
+  - name: scorpius/reporting
+    newTag: "1.0.0"
+  - name: redis
+    newTag: "7.2-alpine"
+  - name: postgres
+    newTag: "15-alpine"
+  - name: nginx
+    newTag: "1.25-alpine"
+  - name: prom/prometheus
+    newTag: "v2.45.0"
+  - name: grafana/grafana
+    newTag: "10.0.0"
+
+# ConfigMap and Secret generators
+configMapGenerator:
+  - name: scorpius-config
+    env: config.env
+  - name: monitoring-config
+    files:
+      - prometheus.yml
+      - alertmanager.yml
+  - name: grafana-dashboards
+    files:
+      - dashboards/sla-dashboard.json
+      - dashboards/usage-dashboard.json
+
+secretGenerator:
+  - name: scorpius-secrets
+    env: secrets.env
+    type: Opaque
+  - name: database-secrets
+    literals:
+      - postgres-user=scorpius
+      - postgres-database=scorpius
+    type: Opaque
+  - name: redis-secrets
+    literals:
+      - redis-password=changeme
+    type: Opaque
+
+# Namespace to deploy to
+namespace: scorpius-enterprise
+
+# Patches for common configuration
+patches:
+  # Add security context to all deployments
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+
+  # Add resource limits to all containers
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+  # Add liveness and readiness probes
+  - target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/component=application"
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/livenessProbe
+        value:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      - op: add
+        path: /spec/template/spec/containers/0/readinessProbe
+        value:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+# Replica count for scalable components
+replicas:
+  - name: wallet-guard
+    count: 2
+  - name: usage-metering
+    count: 2
+  - name: auth-proxy
+    count: 2
+  - name: audit-trail
+    count: 1
+  - name: reporting
+    count: 1
+
+# Transformers
+transformers:
+  # Add annotations transformer
+  - |-
+    apiVersion: builtin
+    kind: AnnotationsTransformer
+    metadata:
+      name: add-annotations
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      scorpius.io/build-timestamp: "2024-01-01T00:00:00Z"
+    fieldSpecs:
+    - path: metadata/annotations
+      create: true
+
+  # Add labels transformer for monitoring
+  - |-
+    apiVersion: builtin
+    kind: LabelTransformer
+    metadata:
+      name: add-monitoring-labels
+    labels:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8080"
+      prometheus.io/path: "/metrics"
+    fieldSpecs:
+    - path: spec/template/metadata/labels
+      create: true
+      kind: Deployment
+
+# Validation
+validators:
+  - |-
+    apiVersion: builtin
+    kind: KubernetesValidatorPlugin
+    metadata:
+      name: validate-kubernetes
+    strict: true

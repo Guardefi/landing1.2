@@ -1,0 +1,431 @@
+name: scorpius-enterprise
+
+services:
+  # === CORE INFRASTRUCTURE ===
+  redis:
+    image: redis:7-alpine
+    container_name: scorpius-redis-enterprise
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-scorpius123}
+    ports:
+      - "6390:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: scorpius-postgres-enterprise
+    environment:
+      POSTGRES_DB: scorpius_enterprise
+      POSTGRES_USER: scorpius
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-scorpius123}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5440:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/sql:/docker-entrypoint-initdb.d:ro
+      - ./logs:/var/log/postgresql
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scorpius -d scorpius_enterprise"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # === MAIN API GATEWAY ===
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: scorpius-gateway-enterprise
+    ports:
+      - "8010:8000"
+      - "8011:8001"  # Debug port
+    environment:
+      - ENVIRONMENT=enterprise
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-scorpius123}@redis:6379
+      - DATABASE_URL=postgresql://scorpius:${DB_PASSWORD:-scorpius123}@postgres:5432/scorpius_enterprise
+      - JWT_SECRET=${JWT_SECRET:-enterprise-secret-key}
+      - LOG_LEVEL=INFO
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8080
+      - SCANNER_SLITHER_URL=http://scanner-slither:8000
+      - SCANNER_MYTHRIL_URL=http://scanner-mythril:8000
+      - SCANNER_MYTHX_URL=http://scanner-mythx:8000
+      - SCANNER_MANTICORE_URL=http://scanner-manticore:8000
+    volumes:
+      - ./services/api-gateway:/app:rw
+      - ./logs:/app/logs:rw
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === BRIDGE SERVICE ===
+  bridge-service:
+    build:
+      context: backend/bridge
+      dockerfile: Dockerfile
+    container_name: scorpius-bridge-enterprise
+    environment:
+      - SERVICE_NAME=bridge
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-scorpius123}@redis:6379
+      - DATABASE_URL=postgresql://scorpius:${DB_PASSWORD:-scorpius123}@postgres:5432/scorpius_enterprise
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend/bridge:/app:rw
+      - ./logs:/app/logs:rw
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === BYTECODE ANALYSIS SERVICE ===
+  bytecode-service:
+    build:
+      context: backend/Bytecode
+      dockerfile: Dockerfile
+    container_name: scorpius-bytecode-enterprise
+    environment:
+      - SERVICE_NAME=bytecode
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-scorpius123}@redis:6379
+      - DATABASE_URL=postgresql://scorpius:${DB_PASSWORD:-scorpius123}@postgres:5432/scorpius_enterprise
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend/Bytecode:/app:rw
+      - ./logs:/app/logs:rw
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === HONEYPOT DETECTION SERVICE ===
+  honeypot-service:
+    build:
+      context: backend/honeypot
+      dockerfile: Dockerfile
+    container_name: scorpius-honeypot-enterprise
+    environment:
+      - SERVICE_NAME=honeypot
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-scorpius123}@redis:6379
+      - DATABASE_URL=postgresql://scorpius:${DB_PASSWORD:-scorpius123}@postgres:5432/scorpius_enterprise
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend/honeypot:/app:rw
+      - ./logs:/app/logs:rw
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === MEMPOOL MONITORING SERVICE ===
+  mempool-service:
+    build:
+      context: backend/mempool
+      dockerfile: Dockerfile
+    container_name: scorpius-mempool-enterprise
+    environment:
+      - SERVICE_NAME=mempool
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-scorpius123}@redis:6379
+      - DATABASE_URL=postgresql://scorpius:${DB_PASSWORD:-scorpius123}@postgres:5432/scorpius_enterprise
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend/mempool:/app:rw
+      - ./logs:/app/logs:rw
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === QUANTUM COMPUTING SERVICE ===
+  quantum-service:
+    build:
+      context: backend/quantum
+      dockerfile: Dockerfile
+    container_name: scorpius-quantum-enterprise
+    environment:
+      - SERVICE_NAME=quantum
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-scorpius123}@redis:6379
+      - DATABASE_URL=postgresql://scorpius:${DB_PASSWORD:-scorpius123}@postgres:5432/scorpius_enterprise
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend/quantum:/app:rw
+      - ./logs:/app/logs:rw
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === TIME MACHINE SERVICE ===
+  time-machine-service:
+    build:
+      context: backend/time_machine
+      dockerfile: Dockerfile
+    container_name: scorpius-time-machine-enterprise
+    environment:
+      - SERVICE_NAME=time_machine
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-scorpius123}@redis:6379
+      - DATABASE_URL=postgresql://scorpius:${DB_PASSWORD:-scorpius123}@postgres:5432/scorpius_enterprise
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend/time_machine:/app:rw
+      - ./logs:/app/logs:rw
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === SCANNER PLUGINS ===
+  
+  # Slither Security Scanner
+  scanner-slither:
+    build:
+      context: backend/scanner/docker/slither
+      dockerfile: Dockerfile
+    container_name: scorpius-scanner-slither
+    ports:
+      - "8002:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - SCANNER_TYPE=slither
+    volumes:
+      - ./backend/scanner/docker/slither:/app:rw
+      - ./logs:/app/logs:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  # Mythril Security Scanner
+  scanner-mythril:
+    build:
+      context: backend/scanner/docker/mythril
+      dockerfile: Dockerfile
+    container_name: scorpius-scanner-mythril
+    ports:
+      - "8003:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - SCANNER_TYPE=mythril
+    volumes:
+      - ./backend/scanner/docker/mythril:/app:rw
+      - ./logs:/app/logs:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.5'
+
+  # MythX Security Scanner
+  scanner-mythx:
+    build:
+      context: backend/scanner/docker/mythx
+      dockerfile: Dockerfile
+    container_name: scorpius-scanner-mythx
+    ports:
+      - "8004:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - SCANNER_TYPE=mythx
+      - MYTHX_API_KEY=${MYTHX_API_KEY}
+    volumes:
+      - ./backend/scanner/docker/mythx:/app:rw
+      - ./logs:/app/logs:rw
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  # Manticore Symbolic Execution
+  scanner-manticore:
+    build:
+      context: backend/scanner/docker/manticore
+      dockerfile: Dockerfile
+    container_name: scorpius-scanner-manticore
+    ports:
+      - "8005:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - SCANNER_TYPE=manticore
+    volumes:
+      - ./backend/scanner/docker/manticore:/app:rw
+      - ./logs:/app/logs:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+
+  # === FRONTEND ===
+  frontend:
+    build: 
+      context: frontend
+      dockerfile: Dockerfile
+    container_name: scorpius-frontend-enterprise
+    ports:
+      - "3010:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_BASE_URL=http://localhost:8010
+      - VITE_WS_BASE_URL=ws://localhost:8010
+    volumes:
+      - ./frontend:/app:rw
+      - /app/node_modules
+      - ./logs:/app/logs:rw
+    depends_on:
+      - api-gateway
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === MONITORING STACK ===
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: scorpius-prometheus-enterprise
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: scorpius-grafana-enterprise
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_DOMAIN=localhost
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === DEVELOPMENT TOOLS ===
+  dev-tools:
+    image: python:3.11-slim
+    container_name: scorpius-dev-tools-enterprise
+    command: tail -f /dev/null
+    volumes:
+      - .:/workspace:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /workspace
+    environment:
+      - PYTHONPATH=/workspace
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === DATABASE ADMIN ===
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: scorpius-pgadmin-enterprise
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@scorpius.enterprise
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5051:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+  # === REDIS ADMIN ===
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: scorpius-redis-commander-enterprise
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:${REDIS_PASSWORD:-scorpius123}
+    ports:
+      - "8082:8081"
+    networks:
+      - scorpius-enterprise
+    restart: unless-stopped
+
+networks:
+  scorpius-enterprise:
+    driver: bridge
+    name: scorpius-enterprise-network
+
+volumes:
+  postgres_data:
+    name: scorpius_postgres_data_enterprise
+  redis_data:
+    name: scorpius_redis_data_enterprise
+  prometheus_data:
+    name: scorpius_prometheus_data_enterprise
+  grafana_data:
+    name: scorpius_grafana_data_enterprise
+  pgadmin_data:
+    name: scorpius_pgadmin_data_enterprise 

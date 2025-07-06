@@ -1,0 +1,25 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:cypress": "cypress run --spec 'cypress/e2e/**/*.cy.ts'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.53.1",
+    "@types/node": "^24.0.6",
+    "cypress": "^13.7.0",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,200 @@
+name: scorpius-dev
+
+services:
+  # === CORE INFRASTRUCTURE ===
+  redis:
+    image: redis:7-alpine
+    container_name: scorpius-redis-dev
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+      - ./config:/usr/local/etc/redis:ro
+    networks:
+      - scorpius-dev-network
+    environment:
+      - REDIS_PASSWORD=
+    profiles:
+      - dev
+      - minimal
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: scorpius-postgres-dev
+    environment:
+      POSTGRES_DB: scorpius_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./infrastructure/sql:/docker-entrypoint-initdb.d:ro
+      - ./logs:/var/log/postgresql
+    networks:
+      - scorpius-dev-network
+    profiles:
+      - dev
+
+  # === CORE ORCHESTRATOR ===
+  orchestrator:
+    build:
+      context: .
+      dockerfile: packages/core/Dockerfile
+      target: development
+    container_name: scorpius-orchestrator-dev
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=DEBUG
+      - HOT_RELOAD=true
+    volumes:
+      - ./packages/core:/app:rw
+      - ./logs:/app/logs:rw
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - scorpius-dev-network
+    profiles:
+      - dev
+      - minimal
+
+  # === UNIFIED API GATEWAY ===
+  api-gateway:
+    build:
+      context: services/api-gateway
+      dockerfile: Dockerfile.dev
+    container_name: scorpius-gateway-dev
+    ports:
+      - "8000:8000"
+      - "8001:8001"  # Debug port
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=dev-secret-key-not-for-production
+      - LOG_LEVEL=DEBUG
+      - HOT_RELOAD=true
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8080
+    volumes:
+      - ./services/api-gateway:/app:rw
+      - ./packages/core:/app/packages/core:ro
+      - ./logs:/app/logs:rw
+    depends_on:
+      redis:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - scorpius-dev-network
+    profiles:
+      - dev
+      - minimal
+
+  # === BRIDGE SERVICE (Development) ===
+  bridge-service:
+    build:
+      context: backend/bridge
+      dockerfile: Dockerfile.dev
+    container_name: scorpius-bridge-dev
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/scorpius_dev
+      - LOG_LEVEL=DEBUG
+      - HOT_RELOAD=true
+    volumes:
+      - ./backend/bridge:/app:rw
+      - ./logs:/app/logs:rw
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - scorpius-dev-network
+    profiles:
+      - dev
+
+  # === FRONTEND (Development with HMR) ===
+  frontend:
+    build: 
+      context: frontend
+      dockerfile: Dockerfile.dev
+    container_name: scorpius-frontend-dev
+    ports:
+      - "3000:3000"
+      - "24678:24678"  # HMR port
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_WS_BASE_URL=ws://localhost:8000
+      - VITE_HMR_PORT=24678
+      - HOT_RELOAD=true
+    volumes:
+      - ./frontend:/app:rw
+      - /app/node_modules  # Exclude node_modules
+      - ./logs:/app/logs:rw
+    depends_on:
+      api-gateway:
+        condition: service_started
+    networks:
+      - scorpius-dev-network
+    profiles:
+      - dev
+
+  # === DEVELOPMENT TOOLS ===
+  dev-tools:
+    image: alpine:latest
+    container_name: scorpius-dev-tools
+    command: tail -f /dev/null
+    volumes:
+      - .:/workspace:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /workspace
+    networks:
+      - scorpius-dev-network
+    profiles:
+      - dev
+
+  # === DATABASE ADMIN ===
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: scorpius-pgadmin-dev
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@scorpius.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data_dev:/var/lib/pgadmin
+    networks:
+      - scorpius-dev-network
+    profiles:
+      - dev
+
+  # === REDIS ADMIN ===
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: scorpius-redis-commander-dev
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - scorpius-dev-network
+    profiles:
+      - dev
+
+networks:
+  scorpius-dev-network:
+    driver: bridge
+    name: scorpius-dev-network
+
+volumes:
+  postgres_data_dev:
+    name: scorpius_postgres_data_dev
+  redis_data_dev:
+    name: scorpius_redis_data_dev
+  pgadmin_data_dev:
+    name: scorpius_pgadmin_data_dev

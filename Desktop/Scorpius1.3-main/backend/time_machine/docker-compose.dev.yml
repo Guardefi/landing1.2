@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  time-machine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - TM_CONFIG_PATH=/app/config/time_machine.yaml
+      - TM_DATA_DIR=/app/store
+      - TM_LOG_LEVEL=DEBUG
+      - FLASK_ENV=development
+    volumes:
+      - .:/app
+      - ./store:/app/store
+      - ./logs:/app/logs
+      - ./config:/app/config
+    networks:
+      - time-machine-network
+    restart: unless-stopped
+    command: ["python", "time_machine_app.py", "serve", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    command: anvil --host 0.0.0.0 --port 8545 --accounts 10 --balance 10000
+    ports:
+      - "8545:8545"
+    networks:
+      - time-machine-network
+    restart: unless-stopped
+
+networks:
+  time-machine-network:
+    driver: bridge

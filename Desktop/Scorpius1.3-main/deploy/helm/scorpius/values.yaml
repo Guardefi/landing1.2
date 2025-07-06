@@ -1,0 +1,208 @@
+# Default values for scorpius.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings
+global:
+  registry: ghcr.io
+  repository: scorpius/enterprise-platform
+  pullPolicy: IfNotPresent
+  storageClass: ""
+
+# Image configuration
+image:
+  tag: "latest"
+
+# Service configuration
+services:
+  apiGateway:
+    enabled: true
+    name: api-gateway
+    replicaCount: 2
+    image:
+      repository: api-gateway
+      tag: ""
+    service:
+      type: ClusterIP
+      port: 8000
+      targetPort: 8000
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+
+  bridgeService:
+    enabled: true
+    name: bridge-service
+    replicaCount: 1
+    image:
+      repository: bridge-service
+      tag: ""
+    service:
+      type: ClusterIP
+      port: 8001
+      targetPort: 8001
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+
+  frontend:
+    enabled: true
+    name: frontend
+    replicaCount: 2
+    image:
+      repository: frontend
+      tag: ""
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 80
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - host: scorpius.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+        - path: /api
+          pathType: Prefix
+          service: api-gateway
+  tls:
+    - secretName: scorpius-tls
+      hosts:
+        - scorpius.example.com
+
+# Database configuration
+postgresql:
+  enabled: true
+  auth:
+    database: scorpius
+    username: scorpius
+    existingSecret: scorpius-db-secret
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+# Redis configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    existingSecret: scorpius-redis-secret
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+
+# Monitoring configuration
+monitoring:
+  prometheus:
+    enabled: true
+    server:
+      persistentVolume:
+        size: 50Gi
+    alertmanager:
+      enabled: true
+      persistentVolume:
+        size: 4Gi
+  grafana:
+    enabled: true
+    persistence:
+      enabled: true
+      size: 4Gi
+    adminPassword: admin123
+    dashboards:
+      enabled: true
+
+# Security
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Node selection
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Environment variables
+env:
+  - name: ENVIRONMENT
+    value: "production"
+  - name: LOG_LEVEL
+    value: "INFO"
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: scorpius-db-secret
+        key: url
+  - name: REDIS_URL
+    valueFrom:
+      secretKeyRef:
+        name: scorpius-redis-secret
+        key: url
+  - name: JWT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: scorpius-jwt-secret
+        key: secret

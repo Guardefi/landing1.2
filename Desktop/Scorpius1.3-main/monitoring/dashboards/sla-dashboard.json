@@ -1,0 +1,352 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Scorpius Enterprise SLA Dashboard",
+    "description": "Comprehensive SLA monitoring for all Scorpius services",
+    "tags": ["scorpius", "sla", "monitoring"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-4h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Platform Availability (SLA: 99.9%)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "scorpius:platform:availability:5m * 100",
+            "legendFormat": "Platform Uptime %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 99.0
+                },
+                {
+                  "color": "green",
+                  "value": 99.9
+                }
+              ]
+            },
+            "unit": "percent",
+            "max": 100,
+            "min": 95
+          }
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "API Gateway Latency p95 (SLA: <2.5s)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "scorpius:api_gateway:latency_p95:5m",
+            "legendFormat": "API Latency p95"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 2.0
+                },
+                {
+                  "color": "red",
+                  "value": 2.5
+                }
+              ]
+            },
+            "unit": "s"
+          }
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Error Rate (SLA: <2%)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "scorpius:api_gateway:error_rate:5m * 100",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 1.0
+                },
+                {
+                  "color": "red",
+                  "value": 2.0
+                }
+              ]
+            },
+            "unit": "percent"
+          }
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "Wallet Guard Performance (SLA: <1.8s for 25 addresses)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "scorpius:wallet_guard:latency_p95:5m",
+            "legendFormat": "Wallet Check p95"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 1.5
+                },
+                {
+                  "color": "red",
+                  "value": 1.8
+                }
+              ]
+            },
+            "unit": "s"
+          }
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        }
+      },
+      {
+        "id": 5,
+        "title": "SLA Compliance Trends",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "scorpius:platform:availability:5m * 100",
+            "legendFormat": "Availability %"
+          },
+          {
+            "expr": "scorpius:api_gateway:latency_p95:5m",
+            "legendFormat": "API Latency p95 (s)"
+          },
+          {
+            "expr": "scorpius:api_gateway:error_rate:5m * 100",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Percentage / Seconds"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 6
+        }
+      },
+      {
+        "id": 6,
+        "title": "Service Status",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "up",
+            "legendFormat": "{{job}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 6
+        }
+      },
+      {
+        "id": 7,
+        "title": "Active Alerts",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "legendFormat": "{{alertname}} - {{service}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 14
+        }
+      },
+      {
+        "id": 8,
+        "title": "SLA Violations (Last 24h)",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "increase(ALERTS{sla=~\"latency|error_rate|availability\"}[24h])",
+            "legendFormat": "{{alertname}} - {{service}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 14
+        }
+      },
+      {
+        "id": 9,
+        "title": "Business Metrics",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "scorpius:business:active_organizations:1h",
+            "legendFormat": "Active Organizations"
+          },
+          {
+            "expr": "scorpius:business:scans_per_hour:1h",
+            "legendFormat": "Scans per Hour"
+          },
+          {
+            "expr": "scorpius:business:wallet_checks_per_hour:1h",
+            "legendFormat": "Wallet Checks per Hour"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Count"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 22
+        }
+      },
+      {
+        "id": 10,
+        "title": "Infrastructure Health",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU Usage % - {{instance}}"
+          },
+          {
+            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+            "legendFormat": "Memory Usage % - {{instance}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Usage %",
+            "max": 100
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 30
+        }
+      },
+      {
+        "id": 11,
+        "title": "Security Events",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "increase(audit_trail_hash_mismatches_total[5m])",
+            "legendFormat": "Audit Trail Tampering"
+          },
+          {
+            "expr": "increase(auth_failed_attempts_total[5m])",
+            "legendFormat": "Failed Auth Attempts"
+          },
+          {
+            "expr": "increase(wallet_guard_high_risk_detected_total[5m])",
+            "legendFormat": "High-Risk Wallets"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Events per 5min"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 30
+        }
+      }
+    ],
+    "schemaVersion": 27,
+    "version": 1
+  }
+}
