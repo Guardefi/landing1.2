@@ -11,19 +11,18 @@ import { shaderMaterial } from "@react-three/drei";
 import { useScrollSync } from "./useScrollSync";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { motion } from "framer-motion";
 
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
 
 // Camera keyframes for different scroll positions
 const cameraKeyframes = [
-  { scroll: 0.0, position: [0, 0, 7], fov: 50 },
-  { scroll: 0.2, position: [3, 2, 5], fov: 60 },
-  { scroll: 0.4, position: [-2, 1, 4], fov: 55 },
-  { scroll: 0.6, position: [1, -1, 6], fov: 65 },
-  { scroll: 0.8, position: [-3, 0, 3], fov: 70 },
-  { scroll: 1.0, position: [0, 0, 8], fov: 45 },
+  { scroll: 0.0, position: [0, 0, 12], fov: 45 },
+  { scroll: 0.2, position: [4, 3, 10], fov: 50 },
+  { scroll: 0.4, position: [-3, 2, 8], fov: 45 },
+  { scroll: 0.6, position: [2, -2, 10], fov: 55 },
+  { scroll: 0.8, position: [-4, 1, 7], fov: 60 },
+  { scroll: 1.0, position: [0, 0, 12], fov: 40 },
 ];
 
 // --- GLSL NOISE UTILS (Simplex/FBM) ---
@@ -227,86 +226,6 @@ function CameraController({ scroll }: { scroll: number }) {
   }, [scroll, camera]);
 
   return null;
-}
-
-// Dynamic overlay sections that move with camera
-function DynamicOverlays({ scroll }: { scroll: number }) {
-  const [cameraAngle, setCameraAngle] = useState(0);
-
-  useEffect(() => {
-    setCameraAngle((Math.atan2(scroll * 2 - 1, 1) * 180) / Math.PI);
-  }, [scroll]);
-
-  const overlays = [
-    {
-      id: "greeting",
-      active: scroll < 0.2,
-      content: "Hello, Dark Forest",
-      position: { top: "20%", left: "10%" },
-      parallax: { x: scroll * 50, y: -scroll * 30 },
-    },
-    {
-      id: "defense",
-      active: scroll >= 0.2 && scroll < 0.4,
-      content: "Defense Protocol Activated",
-      position: { top: "60%", right: "15%" },
-      parallax: { x: -scroll * 40, y: scroll * 25 },
-    },
-    {
-      id: "modules",
-      active: scroll >= 0.4 && scroll < 0.6,
-      content: "Security Modules Online",
-      position: { top: "40%", left: "60%" },
-      parallax: { x: scroll * 30, y: -scroll * 40 },
-    },
-    {
-      id: "enterprise",
-      active: scroll >= 0.6 && scroll < 0.8,
-      content: "Enterprise Command Center",
-      position: { bottom: "30%", left: "20%" },
-      parallax: { x: -scroll * 35, y: scroll * 20 },
-    },
-    {
-      id: "final",
-      active: scroll >= 0.8,
-      content: "War Room Initialized",
-      position: { top: "50%", right: "25%" },
-      parallax: { x: scroll * 45, y: -scroll * 35 },
-    },
-  ];
-
-  return (
-    <div className="fixed inset-0 z-20 pointer-events-none">
-      {overlays.map((overlay) => (
-        <motion.div
-          key={overlay.id}
-          style={{
-            position: "absolute",
-            ...overlay.position,
-            filter: "blur(8px)",
-            background: "rgba(0,0,0,0.4)",
-            textShadow: "0 0 16px #00fff7",
-            transform: `rotate(${cameraAngle * 0.1}deg)`,
-          }}
-          animate={{
-            opacity: overlay.active ? 1 : 0,
-            y: overlay.parallax.y,
-            x: overlay.parallax.x,
-            scale: overlay.active ? 1 : 0.8,
-          }}
-          transition={{
-            duration: 0.8,
-            ease: [0.23, 1, 0.32, 1],
-          }}
-          className="p-8 rounded-xl max-w-2xl backdrop-blur-sm"
-        >
-          <div className="text-cyan-400 font-terminal text-2xl font-bold">
-            {overlay.content}
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  );
 }
 
 export default function ScorpiusCore() {
