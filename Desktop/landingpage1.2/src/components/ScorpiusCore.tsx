@@ -208,15 +208,38 @@ function EnergyLayer({
 
 function WireframeSphere({ scroll }: { scroll: number }) {
   const mesh = useRef<THREE.Mesh>(null!);
+
   useFrame((state) => {
     mesh.current.rotation.y += 0.005 + scroll * 0.04;
     mesh.current.position.x = Math.sin(scroll * Math.PI * 2) * 0.3;
     mesh.current.position.y = Math.cos(scroll * Math.PI * 2) * 0.2;
+
+    // Color morphing for wireframe
+    const time = state.clock.getElapsedTime();
+    const cycle = (time * 0.4) % (Math.PI * 2);
+
+    // Create RGB color cycling
+    const r = (Math.sin(cycle) + 1) * 0.5;
+    const g = (Math.sin(cycle + (Math.PI * 2) / 3) + 1) * 0.5;
+    const b = (Math.sin(cycle + (Math.PI * 4) / 3) + 1) * 0.5;
+
+    // Apply scroll influence
+    const scrollInfluence = scroll * 2;
+    const finalR = Math.min(1, r + scrollInfluence * 0.3);
+    const finalG = Math.min(1, g + scrollInfluence * 0.2);
+    const finalB = Math.min(1, b + scrollInfluence * 0.4);
+
+    (mesh.current.material as THREE.MeshBasicMaterial).color.setRGB(
+      finalR,
+      finalG,
+      finalB,
+    );
   });
+
   return (
     <mesh ref={mesh}>
       <sphereGeometry args={[2, 64, 64]} />
-      <meshBasicMaterial wireframe color="#00fff7" transparent opacity={0.8} />
+      <meshBasicMaterial wireframe transparent opacity={0.8} />
     </mesh>
   );
 }
