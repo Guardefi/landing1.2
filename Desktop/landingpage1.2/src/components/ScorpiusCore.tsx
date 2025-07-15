@@ -1,13 +1,17 @@
-'use client';
-import { Canvas, useFrame, extend, useThree } from '@react-three/fiber';
-import { useRef, useEffect, useState } from 'react';
-import * as THREE from 'three';
-import { EffectComposer, Bloom, DepthOfField } from '@react-three/postprocessing';
-import { shaderMaterial } from '@react-three/drei';
-import { useScrollSync } from './useScrollSync';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { motion } from 'framer-motion';
+"use client";
+import { Canvas, useFrame, extend, useThree } from "@react-three/fiber";
+import { useRef, useEffect, useState } from "react";
+import * as THREE from "three";
+import {
+  EffectComposer,
+  Bloom,
+  DepthOfField,
+} from "@react-three/postprocessing";
+import { shaderMaterial } from "@react-three/drei";
+import { useScrollSync } from "./useScrollSync";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { motion } from "framer-motion";
 
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
@@ -89,7 +93,7 @@ float fbm(vec3 x) {
 
 // Custom ShaderMaterial for energy layer
 const EnergyMaterial = shaderMaterial(
-  { uTime: 0, uPulse: 0, uMouse: [0,0] },
+  { uTime: 0, uPulse: 0, uMouse: [0, 0] },
   // vertex
   `
     varying vec3 vNormal;
@@ -127,11 +131,17 @@ const EnergyMaterial = shaderMaterial(
       vec3 refract = mix(base, vec3(0.0, 1.0, 0.7), fresnel * 0.5);
       gl_FragColor = vec4(refract, energy * 0.85 + 0.15 * uPulse);
     }
-  `
+  `,
 );
 extend({ EnergyMaterial });
 
-function EnergyLayer({ scroll, mouse }: { scroll: number; mouse: [number, number] }) {
+function EnergyLayer({
+  scroll,
+  mouse,
+}: {
+  scroll: number;
+  mouse: [number, number];
+}) {
   const mesh = useRef<THREE.Mesh>(null!);
   useFrame((state) => {
     const material = mesh.current.material as any;
@@ -172,15 +182,16 @@ function CameraController({ scroll }: { scroll: number }) {
   useEffect(() => {
     // Keyframes for camera at scroll stops
     const keyframes = [
-      { scroll: 0.0, pos: [0, 0, 7], fov: 50 },
-      { scroll: 0.25, pos: [1, 0.5, 6], fov: 55 },
-      { scroll: 0.5, pos: [0, 1.2, 4.5], fov: 60 },
-      { scroll: 0.75, pos: [-1, 0.5, 6], fov: 55 },
-      { scroll: 1.0, pos: [0, 0, 7], fov: 50 },
+      { scroll: 0.0, pos: [0, 0, 12], fov: 45 },
+      { scroll: 0.25, pos: [2, 1, 10], fov: 50 },
+      { scroll: 0.5, pos: [0, 2, 8], fov: 55 },
+      { scroll: 0.75, pos: [-2, 1, 10], fov: 50 },
+      { scroll: 1.0, pos: [0, 0, 12], fov: 45 },
     ];
-    
+
     // Interpolate between keyframes
-    let prev = keyframes[0], next = keyframes[keyframes.length - 1];
+    let prev = keyframes[0],
+      next = keyframes[keyframes.length - 1];
     for (let i = 1; i < keyframes.length; i++) {
       if (scroll <= keyframes[i].scroll) {
         prev = keyframes[i - 1];
@@ -198,14 +209,19 @@ function CameraController({ scroll }: { scroll: number }) {
     const fov = lerp(prev.fov, next.fov);
 
     gsap.to(camera.position, {
-      x: pos[0], y: pos[1], z: pos[2], duration: 0.8, ease: 'power2.out', overwrite: 'auto'
+      x: pos[0],
+      y: pos[1],
+      z: pos[2],
+      duration: 0.8,
+      ease: "power2.out",
+      overwrite: "auto",
     });
-    gsap.to(camera, { 
-      fov, 
-      duration: 0.8, 
-      ease: 'power2.out', 
-      overwrite: 'auto', 
-      onUpdate: () => camera.updateProjectionMatrix() 
+    gsap.to(camera, {
+      fov,
+      duration: 0.8,
+      ease: "power2.out",
+      overwrite: "auto",
+      onUpdate: () => camera.updateProjectionMatrix(),
     });
     camera.lookAt(0, 0, 0);
   }, [scroll, camera]);
@@ -216,47 +232,47 @@ function CameraController({ scroll }: { scroll: number }) {
 // Dynamic overlay sections that move with camera
 function DynamicOverlays({ scroll }: { scroll: number }) {
   const [cameraAngle, setCameraAngle] = useState(0);
-  
+
   useEffect(() => {
-    setCameraAngle(Math.atan2(scroll * 2 - 1, 1) * 180 / Math.PI);
+    setCameraAngle((Math.atan2(scroll * 2 - 1, 1) * 180) / Math.PI);
   }, [scroll]);
 
   const overlays = [
     {
-      id: 'greeting',
+      id: "greeting",
       active: scroll < 0.2,
-      content: 'Hello, Dark Forest',
-      position: { top: '20%', left: '10%' },
-      parallax: { x: scroll * 50, y: -scroll * 30 }
+      content: "Hello, Dark Forest",
+      position: { top: "20%", left: "10%" },
+      parallax: { x: scroll * 50, y: -scroll * 30 },
     },
     {
-      id: 'defense',
+      id: "defense",
       active: scroll >= 0.2 && scroll < 0.4,
-      content: 'Defense Protocol Activated',
-      position: { top: '60%', right: '15%' },
-      parallax: { x: -scroll * 40, y: scroll * 25 }
+      content: "Defense Protocol Activated",
+      position: { top: "60%", right: "15%" },
+      parallax: { x: -scroll * 40, y: scroll * 25 },
     },
     {
-      id: 'modules',
+      id: "modules",
       active: scroll >= 0.4 && scroll < 0.6,
-      content: 'Security Modules Online',
-      position: { top: '40%', left: '60%' },
-      parallax: { x: scroll * 30, y: -scroll * 40 }
+      content: "Security Modules Online",
+      position: { top: "40%", left: "60%" },
+      parallax: { x: scroll * 30, y: -scroll * 40 },
     },
     {
-      id: 'enterprise',
+      id: "enterprise",
       active: scroll >= 0.6 && scroll < 0.8,
-      content: 'Enterprise Command Center',
-      position: { bottom: '30%', left: '20%' },
-      parallax: { x: -scroll * 35, y: scroll * 20 }
+      content: "Enterprise Command Center",
+      position: { bottom: "30%", left: "20%" },
+      parallax: { x: -scroll * 35, y: scroll * 20 },
     },
     {
-      id: 'final',
+      id: "final",
       active: scroll >= 0.8,
-      content: 'War Room Initialized',
-      position: { top: '50%', right: '25%' },
-      parallax: { x: scroll * 45, y: -scroll * 35 }
-    }
+      content: "War Room Initialized",
+      position: { top: "50%", right: "25%" },
+      parallax: { x: scroll * 45, y: -scroll * 35 },
+    },
   ];
 
   return (
@@ -265,22 +281,22 @@ function DynamicOverlays({ scroll }: { scroll: number }) {
         <motion.div
           key={overlay.id}
           style={{
-            position: 'absolute',
+            position: "absolute",
             ...overlay.position,
             filter: "blur(8px)",
             background: "rgba(0,0,0,0.4)",
             textShadow: "0 0 16px #00fff7",
-            transform: `rotate(${cameraAngle * 0.1}deg)`
+            transform: `rotate(${cameraAngle * 0.1}deg)`,
           }}
-          animate={{ 
+          animate={{
             opacity: overlay.active ? 1 : 0,
             y: overlay.parallax.y,
             x: overlay.parallax.x,
-            scale: overlay.active ? 1 : 0.8
+            scale: overlay.active ? 1 : 0.8,
           }}
-          transition={{ 
-            duration: 0.8, 
-            ease: [0.23, 1, 0.32, 1] 
+          transition={{
+            duration: 0.8,
+            ease: [0.23, 1, 0.32, 1],
           }}
           className="p-8 rounded-xl max-w-2xl backdrop-blur-sm"
         >
@@ -304,24 +320,32 @@ export default function ScorpiusCore() {
       const y = -(e.clientY / window.innerHeight) * 2 + 1;
       setMouse([x, y]);
     }
-    window.addEventListener('pointermove', onPointerMove);
-    return () => window.removeEventListener('pointermove', onPointerMove);
+    window.addEventListener("pointermove", onPointerMove);
+    return () => window.removeEventListener("pointermove", onPointerMove);
   }, []);
 
   return (
     <>
-      <Canvas camera={{ position: [0, 0, 7], fov: 50 }}>
+      <Canvas camera={{ position: [0, 0, 12], fov: 45 }}>
         <CameraController scroll={scroll} />
         <ambientLight intensity={0.25} />
         <pointLight position={[0, 0, 8]} intensity={2} color="#00fff7" />
         <WireframeSphere scroll={scroll} />
         <EnergyLayer scroll={scroll} mouse={mouse} />
         <EffectComposer>
-          <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.8} intensity={2.2} />
-          <DepthOfField focusDistance={0.015 + 0.02 * scroll} focalLength={0.05} bokehScale={3 + 2 * scroll} height={700} />
+          <Bloom
+            luminanceThreshold={0.15}
+            luminanceSmoothing={0.8}
+            intensity={2.2}
+          />
+          <DepthOfField
+            focusDistance={0.015 + 0.02 * scroll}
+            focalLength={0.05}
+            bokehScale={3 + 2 * scroll}
+            height={700}
+          />
         </EffectComposer>
       </Canvas>
-      <DynamicOverlays scroll={scroll} />
     </>
   );
-} 
+}
