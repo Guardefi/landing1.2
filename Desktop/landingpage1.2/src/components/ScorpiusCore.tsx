@@ -158,30 +158,42 @@ const EnergyMaterial = shaderMaterial(
       }
     }
 
-        void main() {
-      float fresnel = pow(1.0 - dot(normalize(vNormal), vec3(0.,0.,1.)), 2.5);
+            void main() {
+      float rim = pow(1.0 - dot(normalize(vNormal), vec3(0.,0.,1.)), 1.5);
       float noiseGlow = fbm(vPos * 2.0 + uTime * 0.8) * 0.5 + 0.5;
 
-      // Removed spotlight/mouse glow effect
-      float energy = fresnel * (0.8 + 0.4 * noiseGlow);
+      // Create radial color variation from center to edge
+      float radialGradient = length(vPos.xy) / 2.0;
 
-      // Get morphing colors
-      vec3 primaryColor = getColorFromTime(uTime);
-      vec3 secondaryColor = getColorFromTime(uTime + 2.0); // Offset for variety
+      // Multiple color layers radiating outward
+      vec3 centerColor = getColorFromTime(uTime);
+      vec3 midColor = getColorFromTime(uTime + 1.5);
+      vec3 edgeColor = getColorFromTime(uTime + 3.0);
 
-      // Create dynamic color mixing
-      float colorMix = sin(uTime * 0.5 + noiseGlow * 3.14159) * 0.5 + 0.5;
-      vec3 base = mix(primaryColor, secondaryColor, colorMix * noiseGlow);
+      // Create flowing color transitions
+      float colorFlow1 = sin(uTime * 0.3 + radialGradient * 2.0) * 0.5 + 0.5;
+      float colorFlow2 = cos(uTime * 0.4 + noiseGlow * 4.0) * 0.5 + 0.5;
+
+      // Mix colors based on position and flow
+      vec3 innerMix = mix(centerColor, midColor, colorFlow1);
+      vec3 outerMix = mix(midColor, edgeColor, colorFlow2);
+      vec3 baseColor = mix(innerMix, outerMix, radialGradient);
 
       // Add scroll-based color influence
       vec3 scrollColor = getColorFromTime(uTime + uPulse * 5.0);
-      vec3 finalColor = mix(base, scrollColor, uPulse * 0.3);
+      vec3 finalColor = mix(baseColor, scrollColor, uPulse * 0.4);
 
-      // Apply fresnel effect with dynamic colors
-      vec3 refract = mix(finalColor, finalColor * 1.3, fresnel * 0.5);
+      // Add noise variation for organic feel
+      vec3 noiseColor = getColorFromTime(uTime + noiseGlow * 2.0);
+      finalColor = mix(finalColor, noiseColor, noiseGlow * 0.3);
 
-      // Increased base opacity for thicker appearance
-      gl_FragColor = vec4(refract, energy * 0.95 + 0.2 * uPulse);
+      // Use rim for subtle edge enhancement instead of bright white
+      finalColor = mix(finalColor, finalColor * 1.2, rim * 0.3);
+
+      // Energy based on rim and noise for consistent opacity
+      float energy = (rim * 0.7 + noiseGlow * 0.3 + 0.4);
+
+      gl_FragColor = vec4(finalColor, energy * 0.9 + 0.15 * uPulse);
     }
   `,
 );
