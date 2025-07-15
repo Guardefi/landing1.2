@@ -101,12 +101,22 @@ const EnergyMaterial = shaderMaterial(
     uniform float uPulse;
     uniform vec2 uMouse;
     ${noiseGLSL}
-    void main() {
+        void main() {
       vNormal = normal;
       vPos = position;
       float n = fbm(normal * 2.0 + uTime * 0.3);
-      float mouseDist = length((position.xy/2.0) - uMouse);
-      float displacement = n * 0.33 + uPulse * 0.4 * (1.0 - mouseDist);
+
+      // Jello-like mouse interaction - softer, more organic deformation
+      float mouseDist = length(position.xy - uMouse * 4.0);
+      float jelloStrength = smoothstep(3.0, 0.0, mouseDist) * 0.8;
+
+      // Create wave-like deformation that ripples outward from mouse
+      float wavePhase = mouseDist * 0.5 - uTime * 3.0;
+      float wave = sin(wavePhase) * jelloStrength * 0.4;
+
+      // Combine noise with jello deformation
+      float displacement = n * 0.33 + uPulse * 0.4 + wave;
+
       vec3 newPos = position + normal * displacement;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos,1.0);
     }
@@ -148,12 +158,12 @@ const EnergyMaterial = shaderMaterial(
       }
     }
 
-    void main() {
+        void main() {
       float fresnel = pow(1.0 - dot(normalize(vNormal), vec3(0.,0.,1.)), 2.5);
       float noiseGlow = fbm(vPos * 2.0 + uTime * 0.8) * 0.5 + 0.5;
-      float mouseDist = length((vPos.xy/2.0) - uMouse);
-      float mouseGlow = smoothstep(0.6, 0.0, mouseDist);
-      float energy = fresnel * (0.7 + 0.5 * noiseGlow) + mouseGlow * 0.8;
+
+      // Removed spotlight/mouse glow effect
+      float energy = fresnel * (0.8 + 0.4 * noiseGlow);
 
       // Get morphing colors
       vec3 primaryColor = getColorFromTime(uTime);
@@ -170,13 +180,8 @@ const EnergyMaterial = shaderMaterial(
       // Apply fresnel effect with dynamic colors
       vec3 refract = mix(finalColor, finalColor * 1.3, fresnel * 0.5);
 
-      // Add mouse interaction color boost
-      if (mouseGlow > 0.1) {
-        vec3 interactionColor = getColorFromTime(uTime + mouseDist * 10.0);
-        refract = mix(refract, interactionColor, mouseGlow * 0.4);
-      }
-
-      gl_FragColor = vec4(refract, energy * 0.85 + 0.15 * uPulse);
+      // Increased base opacity for thicker appearance
+      gl_FragColor = vec4(refract, energy * 0.95 + 0.2 * uPulse);
     }
   `,
 );
@@ -198,8 +203,8 @@ function EnergyLayer({
     mesh.current.rotation.y -= 0.002 - scroll * 0.01;
   });
   return (
-    <mesh ref={mesh} scale={1.18}>
-      <sphereGeometry args={[2.15, 128, 128]} />
+    <mesh ref={mesh} scale={1.25}>
+      <sphereGeometry args={[2.3, 128, 128]} />
       {/* @ts-ignore */}
       <energyMaterial transparent />
     </mesh>
@@ -239,7 +244,7 @@ function WireframeSphere({ scroll }: { scroll: number }) {
   return (
     <mesh ref={mesh}>
       <sphereGeometry args={[2, 64, 64]} />
-      <meshBasicMaterial wireframe transparent opacity={0.8} />
+      <meshBasicMaterial wireframe transparent opacity={0.3} />
     </mesh>
   );
 }
