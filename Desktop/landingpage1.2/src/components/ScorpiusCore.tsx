@@ -119,15 +119,63 @@ const EnergyMaterial = shaderMaterial(
     uniform float uPulse;
     uniform vec2 uMouse;
     ${noiseGLSL}
+
+    // Color morphing function
+    vec3 getColorFromTime(float time) {
+      float cycle = mod(time * 0.3, 6.0); // 6 color phases
+
+      // Define color palette
+      vec3 color1 = vec3(0.0, 0.9, 1.0);    // Cyan
+      vec3 color2 = vec3(1.0, 0.0, 0.8);    // Magenta
+      vec3 color3 = vec3(0.0, 1.0, 0.3);    // Green
+      vec3 color4 = vec3(1.0, 0.5, 0.0);    // Orange
+      vec3 color5 = vec3(0.5, 0.0, 1.0);    // Purple
+      vec3 color6 = vec3(1.0, 1.0, 0.0);    // Yellow
+
+      // Smooth transitions between colors
+      if (cycle < 1.0) {
+        return mix(color1, color2, cycle);
+      } else if (cycle < 2.0) {
+        return mix(color2, color3, cycle - 1.0);
+      } else if (cycle < 3.0) {
+        return mix(color3, color4, cycle - 2.0);
+      } else if (cycle < 4.0) {
+        return mix(color4, color5, cycle - 3.0);
+      } else if (cycle < 5.0) {
+        return mix(color5, color6, cycle - 4.0);
+      } else {
+        return mix(color6, color1, cycle - 5.0);
+      }
+    }
+
     void main() {
       float fresnel = pow(1.0 - dot(normalize(vNormal), vec3(0.,0.,1.)), 2.5);
       float noiseGlow = fbm(vPos * 2.0 + uTime * 0.8) * 0.5 + 0.5;
       float mouseDist = length((vPos.xy/2.0) - uMouse);
       float mouseGlow = smoothstep(0.6, 0.0, mouseDist);
       float energy = fresnel * (0.7 + 0.5 * noiseGlow) + mouseGlow * 0.8;
-      // Simulate refractive color shift
-      vec3 base = mix(vec3(0.0, 0.9, 1.0), vec3(0.1, 1.0, 1.0), noiseGlow);
-      vec3 refract = mix(base, vec3(0.0, 1.0, 0.7), fresnel * 0.5);
+
+      // Get morphing colors
+      vec3 primaryColor = getColorFromTime(uTime);
+      vec3 secondaryColor = getColorFromTime(uTime + 2.0); // Offset for variety
+
+      // Create dynamic color mixing
+      float colorMix = sin(uTime * 0.5 + noiseGlow * 3.14159) * 0.5 + 0.5;
+      vec3 base = mix(primaryColor, secondaryColor, colorMix * noiseGlow);
+
+      // Add scroll-based color influence
+      vec3 scrollColor = getColorFromTime(uTime + uPulse * 5.0);
+      vec3 finalColor = mix(base, scrollColor, uPulse * 0.3);
+
+      // Apply fresnel effect with dynamic colors
+      vec3 refract = mix(finalColor, finalColor * 1.3, fresnel * 0.5);
+
+      // Add mouse interaction color boost
+      if (mouseGlow > 0.1) {
+        vec3 interactionColor = getColorFromTime(uTime + mouseDist * 10.0);
+        refract = mix(refract, interactionColor, mouseGlow * 0.4);
+      }
+
       gl_FragColor = vec4(refract, energy * 0.85 + 0.15 * uPulse);
     }
   `,
